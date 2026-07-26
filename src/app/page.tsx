@@ -18,11 +18,19 @@ export default function HomePage() {
 
       <div className="mt-8 flex flex-wrap justify-center gap-4">
         <Link
-          href="/admin"
+          href="/map"
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary/90 shadow-md"
         >
+          <Compass className="size-4" />
+          <span>Launch Interactive Map</span>
+        </Link>
+
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-3 text-sm font-bold text-foreground transition-colors hover:bg-accent"
+        >
           <LayoutDashboard className="size-4" />
-          <span>Go to Admin Dashboard</span>
+          <span>Admin Dashboard</span>
         </Link>
 
         <Link
