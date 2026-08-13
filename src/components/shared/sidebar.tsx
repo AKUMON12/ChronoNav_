@@ -40,11 +40,12 @@ const adminNavItems: NavItem[] = [
   { label: "Dashboard", href: "/admin", icon: Home },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Rooms", href: "/admin/rooms", icon: Building2 },
-  { label: "Reports", href: "/admin/reports", icon: BarChart3 },
-  { label: "Report Generator", href: "/admin/reports/generator", icon: FileText },
+  { label: "Activity Logs & Reports", href: "/admin/logs", icon: BarChart3 },
+  { label: "Campus Bulletin", href: "/admin/bulletin", icon: FileText },
   { label: "Campus Map", href: "/map", icon: Map },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
+
 
 interface SidebarProps {
   /** Which role's navigation items to show */
