@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef } from "react";
 import { Node, Waypoint } from "@/lib/navigation/pathfinding";
 
 interface InteractiveSVGMapProps {
@@ -22,161 +22,331 @@ export function InteractiveSVGMap({
   onSelectNode,
   zoomLevel,
 }: InteractiveSVGMapProps) {
-  // Filter nodes belonging to the active selected floor
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Pan offset state for dragging
+  const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  // Mouse pan handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Filter nodes belonging to active floor
   const floorNodes = Object.values(graph).filter((node) => node.floor === currentFloor);
 
-  // Filter path waypoints belonging to the current floor for drawing line polyline
+  // Filter path waypoints belonging to current floor
   const currentFloorWaypoints = waypoints.filter((wp) => wp.floor === currentFloor);
 
-  // Generate SVG path 'd' attribute string connecting current floor waypoints
+  // Generate SVG path 'd' string connecting waypoints on this floor
   const pathDAttribute = currentFloorWaypoints.reduce((acc, wp, idx) => {
     return idx === 0 ? `M ${wp.x} ${wp.y}` : `${acc} L ${wp.x} ${wp.y}`;
   }, "");
 
   return (
-    <div className="relative w-full h-[450px] sm:h-[550px] overflow-hidden rounded-xl border border-border bg-card shadow-inner flex items-center justify-center p-4">
-      {/* Background SVG Grid / Canvas */}
-      <div 
-        className="w-full h-full transition-transform duration-300 ease-out flex items-center justify-center"
-        style={{ transform: `scale(${zoomLevel})` }}
+    <div
+      ref={containerRef}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseUp}
+      className={`relative w-full h-[500px] sm:h-[600px] overflow-hidden rounded-2xl border border-border bg-slate-950 shadow-inner flex items-center justify-center p-4 select-none ${
+        isDragging ? "cursor-grabbing" : "cursor-grab"
+      }`}
+    >
+      {/* Background Grid Pattern */}
+      <svg className="absolute inset-0 w-full h-full opacity-10 pointer-events-none">
+        <defs>
+          <pattern id="grid-pattern" width="30" height="30" patternUnits="userSpaceOnUse">
+            <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#507495" strokeWidth="1" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid-pattern)" />
+      </svg>
+
+      {/* SVG Map Canvas with Zoom & Pan Transform */}
+      <div
+        className="w-full h-full flex items-center justify-center transition-transform duration-100 ease-out origin-center"
+        style={{
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+        }}
       >
         <svg
           viewBox="0 0 600 600"
-          className="w-full h-full max-w-[600px] max-h-[600px]"
-          aria-label={`CCS Building Floor ${currentFloor} Map Plan`}
+          className="w-full h-full max-w-[600px] max-h-[600px] drop-shadow-2xl"
+          aria-label={`University of Cebu CCS Building Floor ${currentFloor} Blueprint Map`}
         >
-          {/* Blueprint Layout Rectangles (Representing Rooms & Corridors) */}
-          <g className="opacity-70 dark:opacity-50">
-            {/* Outer Building Perimeter */}
-            <rect x="50" y="50" width="500" height="500" rx="16" fill="none" stroke="currentColor" strokeWidth="2" className="text-secondary/40" />
+          <defs>
+            {/* Glowing route effect */}
+            <filter id="route-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
             
-            {/* Room Boundaries */}
+            {/* Gradient for Rooms */}
+            <linearGradient id="roomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="#1e293b" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#0f172a" stopOpacity="0.9" />
+            </linearGradient>
+          </defs>
+
+          {/* Building Blueprint Base Floorplan Outline */}
+          <g className="floorplan-base">
+            {/* Outer Wall Boundary */}
+            <rect
+              x="40"
+              y="40"
+              width="520"
+              height="520"
+              rx="20"
+              fill="#090d16"
+              stroke="#507495"
+              strokeWidth="4"
+            />
+
+            {/* Common Hallways & Corridors Track */}
+            <rect x="150" y="420" width="270" height="60" rx="10" fill="#1e293b" opacity="0.6" />
+            <rect x="420" y="350" width="100" height="130" rx="10" fill="#1e293b" opacity="0.6" />
+
+            {/* Floor 1 Layout */}
             {currentFloor === 1 && (
-              <>
-                <rect x="80" y="320" width="160" height="160" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="160" y="405" textAnchor="middle" className="text-xs font-semibold fill-foreground">Main Entrance</text>
+              <g id="floor-1-rooms">
+                {/* Gate 1 Entrance */}
+                <rect x="60" y="410" width="80" height="80" rx="10" fill="url(#roomGrad)" stroke="#1D7DD7" strokeWidth="2" />
+                <text x="100" y="455" textAnchor="middle" fill="#94a3b8" className="text-[11px] font-bold">Main Entrance</text>
 
-                <rect x="200" y="100" width="180" height="180" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="290" y="195" textAnchor="middle" className="text-xs font-semibold fill-foreground">Mac Lab 101</text>
-              </>
+                {/* Security Desk */}
+                <rect x="90" y="350" width="60" height="50" rx="6" fill="url(#roomGrad)" stroke="#507495" strokeWidth="1.5" />
+                <text x="120" y="380" textAnchor="middle" fill="#64748b" className="text-[10px]">Security</text>
+
+                {/* Mac Lab 101 */}
+                <rect x="160" y="160" width="120" height="180" rx="12" fill="url(#roomGrad)" stroke="#1D7DD7" strokeWidth="2" className="hover:stroke-primary cursor-pointer transition-colors" />
+                <text x="220" y="250" textAnchor="middle" fill="#38bdf8" className="text-[12px] font-extrabold">Mac Lab 101</text>
+                <text x="220" y="270" textAnchor="middle" fill="#94a3b8" className="text-[9px]">Cap: 45 Workstations</text>
+
+                {/* Canteen */}
+                <rect x="60" y="120" width="80" height="160" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="100" y="200" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Canteen</text>
+
+                {/* Student Affairs */}
+                <rect x="320" y="160" width="120" height="180" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="380" y="250" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Student Affairs</text>
+
+                {/* Ground Restrooms */}
+                <rect x="440" y="470" width="80" height="60" rx="8" fill="url(#roomGrad)" stroke="#507495" strokeWidth="1.5" />
+                <text x="480" y="505" textAnchor="middle" fill="#64748b" className="text-[10px]">Restroom</text>
+              </g>
             )}
 
+            {/* Floor 2 Layout */}
             {currentFloor === 2 && (
-              <>
-                <rect x="220" y="120" width="160" height="160" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="300" y="200" textAnchor="middle" className="text-xs font-semibold fill-foreground">Prog Lab 201</text>
+              <g id="floor-2-rooms">
+                {/* Programming Lab 201 */}
+                <rect x="290" y="160" width="120" height="180" rx="12" fill="url(#roomGrad)" stroke="#1D7DD7" strokeWidth="2" />
+                <text x="350" y="250" textAnchor="middle" fill="#38bdf8" className="text-[12px] font-extrabold">Prog Lab 201</text>
 
-                <rect x="70" y="320" width="160" height="160" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="150" y="400" textAnchor="middle" className="text-xs font-semibold fill-foreground">Room 202</text>
-              </>
+                {/* Lecture 202 */}
+                <rect x="120" y="220" width="120" height="120" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="180" y="280" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Room 202</text>
+
+                {/* Systems Lab 203 */}
+                <rect x="60" y="390" width="90" height="100" rx="10" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="105" y="445" textAnchor="middle" fill="#e2e8f0" className="text-[10px] font-bold">Systems Lab</text>
+
+                {/* Faculty Room 205 */}
+                <rect x="430" y="160" width="100" height="180" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="480" y="250" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Faculty 205</text>
+              </g>
             )}
 
+            {/* Floor 3 Layout */}
             {currentFloor === 3 && (
-              <>
-                <rect x="260" y="100" width="180" height="160" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="350" y="180" textAnchor="middle" className="text-xs font-semibold fill-foreground">Dean's Office</text>
-              </>
+              <g id="floor-3-rooms">
+                {/* Dean's Office */}
+                <rect x="280" y="120" width="140" height="160" rx="14" fill="url(#roomGrad)" stroke="#1D7DD7" strokeWidth="2.5" />
+                <text x="350" y="195" textAnchor="middle" fill="#38bdf8" className="text-[13px] font-extrabold">Dean's Office</text>
+                <text x="350" y="215" textAnchor="middle" fill="#94a3b8" className="text-[9px]">CCS Administration</text>
+
+                {/* Cisco Networking Lab 301 */}
+                <rect x="120" y="200" width="120" height="140" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="180" y="270" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Network Lab 301</text>
+
+                {/* Software Eng Lab 302 */}
+                <rect x="50" y="380" width="90" height="110" rx="10" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="95" y="440" textAnchor="middle" fill="#e2e8f0" className="text-[10px] font-bold">SE Lab 302</text>
+
+                {/* Computer Research Lab 303 */}
+                <rect x="430" y="140" width="100" height="160" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="480" y="220" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">Research 303</text>
+              </g>
             )}
 
+            {/* Floor 4 Layout */}
             {currentFloor === 4 && (
-              <>
-                <rect x="100" y="200" width="220" height="200" rx="8" className="fill-muted stroke-border" strokeWidth="2" />
-                <text x="210" y="300" textAnchor="middle" className="text-xs font-semibold fill-foreground">AV Hall 401</text>
-              </>
+              <g id="floor-4-rooms">
+                {/* Multipurpose AV Hall 401 */}
+                <rect x="260" y="120" width="180" height="180" rx="16" fill="url(#roomGrad)" stroke="#1D7DD7" strokeWidth="2.5" />
+                <text x="350" y="200" textAnchor="middle" fill="#38bdf8" className="text-[13px] font-extrabold">AV Hall 401</text>
+                <text x="350" y="220" textAnchor="middle" fill="#94a3b8" className="text-[9px]">Events & Seminars</text>
+
+                {/* AI & Data Science Lab 402 */}
+                <rect x="120" y="200" width="120" height="140" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="180" y="270" textAnchor="middle" fill="#e2e8f0" className="text-[11px] font-bold">AI Lab 402</text>
+
+                {/* Cybersecurity Lab 403 */}
+                <rect x="50" y="380" width="90" height="110" rx="10" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="95" y="440" textAnchor="middle" fill="#e2e8f0" className="text-[10px] font-bold">CyberSec Lab</text>
+
+                {/* Senior Student Lounge */}
+                <rect x="440" y="160" width="90" height="140" rx="12" fill="url(#roomGrad)" stroke="#507495" strokeWidth="2" />
+                <text x="485" y="230" textAnchor="middle" fill="#e2e8f0" className="text-[10px] font-bold">Student Lounge</text>
+              </g>
             )}
 
-            {/* Staircase Hub Marker */}
-            <rect x="400" y="340" width="100" height="120" rx="6" className="fill-amber-500/10 stroke-amber-500/40" strokeWidth="2" />
-            <text x="450" y="405" textAnchor="middle" className="text-[11px] font-bold fill-amber-600 dark:fill-amber-400">Stairs</text>
+            {/* Vertical Transportation Hub (Stairs & Elevator) */}
+            <g id="vertical-transport">
+              {/* Staircase Block */}
+              <rect x="445" y="350" width="70" height="60" rx="8" fill="#1e1b4b" stroke="#6366f1" strokeWidth="2" />
+              <text x="480" y="385" textAnchor="middle" fill="#a5b4fc" className="text-[10px] font-extrabold">Stairwell</text>
+
+              {/* Elevator Block */}
+              <rect x="495" y="420" width="50" height="60" rx="8" fill="#064e3b" stroke="#10b981" strokeWidth="2" />
+              <text x="520" y="455" textAnchor="middle" fill="#6ee7b7" className="text-[9.5px] font-bold">Elevator</text>
+            </g>
           </g>
 
-          {/* Animated Navigation Route Overlay */}
+          {/* Animated SVG Route Overlay */}
           {pathDAttribute && (
-            <g className="animate-pulse">
+            <g className="route-overlay">
+              {/* Outer Glow Line */}
               <path
                 d={pathDAttribute}
                 stroke="#1D7DD7"
-                strokeWidth="6"
+                strokeWidth="8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+                opacity="0.4"
+                filter="url(#route-glow)"
+              />
+              {/* Main Solid Primary Color Path (#1D7DD7 strokeWidth="4") */}
+              <path
+                d={pathDAttribute}
+                stroke="#1D7DD7"
+                strokeWidth="4"
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 fill="none"
               />
+              {/* Dashed White Inner Animated Track */}
               <path
                 d={pathDAttribute}
                 stroke="#FFFFFF"
                 strokeWidth="2"
-                strokeDasharray="8 6"
+                strokeDasharray="10 8"
                 strokeLinecap="round"
                 fill="none"
+                className="animate-[dash_1.5s_linear_infinite]"
               />
             </g>
           )}
 
           {/* Interactive Graph Node Markers */}
-          {floorNodes.map((node) => {
-            const isStart = node.id === startNodeId;
-            const isTarget = node.id === targetNodeId;
-            const isWay = currentFloorWaypoints.some((wp) => wp.x === node.x && wp.y === node.y);
+          <g className="graph-nodes">
+            {floorNodes.map((node) => {
+              const isStart = node.id === startNodeId;
+              const isTarget = node.id === targetNodeId;
+              const isWay = currentFloorWaypoints.some((wp) => wp.x === node.x && wp.y === node.y);
 
-            let nodeFill = "#507495"; // Default node
-            if (isStart) nodeFill = "#10B981"; // Start green
-            if (isTarget) nodeFill = "#EF4444"; // Target red
-            if (isWay && !isStart && !isTarget) nodeFill = "#1D7DD7"; // Route node blue
+              let nodeFill = "#507495"; // Default secondary palette
+              if (isStart) nodeFill = "#10B981"; // Emerald green start
+              if (isTarget) nodeFill = "#EF4444"; // Crimson red target
+              if (isWay && !isStart && !isTarget) nodeFill = "#1D7DD7"; // Primary blue route waypoint
 
-            return (
-              <g
-                key={node.id}
-                onClick={() => onSelectNode && onSelectNode(node.id)}
-                className="cursor-pointer transition-transform hover:scale-125"
-                role="button"
-                tabIndex={0}
-                aria-label={`Select ${node.name}`}
-              >
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={isStart || isTarget ? 12 : 8}
-                  fill={nodeFill}
-                  className="shadow-md"
-                />
-                <circle
-                  cx={node.x}
-                  cy={node.y}
-                  r={isStart || isTarget ? 16 : 11}
-                  fill="none"
-                  stroke={nodeFill}
-                  strokeWidth="2"
-                  className="opacity-40 animate-ping"
-                />
-                <text
-                  x={node.x}
-                  y={node.y - 16}
-                  textAnchor="middle"
-                  className="text-[10px] font-bold fill-foreground select-none pointer-events-none drop-shadow-sm"
+              return (
+                <g
+                  key={node.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (onSelectNode) onSelectNode(node.id);
+                  }}
+                  className="cursor-pointer transition-transform hover:scale-125 focus:outline-none"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Select ${node.name}`}
                 >
-                  {node.name}
-                </text>
-              </g>
-            );
-          })}
+                  {/* Outer Pulsing Aura */}
+                  {(isStart || isTarget || isWay) && (
+                    <circle
+                      cx={node.x}
+                      cy={node.y}
+                      r={isStart || isTarget ? 18 : 12}
+                      fill="none"
+                      stroke={nodeFill}
+                      strokeWidth="2"
+                      className="opacity-60 animate-ping origin-center"
+                    />
+                  )}
+
+                  {/* Solid Central Node Circle */}
+                  <circle
+                    cx={node.x}
+                    cy={node.y}
+                    r={isStart || isTarget ? 11 : 7}
+                    fill={nodeFill}
+                    stroke="#FFFFFF"
+                    strokeWidth="2"
+                    className="shadow-lg"
+                  />
+
+                  {/* Label Text */}
+                  <text
+                    x={node.x}
+                    y={node.y - 14}
+                    textAnchor="middle"
+                    fill="#F8FAFC"
+                    className="text-[10px] font-bold select-none pointer-events-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
+                  >
+                    {node.name}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
         </svg>
       </div>
 
-      {/* Map Legend Overlay */}
-      <div className="absolute bottom-3 left-3 bg-background/90 backdrop-blur border border-border p-2.5 rounded-lg text-xs space-y-1.5 shadow-sm">
+      {/* Map Interactive Legend & Hints */}
+      <div className="absolute bottom-3 left-3 bg-slate-900/90 backdrop-blur border border-slate-800 px-3 py-2 rounded-xl text-xs space-y-1 shadow-lg pointer-events-none">
         <div className="flex items-center gap-2">
-          <span className="size-3 rounded-full bg-emerald-500 inline-block" />
-          <span className="text-foreground font-medium">Start Location</span>
+          <span className="size-2.5 rounded-full bg-emerald-500 inline-block shadow-sm" />
+          <span className="text-slate-200 text-[11px] font-semibold">Start Origin</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="size-3 rounded-full bg-rose-500 inline-block" />
-          <span className="text-foreground font-medium">Destination Target</span>
+          <span className="size-2.5 rounded-full bg-rose-500 inline-block shadow-sm" />
+          <span className="text-slate-200 text-[11px] font-semibold">Destination Target</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="size-3 rounded-full bg-[#1D7DD7] inline-block" />
-          <span className="text-foreground font-medium">Calculated Route</span>
+          <span className="size-2.5 rounded-full bg-[#1D7DD7] inline-block shadow-sm" />
+          <span className="text-slate-200 text-[11px] font-semibold">Dijkstra Route</span>
         </div>
       </div>
     </div>
   );
 }
+
