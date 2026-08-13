@@ -2,9 +2,11 @@
 
 import React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Map, ScanLine, CalendarDays, Settings, ArrowRight, Clock, BookOpen } from "lucide-react";
 import { ScheduleList } from "@/components/schedule/schedule-list";
 import { ClassScheduleItem } from "@/types/schedule";
+import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 
 /**
  * Student Dashboard Page — the primary post-login home screen for students.
@@ -63,11 +65,12 @@ const mockSchedule: ClassScheduleItem[] = [
 ];
 
 export default function StudentDashboardPage() {
+  const router = useRouter();
   const nextClassId = "1"; // TODO: Calculate dynamically from current time
 
   const handleNavigate = (item: ClassScheduleItem) => {
-    // TODO: Navigate to /map?destination=<roomId>
-    console.log("Navigate to:", item.room, item.building);
+    const targetNode = getGraphNodeForRoom(item.room);
+    router.push(`/map?start=F1_ENTRANCE&target=${targetNode}`);
   };
 
   return (
@@ -96,7 +99,7 @@ export default function StudentDashboardPage() {
           </div>
         </div>
         <Link
-          href="/map"
+          href={`/map?start=F1_ENTRANCE&target=${getGraphNodeForRoom(mockSchedule[0].room)}`}
           className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm shrink-0"
         >
           <span>Navigate Now</span>

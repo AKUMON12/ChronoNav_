@@ -133,6 +133,11 @@ export function findShortestPath(
     } else {
       const prevNode = graph[pathNodeIds[i - 1]];
       if (node.floor !== prevNode.floor) {
+        const minF = Math.min(prevNode.floor, node.floor);
+        const maxF = Math.max(prevNode.floor, node.floor);
+        for (let f = minF; f <= maxF; f++) {
+          floorsSet.add(f);
+        }
         const transitionType = node.type === 'elevator' ? 'Elevator' : 'Staircase';
         instructions.push(
           `Step ${stepNum}: Take ${transitionType} from Floor ${prevNode.floor} to Floor ${node.floor}`
@@ -636,5 +641,27 @@ export class SampleCCSGraph {
       },
     };
   }
+}
+
+export const ROOM_NODE_MAPPING: Record<string, string> = {
+  "CCS 401": "F4_AV_HALL_401",
+  "MAC LAB 101": "F1_MAC_LAB_101",
+  "CCS 201": "F2_PROG_LAB_201",
+  "ROOM 201": "F2_PROG_LAB_201",
+  "ROOM 202": "F2_LECTURE_202",
+  "CCS 301": "F3_NETWORK_LAB_301",
+  "CCS 302": "F3_SOFT_ENG_LAB_302",
+  "CCS 303": "F3_RESEARCH_LAB_303",
+  "CCS 402": "F4_AI_LAB_402",
+  "CCS 403": "F4_CYBERSEC_LAB_403",
+  "CL2": "F2_PROG_LAB_201",
+  "CL3": "F3_NETWORK_LAB_301",
+  "CL5": "F3_SOFT_ENG_LAB_302",
+  "LH2": "F2_LECTURE_202",
+};
+
+export function getGraphNodeForRoom(roomCode: string): string {
+  const upperRoom = roomCode.toUpperCase().trim();
+  return ROOM_NODE_MAPPING[upperRoom] || "F3_DEAN_OFFICE";
 }
 

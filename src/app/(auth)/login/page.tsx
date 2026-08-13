@@ -40,7 +40,12 @@ export default function LoginPage() {
     if (result.error) {
       setError(result.error);
     } else {
-      router.push("/admin");
+      const role = result.user?.user_metadata?.role;
+      if (role === "student") {
+        router.push("/student");
+      } else {
+        router.push("/admin");
+      }
     }
   };
 

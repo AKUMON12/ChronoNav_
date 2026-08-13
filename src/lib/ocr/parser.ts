@@ -32,21 +32,24 @@ export function parseScheduleText(rawText: string): OCRScheduleResult {
   const parsedItems: ParsedScheduleItem[] = [];
 
   // Regex rules for UC Study Load pattern matching
-  const courseRegex = /([A-Z]{2,4}\s*[-–]?\s*[A-Z0-9]{3,7})\s+([A-Za-z0-9 &.,\-/]+)/i;
+  const courseRegex = /\b([A-Z]{2,4}(?:\s*[-–]\s*|\s+)[A-Z0-9]{3,12})\s+([A-Za-z0-9 &.,\-/]+)/i;
   const timeRegex = /(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i;
   const dayRegex = /\b(MWF|TTH|MON|TUE|WED|THU|FRI|SAT|M|T|W|TH|F|S)\b/i;
   const roomRegex = /\b(CCS\s*\d{3}|CL\d|LH\d|MAC\s*LAB\s*\d{3}|ROOM\s*\d{3}|DON\s*MANUEL\s*\d{3}|MAIN\s*\d{3})\b/i;
 
-  let currentItem: Partial<ParsedScheduleItem> = {};
-
   lines.forEach((line, index) => {
+    // Ignore header / metadata lines
+    if (/UNIVERSITY|COLLEGE|STUDY LOAD|EDP CODE|SUBJECT CODE|MAIN CAMPUS/i.test(line)) {
+      return;
+    }
+
     // Match Time range
     const timeMatch = line.match(timeRegex);
     const dayMatch = line.match(dayRegex);
     const roomMatch = line.match(roomRegex);
     const courseMatch = line.match(courseRegex);
 
-    if (courseMatch || timeMatch) {
+    if ((courseMatch && (timeMatch || dayMatch || roomMatch)) || timeMatch) {
       const id = `ocr-${Date.now()}-${index}`;
       const courseCode = courseMatch ? courseMatch[1].trim() : `CS-${100 + index}`;
       const courseTitle = courseMatch ? courseMatch[2].trim() : "Computer Studies Course";

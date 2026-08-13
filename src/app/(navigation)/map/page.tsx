@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { 
   SampleCCSGraph, 
   findShortestPath, 
-  PathfindingResult 
+  PathfindingResult,
+  getGraphNodeForRoom
 } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
@@ -27,9 +29,10 @@ import {
   Footprints
 } from "lucide-react";
 
-export default function InteractiveMapPage() {
+function InteractiveMapContent() {
   const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
   const allNodes = useMemo(() => Object.values(graph), [graph]);
+  const searchParams = useSearchParams();
 
   // Origin & Destination states
   const [startNodeId, setStartNodeId] = useState<string>("F1_ENTRANCE");
@@ -45,6 +48,26 @@ export default function InteractiveMapPage() {
 
   // Settings
   const [voiceGuidance, setVoiceGuidance] = useState<boolean>(true);
+
+  // Synchronize search params if passed (e.g. /map?start=F1_ENTRANCE&target=F4_AV_HALL_401)
+  useEffect(() => {
+    if (!searchParams) return;
+    const startParam = searchParams.get("start") || searchParams.get("origin");
+    const targetParam = searchParams.get("target") || searchParams.get("destination");
+
+    if (startParam && graph[startParam]) {
+      setStartNodeId(startParam);
+      setCurrentFloor(graph[startParam].floor);
+    }
+
+    if (targetParam) {
+      const resolvedTarget = graph[targetParam] ? targetParam : getGraphNodeForRoom(targetParam);
+      if (graph[resolvedTarget]) {
+        setTargetNodeId(resolvedTarget);
+        setCurrentFloor(graph[resolvedTarget].floor);
+      }
+    }
+  }, [searchParams, graph]);
 
   // Compute Dijkstra shortest path
   const pathResult: PathfindingResult | null = useMemo(() => {
@@ -359,6 +382,14 @@ export default function InteractiveMapPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function InteractiveMapPage() {
+  return (
+    <Suspense fallback={<div className="p-8 text-center text-sm font-bold text-muted-foreground">Loading Interactive Map...</div>}>
+      <InteractiveMapContent />
+    </Suspense>
   );
 }
 
