@@ -1,35 +1,34 @@
-import { createClient } from "@supabase/supabase-js";
+import { createServerClient as createSupabaseServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
 
 /**
- * Creates a server-side Supabase client instance.
- * For Next.js Server Components, Server Actions, and API Route Handlers.
- * Logs a warning if env vars are missing or still set to placeholders.
+ * Creates a server-side Supabase client instance for Next.js Server Components,
+ * Server Actions, and API Route Handlers.
+ * Automatically synchronizes auth cookies with Next.js request/response cycle.
  */
 export function createServerClient() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  const cookieStore = cookies();
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
 
-  // Guard against missing or placeholder env vars
-  if (
-    !supabaseUrl ||
-    !supabaseAnonKey ||
-    supabaseUrl.includes("placeholder") ||
-    supabaseAnonKey.includes("placeholder")
-  ) {
-    console.warn(
-      "[ChronoNav Server] Supabase environment variables are missing or contain placeholders.\n" +
-      "Copy .env.example to .env.local and add your real Supabase URL and anon key.\n" +
-      "Server-side database operations will not work until this is configured."
-    );
-  }
-
-  return createClient<Database>(
-    supabaseUrl || "https://placeholder.supabase.co",
-    supabaseAnonKey || "placeholder-key",
+  return createSupabaseServerClient<Database>(
+    supabaseUrl,
+    supabaseAnonKey,
     {
-      auth: {
-        persistSession: false,
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // Ignored when setAll is called from a Server Component
+          }
+        },
       },
     }
   );

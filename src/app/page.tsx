@@ -123,7 +123,7 @@ export default function LandingPage() {
               <ArrowRight className="size-4" />
             </Link>
             <Link
-              href="/map"
+              href="/explore"
               className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-sm font-bold text-foreground hover:bg-accent transition-colors"
             >
               <Map className="size-4" />

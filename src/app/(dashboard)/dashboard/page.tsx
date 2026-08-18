@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import StudentDashboardPage from "../student/page";
 
-export default function DashboardRedirect() {
-  redirect("/student");
+export default function DashboardPage() {
+  return <StudentDashboardPage />;
 }

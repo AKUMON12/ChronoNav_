@@ -1,3 +1,5 @@
+export type DayOfWeek = "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+
 export interface ClassScheduleItem {
   id: string;
   courseCode: string;
@@ -5,7 +7,7 @@ export interface ClassScheduleItem {
   instructor?: string;
   room: string;
   building: string;
-  dayOfWeek: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+  dayOfWeek: DayOfWeek | string;
   startTime: string; // e.g. "08:00 AM" or "08:00"
   endTime: string;   // e.g. "10:30 AM" or "10:30"
   section?: string;
@@ -16,7 +18,7 @@ export interface ParsedScheduleItem {
   courseCode: string;
   courseTitle: string;
   instructor: string;
-  dayOfWeek: "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun";
+  dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
   building: string;
@@ -29,4 +31,3 @@ export interface OCRScheduleResult {
   rawText: string;
   confidence: number;
 }
-

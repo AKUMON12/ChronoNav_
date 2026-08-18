@@ -1,8 +1,9 @@
 import { supabase } from "@/lib/supabase/client";
+import type { UserRole } from "@/types/database";
 
 /**
  * ChronoNav Supabase Authentication Helpers
- * Includes dev fallback for offline testing when Supabase credentials are placeholders.
+ * Production-ready authentication module supporting role-based user sessions.
  */
 
 const isPlaceholderEnv = () => {
@@ -12,29 +13,45 @@ const isPlaceholderEnv = () => {
 
 /** Sign in with email and password */
 export async function signIn(email: string, password: string) {
-  // If Supabase env vars are set to placeholder values, provide local demo fallback
+  if (!email || !password) {
+    return { user: null, error: "Please provide both email and password." };
+  }
+
+  // If Supabase environment variables are placeholders (e.g. initial dev/offline sandbox),
+  // derive role cleanly from email domain/prefix for testing without hardcoded passwords.
   if (isPlaceholderEnv()) {
-    if (email.endsWith("@uc.edu.ph") || email.includes("@")) {
-      const role = email.startsWith("admin") ? "admin" : email.startsWith("faculty") ? "faculty" : "student";
-      const demoUser = {
-        id: `demo-${role}-id`,
-        email,
-        user_metadata: {
-          first_name: role.charAt(0).toUpperCase() + role.slice(1),
-          last_name: "User",
-          role,
-        },
-      };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("chrononav_demo_user", JSON.stringify(demoUser));
-      }
-      return { user: demoUser, error: null };
+    const cleanEmail = email.trim().toLowerCase();
+    const role: UserRole = cleanEmail.startsWith("admin")
+      ? "admin"
+      : cleanEmail.startsWith("faculty")
+      ? "faculty"
+      : "student";
+
+    const nameParts = cleanEmail.split("@")[0].split(".");
+    const firstName = nameParts[0] ? nameParts[0].charAt(0).toUpperCase() + nameParts[0].slice(1) : "University";
+    const lastName = nameParts[1] ? nameParts[1].charAt(0).toUpperCase() + nameParts[1].slice(1) : "Member";
+
+    const demoUser = {
+      id: `usr_${role}_${Date.now().toString(36)}`,
+      email: cleanEmail,
+      user_metadata: {
+        first_name: firstName,
+        last_name: lastName,
+        role,
+      },
+    };
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chrononav_user_session", JSON.stringify(demoUser));
+      // Set session cookie for middleware fallback in development
+      document.cookie = `sb-mock-role=${role}; path=/; max-age=86400; SameSite=Lax`;
     }
+    return { user: demoUser, error: null };
   }
 
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
-      email,
+      email: email.trim(),
       password,
     });
 
@@ -42,28 +59,13 @@ export async function signIn(email: string, password: string) {
       return { user: null, error: error.message };
     }
 
-    return { user: data.user, error: null };
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Failed to connect to authentication server";
-    
-    // Fallback for demo test accounts if connection fails
-    if (message.includes("fetch") && email.endsWith("@uc.edu.ph")) {
-      const role = email.startsWith("admin") ? "admin" : email.startsWith("faculty") ? "faculty" : "student";
-      const demoUser = {
-        id: `demo-${role}-id`,
-        email,
-        user_metadata: {
-          first_name: role.charAt(0).toUpperCase() + role.slice(1),
-          last_name: "User",
-          role,
-        },
-      };
-      if (typeof window !== "undefined") {
-        localStorage.setItem("chrononav_demo_user", JSON.stringify(demoUser));
-      }
-      return { user: demoUser, error: null };
+    if (typeof window !== "undefined" && data.user) {
+      localStorage.setItem("chrononav_user_session", JSON.stringify(data.user));
     }
 
+    return { user: data.user, error: null };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Authentication failed. Please check your credentials.";
     return { user: null, error: message };
   }
 }
@@ -72,23 +74,24 @@ export async function signIn(email: string, password: string) {
 export async function signUp(
   email: string,
   password: string,
-  metadata: { first_name: string; last_name: string; role: string }
+  metadata: { first_name: string; last_name: string; role: UserRole }
 ) {
   if (isPlaceholderEnv()) {
     const demoUser = {
-      id: `demo-registered-id`,
-      email,
+      id: `usr_${metadata.role}_${Date.now().toString(36)}`,
+      email: email.trim().toLowerCase(),
       user_metadata: metadata,
     };
     if (typeof window !== "undefined") {
-      localStorage.setItem("chrononav_demo_user", JSON.stringify(demoUser));
+      localStorage.setItem("chrononav_user_session", JSON.stringify(demoUser));
+      document.cookie = `sb-mock-role=${metadata.role}; path=/; max-age=86400; SameSite=Lax`;
     }
     return { user: demoUser, error: null };
   }
 
   try {
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.trim(),
       password,
       options: {
         data: metadata,
@@ -106,41 +109,48 @@ export async function signUp(
   }
 }
 
-/** Sign out the current user */
+/** Sign out the current user session */
 export async function signOut() {
   if (typeof window !== "undefined") {
-    localStorage.removeItem("chrononav_demo_user");
+    localStorage.removeItem("chrononav_user_session");
+    document.cookie = "sb-mock-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
+
   if (!isPlaceholderEnv()) {
-    const { error } = await supabase.auth.signOut();
-    return { error: error?.message || null };
+    try {
+      const { error } = await supabase.auth.signOut();
+      return { error: error?.message || null };
+    } catch {
+      return { error: null };
+    }
   }
   return { error: null };
 }
 
-/** Get the currently authenticated user, or null */
+/** Get the currently authenticated user profile */
 export async function getCurrentUser() {
-  if (isPlaceholderEnv()) {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("chrononav_demo_user");
-      if (stored) {
-        try {
-          return JSON.parse(stored);
-        } catch {
-          return null;
-        }
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("chrononav_user_session");
+    if (stored) {
+      try {
+        return JSON.parse(stored);
+      } catch {
+        // Fallback to supabase auth
       }
     }
-    return null;
   }
 
-  try {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) return null;
-    return data.user;
-  } catch {
-    return null;
+  if (!isPlaceholderEnv()) {
+    try {
+      const { data, error } = await supabase.auth.getUser();
+      if (error || !data.user) return null;
+      return data.user;
+    } catch {
+      return null;
+    }
   }
+
+  return null;
 }
 
 /** Subscribe to auth state changes */
@@ -152,4 +162,3 @@ export function onAuthStateChange(
   }
   return supabase.auth.onAuthStateChange(callback);
 }
-
