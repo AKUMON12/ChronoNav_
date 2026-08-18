@@ -25,10 +25,12 @@ import {
 import { SampleCCSGraph, Node } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { BackButton } from "@/components/shared/back-button";
 
 /**
  * Public Campus Explorer for Unauthenticated Guests
- * Zero-login interactive campus map and facility directory for UC Main Campus (College of Computer Studies).
+ * Zero-login interactive campus map and facility directory for UC Main Campus.
  */
 export default function PublicExplorePage() {
   const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
@@ -81,49 +83,53 @@ export default function PublicExplorePage() {
   const getCategoryIcon = (category?: string) => {
     switch (category) {
       case "lab":
-        return <Laptop className="size-3.5 text-[#1D7DD7]" />;
+        return <Laptop className="size-3.5 text-primary" />;
       case "classroom":
-        return <GraduationCap className="size-3.5 text-emerald-400" />;
+        return <GraduationCap className="size-3.5 text-emerald-500 dark:text-emerald-400" />;
       case "office":
-        return <Briefcase className="size-3.5 text-indigo-400" />;
+        return <Briefcase className="size-3.5 text-indigo-500 dark:text-indigo-400" />;
       case "amenity":
       case "facility":
-        return <Coffee className="size-3.5 text-amber-400" />;
+        return <Coffee className="size-3.5 text-amber-500 dark:text-amber-400" />;
       default:
-        return <MapPin className="size-3.5 text-[#507495]" />;
+        return <MapPin className="size-3.5 text-muted-foreground" />;
     }
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-[#0E151B] text-foreground">
-      {/* ── Top Header ── */}
-      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#507495]/20 bg-[#141E28]/95 backdrop-blur px-4 sm:px-8">
+    <div className="flex min-h-screen w-full flex-col bg-background text-foreground transition-colors duration-200">
+      {/* ── Top Header with Back Button (Left) & Theme Toggle (Right) ── */}
+      <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/90 backdrop-blur px-4 sm:px-8 transition-colors duration-200">
         <div className="flex items-center gap-3">
+          <BackButton fallbackUrl="/" showLabel={false} />
+
           <Link href="/" className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#1D7DD7] text-white font-bold shadow-lg shadow-[#1D7DD7]/30">
-              <Compass className="size-6" />
+            <div className="flex size-9 items-center justify-center rounded-2xl bg-primary text-white font-bold shadow-lg shadow-primary/30">
+              <Compass className="size-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-base font-extrabold text-white tracking-tight">CHRONONAV</span>
-                <span className="rounded-md bg-[#1D7DD7]/20 border border-[#1D7DD7]/40 px-2 py-0.5 text-[10px] font-black text-[#1D7DD7] uppercase tracking-wider">
+                <span className="text-sm sm:text-base font-black text-foreground tracking-tight">CHRONONAV</span>
+                <span className="rounded-md bg-primary/15 border border-primary/30 px-2 py-0.5 text-[9px] sm:text-[10px] font-black text-primary uppercase tracking-wider">
                   Guest Mode
                 </span>
               </div>
-              <p className="text-[11px] font-semibold text-[#74777E]">
+              <p className="hidden sm:block text-[11px] font-semibold text-muted-foreground">
                 University of Cebu • Main Campus (CCS Building)
               </p>
             </div>
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
+          <ThemeToggle />
+
           <Link
             href="/login"
-            className="flex items-center gap-2 rounded-xl bg-[#1D7DD7] px-4 py-2 text-xs sm:text-sm font-extrabold text-white hover:bg-[#1D7DD7]/90 shadow-md shadow-[#1D7DD7]/30 transition-all"
+            className="flex items-center gap-1.5 sm:gap-2 rounded-xl bg-primary px-3 sm:px-4 py-2 text-xs font-black text-white hover:bg-primary/90 shadow-md shadow-primary/25 transition-all"
           >
-            <LogIn className="size-4" />
-            <span>Student / Staff Sign In</span>
+            <LogIn className="size-3.5 sm:size-4" />
+            <span>Sign In</span>
           </Link>
         </div>
       </header>
@@ -134,18 +140,18 @@ export default function PublicExplorePage() {
         <div className="space-y-4 lg:col-span-4 flex flex-col">
           {/* Search Box */}
           <div className="relative">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#74777E]" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search classrooms, labs, offices (e.g. 538, Mac Lab)..."
-              className="w-full rounded-2xl border border-[#507495]/30 bg-[#141E28] py-3 pl-10 pr-4 text-xs sm:text-sm font-medium text-foreground placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7] transition-all"
+              className="w-full rounded-2xl border border-border bg-card py-3 pl-10 pr-4 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery("")}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#74777E] hover:text-foreground p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1"
                 aria-label="Clear search"
               >
                 <X className="size-3.5" />
@@ -155,7 +161,7 @@ export default function PublicExplorePage() {
 
           {/* Quick Floor Switcher Tabs */}
           <div className="space-y-1.5">
-            <span className="text-[10px] font-black text-[#74777E] uppercase tracking-wider block">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
               QUICK FLOOR SWITCHER
             </span>
             <div className="grid grid-cols-5 gap-1.5">
@@ -168,8 +174,8 @@ export default function PublicExplorePage() {
                   }}
                   className={`py-2 rounded-xl text-xs font-black transition-all ${
                     currentFloor === fl && !searchQuery
-                      ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                      : "bg-[#141E28] border border-[#507495]/20 text-[#74777E] hover:bg-[#141E28]/80 hover:text-foreground"
+                      ? "bg-primary text-white shadow-md shadow-primary/30 scale-[1.02]"
+                      : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
                   {fl}F
@@ -192,8 +198,8 @@ export default function PublicExplorePage() {
                 onClick={() => setSelectedCategory(cat.id)}
                 className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all shrink-0 ${
                   selectedCategory === cat.id
-                    ? "bg-[#1D7DD7]/20 border border-[#1D7DD7] text-[#1D7DD7]"
-                    : "bg-[#141E28] border border-[#507495]/20 text-[#74777E] hover:text-foreground"
+                    ? "bg-primary/15 border border-primary text-primary"
+                    : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 {cat.label}
@@ -202,12 +208,12 @@ export default function PublicExplorePage() {
           </div>
 
           {/* Room Cards Directory List */}
-          <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-4 flex-1 flex flex-col space-y-3 min-h-[350px]">
-            <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
+          <div className="rounded-3xl border border-border bg-card p-4 flex-1 flex flex-col space-y-3 min-h-[350px] shadow-sm">
+            <div className="flex items-center justify-between pb-2 border-b border-border">
               <span className="text-xs font-extrabold text-foreground uppercase tracking-wide">
                 {searchQuery ? "Search Results" : `Floor ${currentFloor} Directory`}
               </span>
-              <span className="text-[11px] font-black text-[#1D7DD7] bg-[#1D7DD7]/10 px-2 py-0.5 rounded-md">
+              <span className="text-[11px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 {filteredNodes.length} Locations
               </span>
             </div>
@@ -222,8 +228,8 @@ export default function PublicExplorePage() {
                       onClick={() => handleSelectNode(node.id)}
                       className={`p-3 rounded-2xl border text-xs cursor-pointer transition-all ${
                         isSelected
-                          ? "bg-[#1D7DD7]/15 border-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/20"
-                          : "bg-[#0E151B]/60 border-[#507495]/20 text-[#74777E] hover:bg-[#0E151B] hover:border-[#507495]/40 hover:text-foreground"
+                          ? "bg-primary/15 border-primary text-foreground shadow-md shadow-primary/20"
+                          : "bg-muted/30 border-border text-muted-foreground hover:bg-muted/60 hover:border-border hover:text-foreground"
                       }`}
                       role="button"
                       tabIndex={0}
@@ -235,12 +241,12 @@ export default function PublicExplorePage() {
                             <span className="text-xs font-extrabold">{node.name}</span>
                           </div>
                           {node.description && (
-                            <p className="text-[11px] text-[#74777E] line-clamp-2 leading-relaxed">
+                            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
                               {node.description}
                             </p>
                           )}
                         </div>
-                        <span className="text-[10px] font-black bg-[#141E28] border border-[#507495]/30 px-2 py-0.5 rounded-lg text-[#1D7DD7] shrink-0">
+                        <span className="text-[10px] font-black bg-card border border-border px-2 py-0.5 rounded-lg text-primary shrink-0">
                           {node.floor}F
                         </span>
                       </div>
@@ -249,8 +255,8 @@ export default function PublicExplorePage() {
                 })
               ) : (
                 <div className="py-12 text-center space-y-2">
-                  <Info className="size-8 text-[#74777E] mx-auto opacity-50" />
-                  <p className="text-xs text-[#74777E] font-medium">
+                  <Info className="size-8 text-muted-foreground mx-auto opacity-50" />
+                  <p className="text-xs text-muted-foreground font-medium">
                     No facilities found matching your search criteria.
                   </p>
                 </div>
@@ -262,12 +268,12 @@ export default function PublicExplorePage() {
         {/* Right Column: Interactive Map Viewer & Floating Room Detail Card */}
         <div className="space-y-4 lg:col-span-8 flex flex-col">
           {/* Controls Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#141E28] border border-[#507495]/20 p-3 rounded-2xl shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 bg-card border border-border p-3 rounded-2xl shadow-sm">
             <div className="flex items-center gap-2">
-              <span className="text-[11px] font-black text-[#74777E] uppercase tracking-wider">
+              <span className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
                 ACTIVE VIEWPORT:
               </span>
-              <span className="text-xs font-black text-[#1D7DD7] bg-[#1D7DD7]/10 border border-[#1D7DD7]/30 px-3 py-1 rounded-xl">
+              <span className="text-xs font-black text-primary bg-primary/10 border border-primary/30 px-3 py-1 rounded-xl">
                 CCS Building • Floor {currentFloor} (Floorplan)
               </span>
             </div>
@@ -275,7 +281,7 @@ export default function PublicExplorePage() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
-                className="p-2 rounded-xl border border-[#507495]/30 bg-[#0E151B] hover:bg-[#141E28] text-foreground shadow-sm transition-colors"
+                className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom in"
                 title="Zoom In"
               >
@@ -283,7 +289,7 @@ export default function PublicExplorePage() {
               </button>
               <button
                 onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.75))}
-                className="p-2 rounded-xl border border-[#507495]/30 bg-[#0E151B] hover:bg-[#141E28] text-foreground shadow-sm transition-colors"
+                className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom out"
                 title="Zoom Out"
               >
@@ -291,10 +297,10 @@ export default function PublicExplorePage() {
               </button>
               <button
                 onClick={() => setZoomLevel(1)}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#507495]/30 bg-[#0E151B] hover:bg-[#141E28] text-xs font-bold text-foreground shadow-sm transition-colors"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-accent text-xs font-bold text-foreground shadow-sm transition-colors"
                 aria-label="Reset zoom"
               >
-                <RotateCcw className="size-3.5 text-[#1D7DD7]" />
+                <RotateCcw className="size-3.5 text-primary" />
                 <span>Reset</span>
               </button>
             </div>
@@ -323,22 +329,22 @@ export default function PublicExplorePage() {
 
           {/* Floating Selected Room Detail Card with Turn-by-Turn Navigation Prompt */}
           {selectedNode && (
-            <div className="rounded-3xl border border-[#1D7DD7]/40 bg-[#141E28] p-5 shadow-2xl space-y-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="rounded-3xl border border-primary/40 bg-card p-5 shadow-xl space-y-4 animate-in fade-in slide-in-from-bottom-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex size-11 items-center justify-center rounded-2xl bg-[#1D7DD7]/20 border border-[#1D7DD7]/40 text-[#1D7DD7] shrink-0">
+                  <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/15 border border-primary/30 text-primary shrink-0">
                     <Building2 className="size-6" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-base sm:text-lg font-black text-white">
+                      <h3 className="text-base sm:text-lg font-black text-foreground">
                         {selectedNode.name}
                       </h3>
-                      <span className="rounded-md bg-[#1D7DD7] px-2 py-0.5 text-[10px] font-black text-white">
+                      <span className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-black text-white">
                         Floor {selectedNode.floor}
                       </span>
                     </div>
-                    <p className="text-xs text-[#74777E] mt-0.5">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {selectedNode.description || "College of Computer Studies • University of Cebu Main Campus"}
                     </p>
                   </div>
@@ -347,7 +353,7 @@ export default function PublicExplorePage() {
                 <div className="flex items-center gap-2 shrink-0">
                   <Link
                     href={`/login?redirect=/map?target=${selectedNode.id}`}
-                    className="flex items-center gap-2 rounded-xl bg-[#1D7DD7] px-4 py-2.5 text-xs font-extrabold text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all"
+                    className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-xs font-extrabold text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
                   >
                     <Footprints className="size-4" />
                     <span>Sign In for Turn-by-Turn Routing</span>
@@ -357,8 +363,8 @@ export default function PublicExplorePage() {
               </div>
 
               {/* Guest CTA Info Strip */}
-              <div className="flex items-center gap-2 rounded-xl bg-[#0E151B]/80 border border-[#507495]/25 p-3 text-[11px] text-[#74777E]">
-                <Sparkles className="size-4 text-[#1D7DD7] shrink-0" />
+              <div className="flex items-center gap-2 rounded-xl bg-muted/40 border border-border p-3 text-[11px] text-muted-foreground">
+                <Sparkles className="size-4 text-primary shrink-0" />
                 <span>
                   ChronoNav automatically syncs your enrolled study load and calculates shortest walking paths from gate entrance to classrooms.
                 </span>

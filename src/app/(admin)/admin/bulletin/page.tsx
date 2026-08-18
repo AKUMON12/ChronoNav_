@@ -88,24 +88,24 @@ export default function CampusBulletinPage() {
   const getPriorityStyle = (priority: AnnouncementItem["priority"]) => {
     switch (priority) {
       case "urgent":
-        return "bg-rose-500/15 text-rose-400 border-rose-500/30";
+        return "bg-rose-500/15 text-rose-500 border-rose-500/30";
       case "maintenance":
-        return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+        return "bg-amber-500/15 text-amber-500 border-amber-500/30";
       default:
-        return "bg-[#1D7DD7]/15 text-[#1D7DD7] border-[#1D7DD7]/30";
+        return "bg-primary/15 text-primary border-primary/30";
     }
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#507495]/20 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-            <Megaphone className="size-7 text-[#1D7DD7]" />
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
+            <Megaphone className="size-7 text-primary" />
             <span>Campus Bulletin & Broadcast Board</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#74777E] mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Broadcast official university notices, maintenance updates, and classroom advisories to ChronoNav users.
           </p>
         </div>
@@ -115,7 +115,7 @@ export default function CampusBulletinPage() {
             setEditingBulletin(null);
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-[#1D7DD7] px-4 py-2.5 text-xs font-black text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all shrink-0"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-black text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all shrink-0"
         >
           <Plus className="size-4" />
           <span>Publish New Bulletin</span>
@@ -124,7 +124,7 @@ export default function CampusBulletinPage() {
 
       {/* Toast Notification */}
       {notification && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-400 font-bold animate-in fade-in">
+        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-500 font-bold animate-in fade-in">
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{notification}</span>
         </div>
@@ -133,19 +133,19 @@ export default function CampusBulletinPage() {
       {/* Filter Controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-extrabold text-[#74777E] flex items-center gap-1">
+          <span className="text-xs font-extrabold text-muted-foreground flex items-center gap-1">
             <Filter className="size-3.5" />
             <span>Target:</span>
           </span>
-          <div className="flex rounded-2xl border border-[#507495]/30 bg-[#0E151B] p-1 text-xs">
+          <div className="flex rounded-2xl border border-border bg-card p-1 text-xs">
             {["all", "students", "faculty"].map((target) => (
               <button
                 key={target}
                 onClick={() => setTargetFilter(target)}
                 className={`px-3 py-1 rounded-xl font-bold capitalize transition-all ${
                   targetFilter === target
-                    ? "bg-[#1D7DD7] text-white shadow-sm"
-                    : "text-[#74777E] hover:text-white"
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {target}
@@ -155,11 +155,11 @@ export default function CampusBulletinPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-xs font-extrabold text-[#74777E]">Priority:</span>
+          <span className="text-xs font-extrabold text-muted-foreground">Priority:</span>
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="rounded-2xl border border-[#507495]/30 bg-[#0E151B] px-3 py-1.5 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+            className="rounded-2xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
           >
             <option value="all">All Priorities</option>
             <option value="urgent">Urgent Only</option>
@@ -172,15 +172,15 @@ export default function CampusBulletinPage() {
       {/* Announcements Feed Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredBulletins.length === 0 ? (
-          <div className="col-span-full rounded-3xl border border-dashed border-[#507495]/20 bg-[#141E28] p-12 text-center text-[#74777E]">
+          <div className="col-span-full rounded-3xl border border-dashed border-border bg-card p-12 text-center text-muted-foreground">
             <Bell className="size-10 mx-auto mb-2 opacity-40" />
-            <p className="font-bold text-white">No announcements found matching filter.</p>
+            <p className="font-bold text-foreground">No announcements found matching filter.</p>
           </div>
         ) : (
           filteredBulletins.map((item) => (
             <div
               key={item.id}
-              className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-5 shadow-lg flex flex-col justify-between space-y-4 hover:border-[#1D7DD7]/40 transition-all group"
+              className="rounded-3xl border border-border bg-card p-5 shadow-sm flex flex-col justify-between space-y-4 hover:border-primary/40 transition-all group"
             >
               <div className="space-y-2.5">
                 <div className="flex items-center justify-between gap-2">
@@ -192,18 +192,18 @@ export default function CampusBulletinPage() {
                     {item.priority}
                   </span>
 
-                  <span className="text-[10px] font-bold text-[#74777E] bg-[#0E151B] px-2 py-0.5 rounded capitalize">
+                  <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded capitalize">
                     Audience: {item.target}
                   </span>
                 </div>
 
-                <h3 className="text-sm font-black text-white leading-snug">{item.title}</h3>
-                <p className="text-xs text-slate-300 leading-relaxed line-clamp-4">
+                <h3 className="text-sm font-black text-foreground leading-snug">{item.title}</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed line-clamp-4">
                   {item.content}
                 </p>
               </div>
 
-              <div className="pt-3 border-t border-[#507495]/15 flex items-center justify-between text-[11px] text-[#74777E]">
+              <div className="pt-3 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                 <span>{item.date}</span>
 
                 <div className="flex items-center gap-1">
@@ -212,14 +212,14 @@ export default function CampusBulletinPage() {
                       setEditingBulletin(item);
                       setIsModalOpen(true);
                     }}
-                    className="p-1.5 rounded-lg text-[#74777E] hover:text-white hover:bg-[#0E151B] transition-colors"
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
                     title="Edit Bulletin"
                   >
                     <Edit2 className="size-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteBulletin(item.id)}
-                    className="p-1.5 rounded-lg text-[#74777E] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                    className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
                     title="Delete Bulletin"
                   >
                     <Trash2 className="size-3.5" />

@@ -83,27 +83,27 @@ export function ScheduleCRUDModal({ isOpen, item, onClose, onSave }: ScheduleCRU
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-lg rounded-3xl border border-[#507495]/30 bg-[#141E28] p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+      <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in zoom-in-95 transition-colors duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#507495]/20">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#1D7DD7]/20 text-[#1D7DD7]">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <Calendar className="size-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">
+              <h3 className="text-base font-black text-foreground">
                 {item ? "Edit Class Schedule" : "Add New Subject Schedule"}
               </h3>
-              <p className="text-[11px] text-[#74777E]">Course & Timetable Configuration</p>
+              <p className="text-[11px] text-muted-foreground">Course & Timetable Configuration</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-[#74777E] hover:text-white">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground">
             <X className="size-5" />
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-400">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-500">
             {error}
           </div>
         )}
@@ -112,37 +112,37 @@ export function ScheduleCRUDModal({ isOpen, item, onClose, onSave }: ScheduleCRU
           {/* Course Code & Section */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Course Code</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Course Code</label>
               <input
                 type="text"
                 value={courseCode}
                 onChange={(e) => setCourseCode(e.target.value)}
                 placeholder="e.g. CS 301"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7] uppercase font-bold"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary uppercase font-bold shadow-sm"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Section</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Section</label>
               <input
                 type="text"
                 value={section}
                 onChange={(e) => setSection(e.target.value)}
                 placeholder="e.g. BSCS-3A"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               />
             </div>
           </div>
 
           {/* Course Title */}
           <div className="space-y-1">
-            <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Course Descriptive Title</label>
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Course Descriptive Title</label>
             <input
               type="text"
               value={courseTitle}
               onChange={(e) => setCourseTitle(e.target.value)}
               placeholder="e.g. Data Structures and Algorithms"
-              className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+              className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
           </div>
@@ -150,22 +150,22 @@ export function ScheduleCRUDModal({ isOpen, item, onClose, onSave }: ScheduleCRU
           {/* Instructor & Room */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Instructor</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Instructor</label>
               <input
                 type="text"
                 value={instructor}
                 onChange={(e) => setInstructor(e.target.value)}
                 placeholder="e.g. Dr. Maria Santos"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Assigned Room</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Assigned Room</label>
               <select
                 value={room}
                 onChange={(e) => setRoom(e.target.value)}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 {AVAILABLE_ROOMS.map((r) => (
                   <option key={r.code} value={r.code}>
@@ -179,11 +179,11 @@ export function ScheduleCRUDModal({ isOpen, item, onClose, onSave }: ScheduleCRU
           {/* Day and Times */}
           <div className="grid grid-cols-3 gap-2">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Day</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Day</label>
               <select
                 value={dayOfWeek}
                 onChange={(e) => setDayOfWeek(e.target.value as DayOfWeek)}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 <option value="Mon">Mon</option>
                 <option value="Tue">Tue</option>
@@ -195,40 +195,40 @@ export function ScheduleCRUDModal({ isOpen, item, onClose, onSave }: ScheduleCRU
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Start Time</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Start Time</label>
               <input
                 type="text"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 placeholder="08:00 AM"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">End Time</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">End Time</label>
               <input
                 type="text"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 placeholder="10:30 AM"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               />
             </div>
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2.5 pt-3 border-t border-[#507495]/20">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-[#507495]/30 text-[#74777E] hover:text-white"
+              className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#1D7DD7] text-white font-black hover:bg-[#1D7DD7]/90 shadow-md shadow-[#1D7DD7]/30 transition-all"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white font-black hover:bg-primary/90 shadow-md shadow-primary/30 transition-all"
             >
               <span>{item ? "Save Changes" : "Add Subject"}</span>
             </button>

@@ -17,6 +17,8 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { signUp } from "@/lib/supabase/auth";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { BackButton } from "@/components/shared/back-button";
 
 const ACADEMIC_PROGRAMS = [
   { code: "BSCS", name: "BS Computer Science" },
@@ -126,31 +128,37 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="w-full max-w-lg px-4 py-8">
-      <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-6 sm:p-8 shadow-2xl space-y-6">
+    <div className="w-full max-w-lg px-4 py-8 relative">
+      {/* Top Header: Back Button (Left) & Theme Toggle (Right) */}
+      <div className="flex items-center justify-between mb-4">
+        <BackButton fallbackUrl="/" showLabel={false} />
+        <ThemeToggle compact={false} />
+      </div>
+
+      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 transition-colors duration-200">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Link
               href="/"
-              className="flex size-14 items-center justify-center rounded-2xl bg-[#1D7DD7] text-white shadow-lg shadow-[#1D7DD7]/30 hover:scale-105 transition-transform"
+              className="flex size-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:scale-105 transition-transform"
               aria-label="ChronoNav Home"
             >
               <Compass className="size-8" />
             </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
             Create Student Account
           </h1>
-          <p className="text-xs sm:text-sm text-[#74777E]">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             University of Cebu • College of Computer Studies
           </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/15 border border-destructive/40 p-3.5 text-xs text-rose-400 font-bold animate-in fade-in">
-            <AlertCircle className="size-4 shrink-0 text-rose-500" />
+          <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/15 border border-destructive/40 p-3.5 text-xs text-rose-500 font-bold animate-in fade-in">
+            <AlertCircle className="size-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
@@ -160,7 +168,7 @@ export default function RegisterPage() {
           {/* Name Fields */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
                 First Name
               </label>
               <input
@@ -168,12 +176,12 @@ export default function RegisterPage() {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="e.g. Juan"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
                 Last Name
               </label>
               <input
@@ -181,7 +189,7 @@ export default function RegisterPage() {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="e.g. Dela Cruz"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
             </div>
@@ -191,13 +199,13 @@ export default function RegisterPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+                <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
                   UC Student ID Number
                 </label>
                 {idNumber && (
                   <span
                     className={`text-[10px] font-bold ${
-                      isIdNumberValid ? "text-emerald-400" : "text-rose-400"
+                      isIdNumberValid ? "text-emerald-500" : "text-rose-500"
                     }`}
                   >
                     {isIdNumberValid ? "Valid ID" : "Invalid Format"}
@@ -210,28 +218,28 @@ export default function RegisterPage() {
                 onChange={(e) => handleIdNumberChange(e.target.value)}
                 placeholder="e.g. 22684955"
                 maxLength={9}
-                className={`w-full rounded-xl border px-3.5 py-2.5 text-xs font-bold text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 transition-all ${
+                className={`w-full rounded-xl border px-3.5 py-2.5 text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 transition-all shadow-sm ${
                   idNumber && isIdNumberValid
-                    ? "border-emerald-500/50 bg-[#0E151B] focus:ring-emerald-500"
+                    ? "border-emerald-500/50 bg-background focus:ring-emerald-500"
                     : idNumber && !isIdNumberValid
-                    ? "border-rose-500/50 bg-[#0E151B] focus:ring-rose-500"
-                    : "border-[#507495]/30 bg-[#0E151B] focus:ring-[#1D7DD7]"
+                    ? "border-rose-500/50 bg-background focus:ring-rose-500"
+                    : "border-border bg-background focus:ring-primary"
                 }`}
                 required
               />
-              <span className="text-[10px] text-[#74777E] block">
+              <span className="text-[10px] text-muted-foreground block">
                 Format: 7-9 digit UC ID (e.g. 22684955)
               </span>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
                 Degree Program
               </label>
               <select
                 value={program}
                 onChange={(e) => setProgram(e.target.value)}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 {ACADEMIC_PROGRAMS.map((prog) => (
                   <option key={prog.code} value={prog.code}>
@@ -244,7 +252,7 @@ export default function RegisterPage() {
 
           {/* Email Address */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
               University Email Address
             </label>
             <input
@@ -252,14 +260,14 @@ export default function RegisterPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. 22684955@uc.edu.ph"
-              className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
           </div>
 
           {/* Password with Visibility Toggle */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
               Password
             </label>
             <div className="relative">
@@ -268,13 +276,13 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Create a strong password"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 pr-11 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 pr-11 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#74777E] hover:text-white"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -285,20 +293,20 @@ export default function RegisterPage() {
             {password.length > 0 && (
               <div className="space-y-1 pt-1 animate-in fade-in">
                 <div className="flex items-center justify-between text-[10px] font-black">
-                  <span className="text-[#74777E]">Password Strength:</span>
+                  <span className="text-muted-foreground">Password Strength:</span>
                   <span
                     className={
                       passwordScore === 5
-                        ? "text-emerald-400"
+                        ? "text-emerald-500"
                         : passwordScore >= 3
-                        ? "text-indigo-400"
-                        : "text-rose-400"
+                        ? "text-indigo-500"
+                        : "text-rose-500"
                     }
                   >
                     {strengthMeta.label}
                   </span>
                 </div>
-                <div className="w-full h-1.5 rounded-full bg-[#0E151B] overflow-hidden">
+                <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
                   <div
                     className={`h-full transition-all duration-300 ${strengthMeta.color}`}
                     style={{ width: strengthMeta.width }}
@@ -308,58 +316,58 @@ export default function RegisterPage() {
             )}
 
             {/* Interactive Password Requirements Checklist */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2 rounded-2xl bg-[#0E151B]/80 border border-[#507495]/20 p-3 text-[11px]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2 rounded-2xl bg-muted/40 border border-border p-3 text-[11px]">
               <div className="flex items-center gap-1.5">
                 {passwordCriteria.minLength ? (
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <XCircle className="size-3.5 text-[#74777E] shrink-0" />
+                  <XCircle className="size-3.5 text-muted-foreground shrink-0" />
                 )}
-                <span className={passwordCriteria.minLength ? "text-slate-200 font-bold" : "text-[#74777E]"}>
+                <span className={passwordCriteria.minLength ? "text-foreground font-bold" : "text-muted-foreground"}>
                   At least 8 characters
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5">
                 {passwordCriteria.hasUpper ? (
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <XCircle className="size-3.5 text-[#74777E] shrink-0" />
+                  <XCircle className="size-3.5 text-muted-foreground shrink-0" />
                 )}
-                <span className={passwordCriteria.hasUpper ? "text-slate-200 font-bold" : "text-[#74777E]"}>
+                <span className={passwordCriteria.hasUpper ? "text-foreground font-bold" : "text-muted-foreground"}>
                   1 uppercase letter (A-Z)
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5">
                 {passwordCriteria.hasLower ? (
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <XCircle className="size-3.5 text-[#74777E] shrink-0" />
+                  <XCircle className="size-3.5 text-muted-foreground shrink-0" />
                 )}
-                <span className={passwordCriteria.hasLower ? "text-slate-200 font-bold" : "text-[#74777E]"}>
+                <span className={passwordCriteria.hasLower ? "text-foreground font-bold" : "text-muted-foreground"}>
                   1 lowercase letter (a-z)
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5">
                 {passwordCriteria.hasNumber ? (
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <XCircle className="size-3.5 text-[#74777E] shrink-0" />
+                  <XCircle className="size-3.5 text-muted-foreground shrink-0" />
                 )}
-                <span className={passwordCriteria.hasNumber ? "text-slate-200 font-bold" : "text-[#74777E]"}>
+                <span className={passwordCriteria.hasNumber ? "text-foreground font-bold" : "text-muted-foreground"}>
                   1 numeric digit (0-9)
                 </span>
               </div>
 
               <div className="flex items-center gap-1.5 sm:col-span-2">
                 {passwordCriteria.hasSpecial ? (
-                  <CheckCircle2 className="size-3.5 text-emerald-400 shrink-0" />
+                  <CheckCircle2 className="size-3.5 text-emerald-500 shrink-0" />
                 ) : (
-                  <XCircle className="size-3.5 text-[#74777E] shrink-0" />
+                  <XCircle className="size-3.5 text-muted-foreground shrink-0" />
                 )}
-                <span className={passwordCriteria.hasSpecial ? "text-slate-200 font-bold" : "text-[#74777E]"}>
+                <span className={passwordCriteria.hasSpecial ? "text-foreground font-bold" : "text-muted-foreground"}>
                   1 special character (!@#$%^&*)
                 </span>
               </div>
@@ -369,11 +377,11 @@ export default function RegisterPage() {
           {/* Confirm Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
                 Confirm Password
               </label>
               {confirmPassword && (
-                <span className={`text-[10px] font-bold ${isConfirmMatch ? "text-emerald-400" : "text-rose-400"}`}>
+                <span className={`text-[10px] font-bold ${isConfirmMatch ? "text-emerald-500" : "text-rose-500"}`}>
                   {isConfirmMatch ? "Passwords Match" : "Do Not Match"}
                 </span>
               )}
@@ -383,7 +391,7 @@ export default function RegisterPage() {
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter password"
-              className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-2.5 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+              className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
           </div>
@@ -391,7 +399,7 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={loading || !isIdNumberValid || !isPasswordValid || !isConfirmMatch}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1D7DD7] px-4 py-3 text-sm font-extrabold text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all disabled:opacity-40 disabled:pointer-events-none"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-extrabold text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all disabled:opacity-40 disabled:pointer-events-none"
           >
             {loading ? (
               <>
@@ -409,14 +417,14 @@ export default function RegisterPage() {
         </form>
 
         {/* Footer */}
-        <div className="pt-2 border-t border-[#507495]/20 text-center space-y-2 text-xs">
-          <p className="text-[#74777E]">
+        <div className="pt-2 border-t border-border text-center space-y-2 text-xs">
+          <p className="text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="font-bold text-[#1D7DD7] hover:underline">
+            <Link href="/login" className="font-bold text-primary hover:underline">
               Sign In
             </Link>
           </p>
-          <p className="text-[11px] text-[#74777E]">
+          <p className="text-[11px] text-muted-foreground">
             Faculty and staff accounts are provisioned via the CCS Admin Portal.
           </p>
         </div>

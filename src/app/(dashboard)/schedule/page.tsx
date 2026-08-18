@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useMemo, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -24,7 +24,6 @@ import {
   List,
   Filter,
   X,
-  User,
 } from "lucide-react";
 import { ClassScheduleItem, ParsedScheduleItem, DayOfWeek } from "@/types/schedule";
 import { OCRUploadModal } from "@/components/schedule/ocr-upload-modal";
@@ -43,6 +42,7 @@ const initialSchedules: ClassScheduleItem[] = [
     dayOfWeek: "Mon",
     startTime: "08:00 AM",
     endTime: "10:30 AM",
+    section: "BSCS-3A",
   },
   {
     id: "sched-2",
@@ -51,9 +51,10 @@ const initialSchedules: ClassScheduleItem[] = [
     instructor: "Engr. Pedro Cruz",
     building: "CCS Building",
     room: "Mac Lab 101",
-    dayOfWeek: "Tue",
+    dayOfWeek: "Mon",
     startTime: "10:30 AM",
     endTime: "12:00 PM",
+    section: "BSCS-3A",
   },
   {
     id: "sched-3",
@@ -62,59 +63,62 @@ const initialSchedules: ClassScheduleItem[] = [
     instructor: "Prof. Ana Reyes",
     building: "CCS Building",
     room: "CCS 301",
-    dayOfWeek: "Wed",
+    dayOfWeek: "Mon",
     startTime: "01:00 PM",
-    endTime: "03:00 PM",
+    endTime: "03:30 PM",
+    section: "BSCS-3A",
   },
   {
     id: "sched-4",
-    courseCode: "IT-CPSTONE41",
-    courseTitle: "Capstone Project and Research 1",
-    instructor: "Dr. Ramon Garcia",
+    courseCode: "CS 304",
+    courseTitle: "Database Management Systems",
+    instructor: "Prof. Roberto Gomez",
     building: "CCS Building",
-    room: "AV Hall 401",
-    dayOfWeek: "Thu",
-    startTime: "02:30 PM",
-    endTime: "04:30 PM",
+    room: "CCS 201",
+    dayOfWeek: "Tue",
+    startTime: "08:00 AM",
+    endTime: "10:30 AM",
+    section: "BSCS-3A",
   },
   {
     id: "sched-5",
     courseCode: "CS 305",
-    courseTitle: "Software Engineering Studio",
-    instructor: "Engr. Juan Dela Cruz",
+    courseTitle: "Web Systems and Technologies",
+    instructor: "Engr. Elena Bautista",
     building: "CCS Building",
-    room: "CCS 302",
-    dayOfWeek: "Fri",
-    startTime: "09:00 AM",
-    endTime: "11:30 AM",
+    room: "AV Hall 401",
+    dayOfWeek: "Wed",
+    startTime: "01:00 PM",
+    endTime: "03:30 PM",
+    section: "BSCS-3A",
   },
   {
     id: "sched-6",
-    courseCode: "GE 104",
-    courseTitle: "Science, Technology, and Society",
-    instructor: "Prof. Carlos Tan",
+    courseCode: "CS 306",
+    courseTitle: "Software Engineering 1",
+    instructor: "Dr. Maria Santos",
     building: "CCS Building",
-    room: "Lecture 202",
-    dayOfWeek: "Sat",
+    room: "CCS 538",
+    dayOfWeek: "Thu",
     startTime: "08:00 AM",
-    endTime: "11:00 AM",
+    endTime: "10:30 AM",
+    section: "BSCS-3A",
+  },
+  {
+    id: "sched-7",
+    courseCode: "CS 307",
+    courseTitle: "Artificial Intelligence & ML",
+    instructor: "Dr. Maria Santos",
+    building: "CCS Building",
+    room: "Innovation Lab 501",
+    dayOfWeek: "Fri",
+    startTime: "10:30 AM",
+    endTime: "01:00 PM",
+    section: "BSCS-3A",
   },
 ];
 
-const DAYS_LIST = ["All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const TIME_SLOTS = [
-  "08:00 AM",
-  "09:00 AM",
-  "10:00 AM",
-  "11:00 AM",
-  "12:00 PM",
-  "01:00 PM",
-  "02:00 PM",
-  "03:00 PM",
-  "04:00 PM",
-  "05:00 PM",
-];
 
 function ScheduleContent() {
   const router = useRouter();
@@ -185,28 +189,28 @@ function ScheduleContent() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
       {/* ── Page Header ── */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#507495]/20 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-            <BookOpen className="size-8 text-[#1D7DD7]" />
+          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
+            <BookOpen className="size-8 text-primary" />
             <span>Class Schedule & Study Load</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#74777E] mt-1">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
             Manage your enrolled courses, view weekly timetable grids, and navigate directly to your classrooms.
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
           {/* View Mode Switcher */}
-          <div className="flex items-center rounded-2xl bg-[#141E28] border border-[#507495]/25 p-1">
+          <div className="flex items-center rounded-2xl bg-card border border-border p-1">
             <button
               onClick={() => setViewMode("daily")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                 viewMode === "daily"
-                  ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                  : "text-[#74777E] hover:text-white"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <List className="size-3.5" />
@@ -216,12 +220,12 @@ function ScheduleContent() {
               onClick={() => setViewMode("weekly")}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                 viewMode === "weekly"
-                  ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                  : "text-[#74777E] hover:text-white"
+                  ? "bg-primary text-white shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               <LayoutGrid className="size-3.5" />
-              <span>Weekly Grid</span>
+              <span>Weekly Matrix</span>
             </button>
           </div>
 
@@ -230,15 +234,15 @@ function ScheduleContent() {
               setEditingItem(null);
               setIsCRUDModalOpen(true);
             }}
-            className="flex items-center gap-1.5 rounded-2xl border border-[#507495]/30 bg-[#141E28] px-3.5 py-2 text-xs font-black text-white hover:bg-[#0E151B] transition-colors"
+            className="flex items-center gap-1.5 rounded-2xl border border-border bg-card px-3.5 py-2 text-xs font-black text-foreground hover:bg-accent transition-colors"
           >
-            <Plus className="size-4 text-[#1D7DD7]" />
+            <Plus className="size-4 text-primary" />
             <span>Add Class</span>
           </button>
 
           <button
             onClick={() => setIsOCRModalOpen(true)}
-            className="flex items-center gap-2 rounded-2xl bg-[#1D7DD7] px-4 py-2 text-xs font-black text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all"
+            className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2 text-xs font-black text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
           >
             <ScanLine className="size-4" />
             <span>Scan Study Load (OCR)</span>
@@ -248,7 +252,7 @@ function ScheduleContent() {
 
       {/* ── Success Notification Banner ── */}
       {notification && (
-        <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 p-4 text-xs font-black text-emerald-400 animate-in fade-in">
+        <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 p-4 text-xs font-black text-emerald-500 animate-in fade-in">
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{notification}</span>
         </div>
@@ -256,55 +260,72 @@ function ScheduleContent() {
 
       {/* ── Summary Metrics ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-[#74777E] uppercase tracking-wider block">
+        <div className="rounded-3xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
             TOTAL SUBJECTS
           </span>
-          <p className="text-xl sm:text-2xl font-black text-white">{schedules.length}</p>
+          <p className="text-xl sm:text-2xl font-black text-foreground">{schedules.length}</p>
         </div>
 
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-[#74777E] uppercase tracking-wider block">
+        <div className="rounded-3xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
             TOTAL UNITS
           </span>
-          <p className="text-xl sm:text-2xl font-black text-[#1D7DD7]">
+          <p className="text-xl sm:text-2xl font-black text-primary">
             {schedules.length * 3} Units
           </p>
         </div>
 
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-[#74777E] uppercase tracking-wider block">
-            COLLEGE CAMPUS
-          </span>
-          <p className="text-sm font-black text-white truncate">UC Main • CCS</p>
-        </div>
-
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-[#74777E] uppercase tracking-wider block">
+        <div className="rounded-3xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
             CURRENT SEMESTER
           </span>
-          <p className="text-xs sm:text-sm font-black text-emerald-400">1st Sem 2026-2027</p>
+          <p className="text-sm sm:text-base font-black text-foreground">1st Semester, 2026</p>
+        </div>
+
+        <div className="rounded-3xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+            STUDY LOAD STATUS
+          </span>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-black text-emerald-500">Enrolled & Verified</span>
+          </div>
         </div>
       </div>
 
       {/* ── DAILY TIMELINE VIEW ── */}
       {viewMode === "daily" && (
         <div className="space-y-4">
-          {/* Day Filter Switcher */}
+          {/* Day of the Week Filter Tabs */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
-            {DAYS_LIST.map((day) => {
-              const isActive = selectedDay === day;
+            {["All", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => {
+              const count =
+                day === "All"
+                  ? schedules.length
+                  : schedules.filter((s) => s.dayOfWeek.toLowerCase() === day.toLowerCase())
+                      .length;
+
               return (
                 <button
                   key={day}
                   onClick={() => setSelectedDay(day)}
-                  className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
-                    isActive
-                      ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                      : "bg-[#141E28] border border-[#507495]/20 text-[#74777E] hover:text-white"
+                  className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+                    selectedDay === day
+                      ? "bg-primary text-white shadow-md shadow-primary/30 scale-[1.02]"
+                      : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
-                  {day}
+                  <span>{day === "All" ? "All Days" : day}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                      selectedDay === day
+                        ? "bg-white/20 text-white"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {count}
+                  </span>
                 </button>
               );
             })}
@@ -316,39 +337,39 @@ function ScheduleContent() {
               filteredSchedules.map((item) => (
                 <div
                   key={item.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-[#507495]/20 bg-[#141E28] p-5 hover:border-[#1D7DD7]/50 shadow-md transition-all group"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-5 hover:border-primary/50 shadow-sm transition-all group"
                 >
                   <div className="flex items-start gap-4">
                     {/* Time Slot Container */}
-                    <div className="flex flex-col items-center justify-center rounded-2xl bg-[#0E151B] border border-[#507495]/25 px-3.5 py-2.5 text-center min-w-[95px] shrink-0">
-                      <span className="text-xs font-black text-white">{item.startTime}</span>
-                      <span className="text-[10px] font-bold text-[#74777E]">to</span>
-                      <span className="text-[11px] font-bold text-[#74777E]">{item.endTime}</span>
+                    <div className="flex flex-col items-center justify-center rounded-2xl bg-muted/40 border border-border px-3.5 py-2.5 text-center min-w-[95px] shrink-0">
+                      <span className="text-xs font-black text-foreground">{item.startTime}</span>
+                      <span className="text-[10px] font-bold text-muted-foreground">to</span>
+                      <span className="text-[11px] font-bold text-muted-foreground">{item.endTime}</span>
                     </div>
 
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-[#1D7DD7] bg-[#1D7DD7]/15 border border-[#1D7DD7]/30 px-2 py-0.5 rounded-md">
+                        <span className="text-xs font-black text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-md">
                           {item.courseCode}
                         </span>
-                        <span className="text-[11px] font-bold text-[#74777E] bg-[#0E151B] px-2 py-0.5 rounded-md">
+                        <span className="text-[11px] font-bold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-md">
                           {item.dayOfWeek}
                         </span>
                       </div>
 
-                      <h3 className="text-base font-black text-white leading-snug">
+                      <h3 className="text-base font-black text-foreground leading-snug">
                         {item.courseTitle}
                       </h3>
 
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-[#74777E] pt-1">
-                        <span className="flex items-center gap-1 font-black text-white">
-                          <MapPin className="size-3.5 text-[#1D7DD7]" />
-                          {item.building} — <span className="text-[#1D7DD7]">{item.room}</span>
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-1">
+                        <span className="flex items-center gap-1 font-black text-foreground">
+                          <MapPin className="size-3.5 text-primary" />
+                          {item.building} — <span className="text-primary">{item.room}</span>
                         </span>
                         {item.instructor && (
                           <>
                             <span>•</span>
-                            <span className="text-slate-300 font-medium">
+                            <span className="text-muted-foreground font-medium">
                               Instructor: {item.instructor}
                             </span>
                           </>
@@ -360,7 +381,7 @@ function ScheduleContent() {
                   <div className="flex items-center gap-2 shrink-0">
                     <button
                       onClick={() => handleNavigateToRoom(item.room)}
-                      className="flex items-center justify-center gap-2 rounded-xl bg-[#1D7DD7] hover:bg-[#1D7DD7]/90 text-white px-4 py-2.5 text-xs font-black transition-all shadow-md shadow-[#1D7DD7]/25"
+                      className="flex items-center justify-center gap-2 rounded-xl bg-primary hover:bg-primary/90 text-white px-4 py-2.5 text-xs font-black transition-all shadow-md shadow-primary/25"
                     >
                       <Compass className="size-4" />
                       <span>Get Directions</span>
@@ -371,14 +392,14 @@ function ScheduleContent() {
                         setEditingItem(item);
                         setIsCRUDModalOpen(true);
                       }}
-                      className="p-2.5 rounded-xl border border-[#507495]/20 bg-[#0E151B] text-[#74777E] hover:text-white hover:border-[#1D7DD7]/50 transition-colors"
+                      className="p-2.5 rounded-xl border border-border bg-muted/30 text-muted-foreground hover:text-foreground hover:border-primary/50 transition-colors"
                       title="Edit Subject"
                     >
                       <Edit2 className="size-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteSubject(item.id)}
-                      className="p-2.5 rounded-xl border border-[#507495]/20 bg-[#0E151B] text-[#74777E] hover:text-rose-400 hover:border-rose-500/30 transition-colors"
+                      className="p-2.5 rounded-xl border border-border bg-muted/30 text-muted-foreground hover:text-rose-500 hover:border-rose-500/30 transition-colors"
                       title="Remove Subject"
                     >
                       <Trash2 className="size-4" />
@@ -387,10 +408,10 @@ function ScheduleContent() {
                 </div>
               ))
             ) : (
-              <div className="rounded-3xl border border-dashed border-[#507495]/20 bg-[#141E28] p-12 text-center space-y-3">
-                <Calendar className="size-10 text-[#74777E] mx-auto opacity-40" />
-                <p className="text-sm font-black text-white">No classes scheduled for {selectedDay}</p>
-                <p className="text-xs text-[#74777E]">
+              <div className="rounded-3xl border border-dashed border-border bg-card p-12 text-center space-y-3">
+                <Calendar className="size-10 text-muted-foreground mx-auto opacity-40" />
+                <p className="text-sm font-black text-foreground">No classes scheduled for {selectedDay}</p>
+                <p className="text-xs text-muted-foreground">
                   Use the Study Load OCR scanner or add subjects manually to populate your timetable.
                 </p>
               </div>
@@ -401,13 +422,13 @@ function ScheduleContent() {
 
       {/* ── WEEKLY CALENDAR MATRIX GRID VIEW ── */}
       {viewMode === "weekly" && (
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-5 shadow-xl overflow-x-auto space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
-            <h3 className="text-xs font-black text-white uppercase tracking-wide flex items-center gap-2">
-              <LayoutGrid className="size-4 text-[#1D7DD7]" />
+        <div className="rounded-3xl border border-border bg-card p-5 shadow-xl overflow-x-auto space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border">
+            <h3 className="text-xs font-black text-foreground uppercase tracking-wide flex items-center gap-2">
+              <LayoutGrid className="size-4 text-primary" />
               <span>Weekly Class Timetable Matrix</span>
             </h3>
-            <span className="text-[11px] font-bold text-[#74777E]">
+            <span className="text-[11px] font-bold text-muted-foreground">
               Mon to Sat • Click class for room routing
             </span>
           </div>
@@ -420,9 +441,9 @@ function ScheduleContent() {
 
               return (
                 <div key={day} className="space-y-3">
-                  <div className="rounded-xl bg-[#0E151B] border border-[#507495]/25 p-2 text-center">
-                    <span className="text-xs font-black text-white">{day}</span>
-                    <span className="text-[10px] font-bold text-[#74777E] block">
+                  <div className="rounded-xl bg-muted/40 border border-border p-2 text-center">
+                    <span className="text-xs font-black text-foreground">{day}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground block">
                       {daySchedules.length} Classes
                     </span>
                   </div>
@@ -432,20 +453,20 @@ function ScheduleContent() {
                       <div
                         key={item.id}
                         onClick={() => handleNavigateToRoom(item.room)}
-                        className="rounded-2xl border border-[#507495]/30 bg-[#0E151B]/90 p-3 text-xs space-y-1.5 cursor-pointer hover:border-[#1D7DD7] hover:scale-[1.02] transition-all shadow-sm group"
+                        className="rounded-2xl border border-border bg-card p-3 text-xs space-y-1.5 cursor-pointer hover:border-primary hover:scale-[1.02] transition-all shadow-sm group"
                       >
-                        <span className="text-[10px] font-black text-[#1D7DD7] bg-[#1D7DD7]/15 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-black text-primary bg-primary/10 px-1.5 py-0.5 rounded">
                           {item.courseCode}
                         </span>
-                        <h4 className="font-bold text-white leading-tight line-clamp-2">
+                        <h4 className="font-bold text-foreground leading-tight line-clamp-2">
                           {item.courseTitle}
                         </h4>
-                        <div className="text-[10px] text-[#74777E] space-y-0.5 pt-1">
-                          <p className="flex items-center gap-1 font-semibold text-slate-300">
-                            <Clock className="size-3 text-[#1D7DD7]" />
+                        <div className="text-[10px] text-muted-foreground space-y-0.5 pt-1">
+                          <p className="flex items-center gap-1 font-semibold text-foreground">
+                            <Clock className="size-3 text-primary" />
                             <span>{item.startTime}</span>
                           </p>
-                          <p className="flex items-center gap-1 font-bold text-[#1D7DD7]">
+                          <p className="flex items-center gap-1 font-bold text-primary">
                             <MapPin className="size-3" />
                             <span>{item.room}</span>
                           </p>
@@ -482,7 +503,7 @@ export default function SchedulePage() {
   return (
     <Suspense
       fallback={
-        <div className="p-12 text-center text-sm font-black text-[#74777E]">
+        <div className="p-12 text-center text-sm font-black text-muted-foreground">
           Loading Schedule Manager...
         </div>
       }

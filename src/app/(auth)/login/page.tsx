@@ -12,8 +12,11 @@ import {
   ArrowRight,
   AlertCircle,
   ShieldCheck,
+  GraduationCap,
 } from "lucide-react";
 import { signIn } from "@/lib/supabase/auth";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { BackButton } from "@/components/shared/back-button";
 
 /**
  * Production Secure Login Page
@@ -56,100 +59,74 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full max-w-md px-4 py-8">
-      <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-6 sm:p-8 shadow-2xl space-y-6">
+    <div className="w-full max-w-md px-4 py-8 relative">
+      {/* Top Header Navigation: Back Button (Left) & Theme Toggle (Right) */}
+      <div className="flex items-center justify-between mb-4">
+        <BackButton fallbackUrl="/" showLabel={false} />
+        <ThemeToggle compact={false} />
+      </div>
+
+      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 transition-colors duration-200">
         {/* Brand Header */}
         <div className="text-center space-y-2">
           <div className="flex justify-center">
             <Link
               href="/"
-              className="flex size-14 items-center justify-center rounded-2xl bg-[#1D7DD7] text-white shadow-lg shadow-[#1D7DD7]/30 hover:scale-105 transition-transform"
+              className="flex size-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:scale-105 transition-transform"
               aria-label="ChronoNav Home"
             >
               <Compass className="size-8" />
             </Link>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
             Sign In to ChronoNav
           </h1>
-          <p className="text-xs sm:text-sm text-[#74777E]">
+          <p className="text-xs sm:text-sm text-muted-foreground">
             University of Cebu • College of Computer Studies
           </p>
         </div>
 
-        {/* Guest Mode Action Banner */}
-        <div className="rounded-2xl border border-[#507495]/30 bg-[#0E151B]/80 p-4 flex items-center justify-between gap-3">
-          <div className="space-y-0.5">
-            <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
-              <Map className="size-3.5 text-[#1D7DD7]" />
-              <span>Visiting Campus as a Guest?</span>
-            </p>
-            <p className="text-[11px] text-[#74777E]">
-              View the interactive CCS building map without signing in.
-            </p>
-          </div>
-          <Link
-            href="/explore"
-            className="flex items-center gap-1.5 rounded-xl bg-[#1D7DD7]/15 border border-[#1D7DD7]/40 px-3 py-2 text-xs font-extrabold text-[#1D7DD7] hover:bg-[#1D7DD7] hover:text-white transition-all shrink-0"
-          >
-            <span>Explore</span>
-            <ArrowRight className="size-3" />
-          </Link>
-        </div>
-
-        {/* Visual Error Banner */}
+        {/* Error Alert */}
         {error && (
-          <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/15 border border-destructive/40 p-3.5 text-xs text-rose-400 font-bold animate-in fade-in">
-            <AlertCircle className="size-4 shrink-0 text-rose-500" />
+          <div className="flex items-center gap-2.5 rounded-2xl bg-destructive/15 border border-destructive/40 p-3.5 text-xs text-rose-500 font-bold animate-in fade-in">
+            <AlertCircle className="size-4 shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        {/* Secure Login Form */}
+        {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
-            <label
-              htmlFor="login-email"
-              className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block"
-            >
-              University Email Address
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
+              University Email / ID
             </label>
             <input
-              id="login-email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. j.delacruz@uc.edu.ph"
-              className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-3 text-sm font-medium text-foreground placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7] transition-all"
-              autoComplete="email"
+              placeholder="e.g. 22684955@uc.edu.ph"
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label
-                htmlFor="login-password"
-                className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block"
-              >
-                Password
-              </label>
-            </div>
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
+              Password
+            </label>
             <div className="relative">
               <input
-                id="login-password"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3.5 py-3 pr-11 text-sm font-medium text-foreground placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7] transition-all"
-                autoComplete="current-password"
+                placeholder="Enter account password"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 pr-11 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#74777E] hover:text-foreground transition-colors p-1"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -160,45 +137,53 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1D7DD7] px-4 py-3 text-sm font-extrabold text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all disabled:opacity-50 disabled:pointer-events-none"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3.5 text-sm font-extrabold text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all disabled:opacity-50"
           >
             {loading ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                <span>Authenticating...</span>
+                <span>Authenticating Session...</span>
               </>
             ) : (
               <>
-                <ShieldCheck className="size-4" />
-                <span>Sign In Securely</span>
+                <span>Sign In to Dashboard</span>
+                <ArrowRight className="size-4" />
               </>
             )}
           </button>
         </form>
 
-        {/* Footer Navigation */}
-        <div className="pt-2 border-t border-[#507495]/20 text-center space-y-3 text-xs">
-          <p className="text-[#74777E]">
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-[10px] font-black uppercase">
+            <span className="bg-card px-2 text-muted-foreground">Guest Access</span>
+          </div>
+        </div>
+
+        {/* Explore as Guest CTA Button */}
+        <Link
+          href="/explore"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 hover:bg-accent px-4 py-3 text-xs sm:text-sm font-extrabold text-foreground transition-all shadow-sm group"
+        >
+          <Map className="size-4 text-primary group-hover:scale-110 transition-transform" />
+          <span>Explore Campus Map as Guest</span>
+          <ArrowRight className="size-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+        </Link>
+
+        {/* Footer */}
+        <div className="pt-2 border-t border-border text-center space-y-2 text-xs">
+          <p className="text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link
-              href="/register"
-              className="font-bold text-[#1D7DD7] hover:underline"
-            >
-              Create Account
+            <Link href="/register" className="font-bold text-primary hover:underline">
+              Create Student Account
             </Link>
           </p>
-          <div className="flex items-center justify-center gap-4 text-[11px] text-[#74777E]">
-            <Link href="/" className="hover:text-foreground transition-colors">
-              Return Home
-            </Link>
-            <span>•</span>
-            <Link href="/explore" className="hover:text-foreground transition-colors">
-              Campus Map
-            </Link>
-            <span>•</span>
-            <Link href="/privacy" className="hover:text-foreground transition-colors">
-              Privacy Notice
-            </Link>
+          <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
+            <ShieldCheck className="size-3.5 text-emerald-500" />
+            <span>Strict End-to-End Session RBAC & Supabase SSR Encryption</span>
           </div>
         </div>
       </div>

@@ -6,41 +6,38 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Compass,
   LayoutDashboard,
-  CalendarDays,
-  Map,
+  Calendar,
+  MapPin,
   ScanLine,
   Bell,
-  GraduationCap,
+  Settings,
   Shield,
+  GraduationCap,
+  Users,
   LogOut,
   Menu,
   X,
-  User,
   ChevronRight,
-  Sun,
-  Moon,
-  Search,
+  User,
+  Map,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { BackButton } from "@/components/shared/back-button";
 import { signOut, getCurrentUser } from "@/lib/supabase/auth";
 import type { UserRole } from "@/types/database";
 
-interface AppShellProps {
-  children: React.ReactNode;
-  forcedRole?: UserRole;
-}
-
-interface NavItem {
+interface NavigationItem {
   label: string;
   href: string;
-  icon: React.ElementType;
-  roles: UserRole[];
+  icon: React.ComponentType<{ className?: string }>;
   badge?: string;
+  roles: UserRole[];
 }
 
-const navigationConfig: NavItem[] = [
-  // Base Student Links
+/** Dynamic Role-Based Navigation Configuration */
+const navigationConfig: NavigationItem[] = [
+  // Student Portal Core
   {
     label: "Overview",
     href: "/dashboard",
@@ -50,72 +47,96 @@ const navigationConfig: NavItem[] = [
   {
     label: "My Schedule",
     href: "/schedule",
-    icon: CalendarDays,
+    icon: Calendar,
     roles: ["student", "faculty", "admin"],
   },
   {
     label: "Campus Map",
     href: "/map",
-    icon: Map,
+    icon: MapPin,
+    badge: "5 Floors",
     roles: ["student", "faculty", "admin"],
   },
   {
     label: "Scan Load",
     href: "/schedule?ocr=open",
     icon: ScanLine,
+    badge: "OCR",
     roles: ["student", "faculty", "admin"],
   },
   {
-    label: "Alerts",
-    href: "/dashboard#bulletins",
-    icon: Bell,
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
     roles: ["student", "faculty", "admin"],
   },
-
-  // Faculty Specific Link
+  // Faculty Hub Access
   {
     label: "Faculty Hub",
     href: "/faculty/dashboard",
     icon: GraduationCap,
     roles: ["faculty", "admin"],
-    badge: "Faculty",
   },
-
-  // Admin Specific Link
+  // Admin Suite Access
   {
     label: "Admin Suite",
     href: "/admin/dashboard",
     icon: Shield,
     roles: ["admin"],
-    badge: "Admin",
+  },
+  {
+    label: "User Accounts",
+    href: "/admin/users",
+    icon: Users,
+    roles: ["admin"],
+  },
+  {
+    label: "Room Calibrator",
+    href: "/admin/rooms",
+    icon: Map,
+    roles: ["admin"],
+  },
+  {
+    label: "Broadcast Bulletin",
+    href: "/admin/bulletin",
+    icon: Bell,
+    roles: ["admin"],
   },
 ];
 
+interface AppShellProps {
+  children: React.ReactNode;
+  forcedRole?: UserRole;
+}
+
+/**
+ * Enterprise Responsive Role-Aware App Shell
+ * Fully dynamic theme engine supporting clean Light and Dark modes.
+ */
 export function AppShell({ children, forcedRole }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const { theme, setTheme } = useTheme();
 
   const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
   const [userName, setUserName] = useState<string>("Student");
-  const [userEmail, setUserEmail] = useState<string>("user@uc.edu.ph");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
-  // Load user metadata on mount
   useEffect(() => {
     async function loadUserData() {
+      if (forcedRole) {
+        setUserRole(forcedRole);
+        return;
+      }
       const user = await getCurrentUser();
       if (user) {
-        const metadata = user.user_metadata || {};
-        const detectedRole = (forcedRole || metadata.role || "student") as UserRole;
-        setUserRole(detectedRole);
-
-        const fullName = metadata.first_name
-          ? `${metadata.first_name} ${metadata.last_name || ""}`.trim()
-          : "Juan Dela Cruz";
-        setUserName(fullName);
-        setUserEmail(user.email || "user@uc.edu.ph");
+        const metadataRole = user.user_metadata?.role as UserRole;
+        if (metadataRole) setUserRole(metadataRole);
+        if (user.user_metadata?.first_name) {
+          setUserName(`${user.user_metadata.first_name}`);
+        } else if (user.email) {
+          setUserName(user.email.split("@")[0]);
+        }
       }
     }
     loadUserData();
@@ -138,39 +159,41 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const getRoleBadgeStyle = (role: UserRole) => {
     switch (role) {
       case "admin":
-        return "bg-rose-500/15 border-rose-500/30 text-rose-400";
+        return "bg-rose-500/15 border-rose-500/30 text-rose-500 dark:text-rose-400";
       case "faculty":
-        return "bg-indigo-500/15 border-indigo-500/30 text-indigo-400";
+        return "bg-indigo-500/15 border-indigo-500/30 text-indigo-600 dark:text-indigo-400";
       default:
-        return "bg-[#1D7DD7]/15 border-[#1D7DD7]/30 text-[#1D7DD7]";
+        return "bg-primary/15 border-primary/30 text-primary";
     }
   };
 
+  const isRootDashboard = pathname === "/dashboard" || pathname === "/student" || pathname === "/faculty/dashboard" || pathname === "/admin/dashboard";
+
   return (
-    <div className="min-h-screen flex w-full bg-[#0E151B] text-foreground antialiased selection:bg-[#1D7DD7] selection:text-white">
+    <div className="min-h-screen flex w-full bg-background text-foreground antialiased selection:bg-primary selection:text-white transition-colors duration-200">
       {/* ── Desktop Left Sidebar (≥1024px / lg breakpoint) ── */}
-      <aside className="hidden lg:flex w-64 flex-col justify-between border-r border-[#507495]/20 bg-[#141E28] p-5 shrink-0 z-30">
+      <aside className="hidden lg:flex w-64 flex-col justify-between border-r border-border bg-card p-5 shrink-0 z-30 transition-colors duration-200">
         <div className="space-y-6">
           {/* Brand Logo Header */}
           <Link href="/dashboard" className="flex items-center gap-3 px-2">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-[#1D7DD7] text-white shadow-lg shadow-[#1D7DD7]/30">
+            <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
               <Compass className="size-6" />
             </div>
             <div>
-              <span className="text-base font-black tracking-tight text-white block">CHRONONAV</span>
-              <span className="text-[10px] font-bold text-[#74777E] tracking-wider uppercase">
+              <span className="text-base font-black tracking-tight text-foreground block">CHRONONAV</span>
+              <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
                 UC Main • CCS
               </span>
             </div>
           </Link>
 
           {/* User Profile Card */}
-          <div className="rounded-2xl border border-[#507495]/20 bg-[#0E151B]/80 p-3 flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-[#1D7DD7]/20 border border-[#1D7DD7]/40 text-[#1D7DD7] font-black text-sm shrink-0">
-              {userName.charAt(0)}
+          <div className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0">
+              {userName.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-white truncate">{userName}</p>
+              <p className="text-xs font-black text-foreground truncate">{userName}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
                   className={`rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider ${getRoleBadgeStyle(
@@ -185,7 +208,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
 
           {/* Dynamic Navigation Links */}
           <nav className="space-y-1.5" aria-label="Desktop Navigation">
-            <span className="text-[10px] font-black text-[#74777E] px-3 uppercase tracking-wider block pb-1">
+            <span className="text-[10px] font-black text-muted-foreground px-3 uppercase tracking-wider block pb-1">
               CAMPUS SUITE
             </span>
             {filteredNavItems.map((item) => {
@@ -200,8 +223,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                   href={item.href}
                   className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${
                     isActive
-                      ? "bg-[#1D7DD7] text-white shadow-lg shadow-[#1D7DD7]/30 scale-[1.02]"
-                      : "text-[#74777E] hover:bg-[#0E151B] hover:text-white"
+                      ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
                   <div className="flex items-center gap-3">
@@ -209,7 +232,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                     <span>{item.label}</span>
                   </div>
                   {item.badge && !isActive && (
-                    <span className="text-[9px] font-black bg-[#0E151B] border border-[#507495]/30 text-[#1D7DD7] px-1.5 py-0.5 rounded-md">
+                    <span className="text-[9px] font-black bg-muted border border-border text-primary px-1.5 py-0.5 rounded-md">
                       {item.badge}
                     </span>
                   )}
@@ -221,15 +244,15 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
         </div>
 
         {/* Sidebar Footer: Theme Toggle & Sign Out Button */}
-        <div className="space-y-3 pt-4 border-t border-[#507495]/20">
+        <div className="space-y-3 pt-4 border-t border-border">
           <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-bold text-[#74777E]">Interface Theme</span>
-            <ThemeToggle compact={true} />
+            <span className="text-[11px] font-bold text-muted-foreground">Interface Theme</span>
+            <ThemeToggle />
           </div>
           <button
             onClick={handleSignOut}
             disabled={isSigningOut}
-            className="flex w-full items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-xs font-black text-rose-400 hover:bg-destructive/20 transition-colors disabled:opacity-50"
+            className="flex w-full items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-xs font-black text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
           >
             <LogOut className="size-4" />
             <span>{isSigningOut ? "Signing out..." : "Sign Out Session"}</span>
@@ -239,44 +262,51 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
 
       {/* ── Main Content Viewport Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Mobile & Tablet Header Bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#507495]/20 bg-[#141E28]/95 backdrop-blur px-4 sm:px-6">
-          <div className="flex items-center gap-3">
+        {/* Universal Top Header Bar with Consistent Top-Left Back Button & Top-Right Theme Toggle */}
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/90 backdrop-blur px-4 sm:px-6 transition-colors duration-200">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-foreground hover:bg-[#0E151B] transition-colors"
+              className="lg:hidden p-2 rounded-xl text-foreground hover:bg-muted transition-colors"
               aria-label="Open Navigation Menu"
             >
               <Menu className="size-5" />
             </button>
 
-            <Link href="/dashboard" className="flex items-center gap-2.5">
-              <div className="flex size-8 items-center justify-center rounded-xl bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30">
-                <Compass className="size-5" />
-              </div>
-              <span className="text-base font-black tracking-tight text-white">CHRONONAV</span>
-            </Link>
+            {/* Top-Left Back Button (Always accessible on sub-views) */}
+            {!isRootDashboard ? (
+              <BackButton fallbackUrl="/dashboard" showLabel={false} />
+            ) : (
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/30">
+                  <Compass className="size-4.5" />
+                </div>
+                <span className="text-sm sm:text-base font-black tracking-tight text-foreground hidden xs:inline">
+                  CHRONONAV
+                </span>
+              </Link>
+            )}
           </div>
 
-          <div className="flex items-center gap-2.5">
-            {/* Theme Toggle */}
-            <ThemeToggle compact={true} />
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            {/* Top-Right Light/Dark Theme Switcher */}
+            <ThemeToggle compact={false} />
 
-            {/* Guest Explorer Link */}
+            {/* Guest Explorer CTA */}
             <Link
               href="/explore"
-              className="hidden sm:flex items-center gap-1.5 rounded-xl border border-[#507495]/30 bg-[#0E151B] px-3 py-1.5 text-xs font-extrabold text-[#74777E] hover:text-white transition-colors"
+              className="hidden md:flex items-center gap-1.5 rounded-xl border border-border bg-muted/50 px-3 py-1.5 text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
-              <Map className="size-3.5 text-[#1D7DD7]" />
+              <Map className="size-3.5 text-primary" />
               <span>Campus Map View</span>
             </Link>
 
             {/* User Avatar Badge */}
-            <div className="flex items-center gap-2 pl-2 border-l border-[#507495]/20">
-              <div className="flex size-8 items-center justify-center rounded-full bg-[#1D7DD7]/20 border border-[#1D7DD7]/40 text-[#1D7DD7] text-xs font-black">
-                {userName.charAt(0)}
+            <div className="flex items-center gap-2 pl-2 border-l border-border">
+              <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-black">
+                {userName.charAt(0).toUpperCase()}
               </div>
-              <span className="hidden sm:inline text-xs font-black text-white capitalize">
+              <span className="hidden sm:inline text-xs font-black text-foreground capitalize">
                 {userRole}
               </span>
             </div>
@@ -296,7 +326,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             aria-hidden="true"
           />
 
-          <div className="fixed inset-y-0 left-0 w-72 bg-[#141E28] border-r border-[#507495]/30 p-5 flex flex-col justify-between shadow-2xl z-50 animate-in slide-in-from-left duration-200">
+          <div className="fixed inset-y-0 left-0 w-72 bg-card border-r border-border p-5 flex flex-col justify-between shadow-2xl z-50 animate-in slide-in-from-left duration-200">
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <Link
@@ -304,30 +334,37 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2.5"
                 >
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30">
+                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/30">
                     <Compass className="size-5" />
                   </div>
-                  <span className="text-base font-black text-white">CHRONONAV</span>
+                  <div>
+                    <span className="text-base font-black tracking-tight text-foreground block">
+                      CHRONONAV
+                    </span>
+                    <span className="text-[9px] font-bold text-muted-foreground tracking-wider uppercase">
+                      UC Main Campus
+                    </span>
+                  </div>
                 </Link>
 
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-1.5 rounded-lg text-[#74777E] hover:text-white"
-                  aria-label="Close navigation"
+                  className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground"
+                  aria-label="Close Menu"
                 >
                   <X className="size-5" />
                 </button>
               </div>
 
-              {/* Mobile Profile Card */}
-              <div className="rounded-2xl border border-[#507495]/20 bg-[#0E151B] p-3 flex items-center gap-3">
-                <div className="flex size-10 items-center justify-center rounded-xl bg-[#1D7DD7]/20 text-[#1D7DD7] font-black">
-                  {userName.charAt(0)}
+              {/* User Identity Card */}
+              <div className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3">
+                <div className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary font-black text-sm">
+                  {userName.charAt(0).toUpperCase()}
                 </div>
-                <div className="overflow-hidden flex-1">
-                  <p className="text-xs font-bold text-white truncate">{userName}</p>
+                <div className="overflow-hidden">
+                  <p className="text-xs font-black text-foreground truncate">{userName}</p>
                   <span
-                    className={`inline-block rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase ${getRoleBadgeStyle(
+                    className={`inline-block rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase mt-0.5 ${getRoleBadgeStyle(
                       userRole
                     )}`}
                   >
@@ -336,12 +373,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 </div>
               </div>
 
-              {/* Mobile Drawer Navigation Links */}
-              <nav className="space-y-1.5">
+              {/* Mobile Nav Links */}
+              <nav className="space-y-1" aria-label="Mobile Navigation Drawer">
                 {filteredNavItems.map((item) => {
-                  const isActive =
-                    pathname === item.href ||
-                    (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  const isActive = pathname === item.href;
                   const Icon = item.icon;
 
                   return (
@@ -351,8 +386,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${
                         isActive
-                          ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                          : "text-[#74777E] hover:bg-[#0E151B] hover:text-white"
+                          ? "bg-primary text-white shadow-md shadow-primary/30"
+                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
                       }`}
                     >
                       <div className="flex items-center gap-3">
@@ -360,7 +395,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                         <span>{item.label}</span>
                       </div>
                       {item.badge && !isActive && (
-                        <span className="text-[9px] font-black bg-[#0E151B] border border-[#507495]/30 text-[#1D7DD7] px-1.5 py-0.5 rounded-md">
+                        <span className="text-[9px] font-black bg-muted text-primary px-1.5 py-0.5 rounded-md">
                           {item.badge}
                         </span>
                       )}
@@ -370,52 +405,59 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               </nav>
             </div>
 
-            <div className="pt-4 border-t border-[#507495]/20">
+            {/* Mobile Drawer Footer */}
+            <div className="space-y-3 pt-4 border-t border-border">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-xs font-bold text-muted-foreground">Theme</span>
+                <ThemeToggle />
+              </div>
               <button
                 onClick={handleSignOut}
-                className="flex w-full items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-xs font-black text-rose-400 hover:bg-destructive/20"
+                disabled={isSigningOut}
+                className="flex w-full items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-xs font-black text-destructive hover:bg-destructive/20 transition-colors"
               >
                 <LogOut className="size-4" />
-                <span>Sign Out Session</span>
+                <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ── Fixed Mobile Bottom Navigation Dock (<1024px / lg:hidden) ── */}
+      {/* ── Mobile Fixed Bottom Navigation Dock (<1024px) ── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex h-16 items-center justify-around border-t border-[#507495]/25 bg-[#141E28]/95 backdrop-blur-lg lg:hidden px-2 shadow-2xl"
-        aria-label="Mobile Bottom Navigation Dock"
+        className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card/95 backdrop-blur-md border-t border-border shadow-2xl px-2 py-1.5 transition-colors duration-200"
+        aria-label="Mobile Bottom Navigation"
       >
-        {mobileDockItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" && pathname.startsWith(item.href));
-          const Icon = item.icon;
+        <div className="grid grid-cols-4 items-center max-w-md mx-auto">
+          {mobileDockItems.map((item) => {
+            const isActive = pathname === item.href;
+            const Icon = item.icon;
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center justify-center gap-1 px-3 py-1 text-[10px] font-black transition-all ${
-                isActive
-                  ? "text-[#1D7DD7] scale-105"
-                  : "text-[#74777E] hover:text-white"
-              }`}
-              aria-current={isActive ? "page" : undefined}
-            >
-              <div
-                className={`flex size-8 items-center justify-center rounded-xl transition-colors ${
-                  isActive ? "bg-[#1D7DD7]/20 border border-[#1D7DD7]/50" : ""
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+                  isActive
+                    ? "text-primary font-black scale-105"
+                    : "text-muted-foreground hover:text-foreground font-semibold"
                 }`}
               >
-                <Icon className="size-4.5" />
-              </div>
-              <span className="truncate max-w-[65px]">{item.label}</span>
-            </Link>
-          );
-        })}
+                <div
+                  className={`p-1.5 rounded-xl transition-colors ${
+                    isActive ? "bg-primary/15 text-primary" : ""
+                  }`}
+                >
+                  <Icon className="size-4.5" />
+                </div>
+                <span className="text-[10px] mt-0.5 leading-tight truncate">
+                  {item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );

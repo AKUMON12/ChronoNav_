@@ -16,6 +16,7 @@ import {
   X,
 } from "lucide-react";
 import React, { useState } from "react";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 /**
  * ChronoNav Public Landing Page
@@ -49,35 +50,32 @@ export default function LandingPage() {
 
           {/* Desktop CTA + theme toggle */}
           <div className="hidden md:flex items-center gap-3">
-            <button
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-accent transition-colors"
-              aria-label="Toggle theme"
-            >
-              {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </button>
+            <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-lg border border-border bg-card px-4 py-2 text-sm font-bold text-foreground hover:bg-accent transition-colors"
+              className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-black text-foreground hover:bg-accent transition-colors"
             >
               Log In
             </Link>
             <Link
               href="/register"
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-white hover:bg-primary/90 transition-colors shadow-sm shadow-primary/25"
             >
-              Get Started
+              Get Started Free
             </Link>
           </div>
 
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-lg text-foreground hover:bg-accent transition-colors"
-            aria-label="Toggle mobile menu"
-          >
-            {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
-          </button>
+          {/* Mobile top action buttons */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle compact={true} />
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 rounded-xl text-foreground hover:bg-accent transition-colors"
+              aria-label="Toggle mobile menu"
+            >
+              {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile dropdown menu */}
@@ -87,8 +85,8 @@ export default function LandingPage() {
             <a href="#how-it-works" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
             <Link href="/privacy" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Privacy</Link>
             <div className="flex gap-2 pt-2 border-t border-border">
-              <Link href="/login" className="flex-1 text-center rounded-lg border border-border bg-card px-3 py-2 text-sm font-bold text-foreground">Log In</Link>
-              <Link href="/register" className="flex-1 text-center rounded-lg bg-primary px-3 py-2 text-sm font-bold text-primary-foreground">Get Started</Link>
+              <Link href="/login" className="flex-1 text-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-black text-foreground">Log In</Link>
+              <Link href="/register" className="flex-1 text-center rounded-xl bg-primary px-3 py-2 text-xs font-black text-white">Get Started</Link>
             </div>
           </div>
         )}

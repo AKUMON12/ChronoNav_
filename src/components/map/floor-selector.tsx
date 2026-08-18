@@ -17,10 +17,10 @@ export function FloorSelector({
   floorsInRoute = [],
 }: FloorSelectorProps) {
   return (
-    <div className="flex flex-col items-center gap-2 bg-[#141E28]/95 backdrop-blur border border-[#507495]/30 rounded-2xl p-2.5 shadow-2xl w-24">
+    <div className="flex flex-col items-center gap-2 bg-card/95 backdrop-blur border border-border rounded-2xl p-2.5 shadow-2xl w-24 transition-colors duration-200">
       {/* Header Label */}
-      <div className="flex items-center gap-1.5 text-[10px] font-black text-[#74777E] pb-1.5 px-1 border-b border-[#507495]/20 w-full justify-center tracking-wider">
-        <Layers className="size-3.5 text-[#1D7DD7]" />
+      <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground pb-1.5 px-1 border-b border-border w-full justify-center tracking-wider">
+        <Layers className="size-3.5 text-primary" />
         <span>FLOOR</span>
       </div>
 
@@ -39,10 +39,10 @@ export function FloorSelector({
                 onClick={() => onSelectFloor(floor)}
                 className={`relative flex items-center justify-between rounded-xl h-10 w-full px-3 text-xs font-black transition-all duration-200 ${
                   isActive
-                    ? "bg-[#1D7DD7] text-white shadow-lg shadow-[#1D7DD7]/35 scale-[1.04]"
+                    ? "bg-primary text-white shadow-lg shadow-primary/35 scale-[1.04]"
                     : isRouteFloor
-                    ? "bg-[#141E28] text-[#1D7DD7] border border-[#1D7DD7]/50 hover:bg-[#1D7DD7]/10"
-                    : "bg-[#0E151B]/80 text-[#74777E] border border-[#507495]/20 hover:bg-[#141E28] hover:text-foreground"
+                    ? "bg-primary/10 text-primary border border-primary/50 hover:bg-primary/20"
+                    : "bg-muted/40 text-muted-foreground border border-border hover:bg-accent hover:text-foreground"
                 }`}
                 aria-label={`Switch to Floor ${floor}`}
                 aria-pressed={isActive}
@@ -51,7 +51,7 @@ export function FloorSelector({
 
                 {/* Indicator Badge for Route Floors */}
                 {isRouteFloor && !isActive && (
-                  <span className="flex items-center justify-center size-4 rounded-full bg-[#1D7DD7]/20 text-[#1D7DD7] animate-pulse">
+                  <span className="flex items-center justify-center size-4 rounded-full bg-primary/20 text-primary animate-pulse">
                     <Footprints className="size-2.5" />
                   </span>
                 )}

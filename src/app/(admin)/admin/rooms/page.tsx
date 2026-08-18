@@ -114,271 +114,268 @@ export default function BuildingRoomManagerPage() {
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#507495]/20 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-2.5">
-            <Building2 className="size-7 text-[#1D7DD7]" />
+          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center gap-2.5">
+            <Building2 className="size-7 text-primary" />
             <span>Campus Rooms & POI Calibrator</span>
           </h1>
-          <p className="text-xs sm:text-sm text-[#74777E] mt-1">
-            Manage UC Main CCS building room entries, floor plans (1F to 5F), and SVG Dijkstra coordinates.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Create, calibrate, and edit rooms and coordinate waypoints for Floors 1 to 5 in the CCS Building.
           </p>
         </div>
 
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-[#1D7DD7] px-4 py-2.5 text-xs font-black text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all shrink-0"
+          className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-black text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all shrink-0"
         >
           <Plus className="size-4" />
-          <span>Add Room to Floor {activeFloor}</span>
+          <span>Add New Room / POI</span>
         </button>
       </div>
 
-      {/* Notification Toast */}
+      {/* Toast Notification */}
       {notification && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-400 font-bold animate-in fade-in">
+        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-500 font-bold animate-in fade-in">
           <CheckCircle2 className="size-4 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Floor Filter Tabs (1F to 5F) */}
+      {/* Floor Selection Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        <span className="text-xs font-extrabold text-[#74777E] flex items-center gap-1 shrink-0">
-          <Layers className="size-4 text-[#1D7DD7]" />
-          <span>Floor:</span>
-        </span>
         {[1, 2, 3, 4, 5].map((fl) => (
           <button
             key={fl}
             onClick={() => setActiveFloor(fl)}
-            className={`px-4 py-2 rounded-2xl text-xs font-black transition-all shrink-0 ${
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black transition-all shrink-0 ${
               activeFloor === fl
-                ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30 scale-[1.02]"
-                : "bg-[#141E28] border border-[#507495]/25 text-[#74777E] hover:text-white"
+                ? "bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]"
+                : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
             }`}
           >
-            {fl}F — Floor {fl}
+            <Layers className="size-4" />
+            <span>Floor {fl}</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] ${
+                activeFloor === fl
+                  ? "bg-white/20 text-white"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {rooms.filter((r) => r.floor === fl).length} POIs
+            </span>
           </button>
         ))}
       </div>
 
-      {/* Main Grid: Directory Table & Live SVG Coordinate Visualizer */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Room Directory Table */}
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] p-5 shadow-xl space-y-4 lg:col-span-7">
-          <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
-            <h3 className="text-xs font-black text-white uppercase tracking-wider">
-              Floor {activeFloor} Room Directory ({floorRooms.length} Registered Nodes)
-            </h3>
-            <span className="text-[10px] font-bold text-[#74777E]">
-              Building: CCS Main
-            </span>
-          </div>
+        {/* Left Column: Floor Rooms Table */}
+        <div className="lg:col-span-7 space-y-4">
+          <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
+            <div className="p-4 border-b border-border flex items-center justify-between">
+              <h3 className="text-xs font-black text-foreground uppercase tracking-wide">
+                Floor {activeFloor} Registered Facilities ({floorRooms.length})
+              </h3>
+            </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-[#507495]/20">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#0E151B] text-[#74777E] font-black uppercase text-[10px] border-b border-[#507495]/20">
-                <tr>
-                  <th className="p-3">Code</th>
-                  <th className="p-3">Room Name</th>
-                  <th className="p-3">Type</th>
-                  <th className="p-3">Cap</th>
-                  <th className="p-3">Coordinates (X, Y)</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#507495]/10">
-                {floorRooms.length === 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-black tracking-wider text-[10px]">
                   <tr>
-                    <td colSpan={6} className="p-8 text-center text-[#74777E]">
-                      No rooms registered on Floor {activeFloor}.
-                    </td>
+                    <th className="py-3 px-4">Room Code</th>
+                    <th className="py-3 px-4">Facility Name</th>
+                    <th className="py-3 px-4">Coordinates (X, Y)</th>
+                    <th className="py-3 px-4">Type</th>
+                    <th className="py-3 px-4 text-right">Actions</th>
                   </tr>
-                ) : (
-                  floorRooms.map((room) => (
-                    <tr key={room.id} className="hover:bg-[#0E151B]/40 transition-colors">
-                      <td className="p-3 font-mono font-black text-[#1D7DD7]">{room.code}</td>
-                      <td className="p-3 font-bold text-white">{room.name}</td>
-                      <td className="p-3">
-                        <span className="capitalize text-[10px] font-bold text-[#74777E] bg-[#0E151B] px-2 py-0.5 rounded">
-                          {room.type}
-                        </span>
-                      </td>
-                      <td className="p-3 font-mono text-[#74777E]">{room.capacity || 40}</td>
-                      <td className="p-3 font-mono font-bold text-slate-300">
-                        ({room.x}, {room.y})
-                      </td>
-                      <td className="p-3 text-right">
-                        <div className="flex items-center justify-end gap-1">
-                          <button
-                            onClick={() => setEditingRoom(room)}
-                            className="p-1.5 rounded-lg text-[#74777E] hover:text-white hover:bg-[#0E151B] transition-colors"
-                            title="Edit Room Coordinates"
-                          >
-                            <Edit3 className="size-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteRoom(room.id, room.code)}
-                            className="p-1.5 rounded-lg text-[#74777E] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
-                            title="Delete Room"
-                          >
-                            <Trash2 className="size-3.5" />
-                          </button>
-                        </div>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {floorRooms.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                        No facilities registered on Floor {activeFloor}.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    floorRooms.map((room) => (
+                      <tr key={room.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4 font-mono font-bold text-primary">
+                          {room.code}
+                        </td>
+                        <td className="py-3 px-4 font-bold text-foreground">{room.name}</td>
+                        <td className="py-3 px-4 font-mono text-muted-foreground">
+                          ({room.x}, {room.y})
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="rounded-md bg-muted/60 px-2 py-0.5 text-[10px] font-bold text-muted-foreground uppercase">
+                            {room.type}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setEditingRoom(room)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                              title="Edit Room"
+                            >
+                              <Edit3 className="size-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteRoom(room.id, room.code)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                              title="Delete Room"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        {/* SVG Node Visualizer */}
-        <div className="rounded-3xl border border-[#507495]/20 bg-[#0E151B] p-5 shadow-inner space-y-4 lg:col-span-5 flex flex-col justify-between">
-          <div className="space-y-1">
-            <h3 className="text-xs font-black uppercase tracking-wider text-[#1D7DD7] flex items-center gap-2">
-              <Sliders className="size-4" />
-              <span>Floor {activeFloor} Blueprint Coordinates</span>
-            </h3>
-            <p className="text-[11px] text-[#74777E]">
-              Calibrate X & Y anchor waypoints used by the Dijkstra pathfinding algorithm.
+        {/* Right Column: Coordinate Map Canvas Calibrator */}
+        <div className="lg:col-span-5 space-y-4">
+          <div className="rounded-3xl border border-border bg-card p-4 shadow-xl space-y-3">
+            <div className="flex items-center justify-between pb-2 border-b border-border">
+              <h3 className="text-xs font-black text-foreground uppercase tracking-wide flex items-center gap-2">
+                <Compass className="size-4 text-primary" />
+                <span>Floor {activeFloor} Waypoint Visualizer</span>
+              </h3>
+              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                Live Preview
+              </span>
+            </div>
+
+            {/* Interactive Coordinate Preview Canvas */}
+            <div className="relative w-full aspect-square bg-muted/30 rounded-2xl border border-border overflow-hidden p-2">
+              <svg viewBox="0 0 500 500" className="w-full h-full">
+                {/* Background Grid */}
+                <defs>
+                  <pattern id="grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                    <path d="M 50 0 L 0 0 0 50" fill="none" stroke="currentColor" strokeWidth="0.5" className="text-border" />
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)" />
+
+                {/* Outer Wall Boundaries */}
+                <rect x="40" y="40" width="420" height="420" rx="16" fill="none" stroke="currentColor" strokeWidth="3" className="text-primary/40" />
+
+                {/* Central Hallway Line */}
+                <line x1="250" y1="50" x2="250" y2="450" stroke="currentColor" strokeWidth="4" strokeDasharray="6 6" className="text-primary/30" />
+
+                {/* POI Waypoint Markers */}
+                {floorRooms.map((room) => {
+                  const isSelected = editingRoom?.id === room.id;
+                  return (
+                    <g
+                      key={room.id}
+                      className="cursor-pointer transition-transform hover:scale-110"
+                      onClick={() => setEditingRoom(room)}
+                    >
+                      <circle
+                        cx={room.x}
+                        cy={room.y}
+                        r={isSelected ? 14 : 9}
+                        fill={isSelected ? "#1D7DD7" : "currentColor"}
+                        stroke="#FFFFFF"
+                        strokeWidth="2"
+                        className={isSelected ? "" : "text-muted-foreground"}
+                      />
+                      <text
+                        x={room.x}
+                        y={room.y - 12}
+                        textAnchor="middle"
+                        fontSize="10"
+                        fontWeight="bold"
+                        fill="currentColor"
+                        className="text-foreground"
+                      >
+                        {room.code}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+            </div>
+
+            <p className="text-[11px] text-muted-foreground text-center">
+              Click any node marker above to edit its Dijkstra waypoint coordinates.
             </p>
           </div>
-
-          {/* Canvas */}
-          <div className="relative w-full h-[280px] rounded-2xl bg-[#141E28] border border-[#507495]/30 p-2 flex items-center justify-center overflow-hidden">
-            <svg viewBox="0 0 600 600" className="w-full h-full">
-              <rect x="40" y="40" width="520" height="520" rx="20" fill="none" stroke="#507495" strokeWidth="2" strokeDasharray="6 6" />
-              {floorRooms.map((r) => (
-                <g key={r.id} onClick={() => setEditingRoom(r)} className="cursor-pointer group">
-                  <circle
-                    cx={r.x}
-                    cy={r.y}
-                    r="12"
-                    fill={r.code.includes("538") ? "#38BDF8" : "#1D7DD7"}
-                    stroke="#FFF"
-                    strokeWidth="2"
-                    className="hover:scale-125 transition-transform"
-                  />
-                  <text
-                    x={r.x}
-                    y={r.y - 16}
-                    textAnchor="middle"
-                    fill="#FFF"
-                    className="text-[12px] font-black pointer-events-none select-none drop-shadow"
-                  >
-                    {r.code}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-
-          <p className="text-[10px] text-[#74777E] text-center font-bold">
-            Click on any circle waypoint to calibrate pathfinding coordinates.
-          </p>
         </div>
       </div>
 
-      {/* Add Room Modal */}
-      {isCreateOpen && (
+      {/* Edit Room Modal */}
+      {editingRoom && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-[#507495]/30 bg-[#141E28] p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
-              <h3 className="text-base font-black text-white">Add Room to Floor {activeFloor}</h3>
-              <button onClick={() => setIsCreateOpen(false)} className="p-1 text-[#74777E] hover:text-white">
-                <X className="size-5" />
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-black text-foreground">Edit Facility: {editingRoom.code}</h3>
+              <button
+                onClick={() => setEditingRoom(null)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateRoom} className="space-y-3 text-xs">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Room Code</label>
-                  <input
-                    type="text"
-                    value={newCode}
-                    onChange={(e) => setNewCode(e.target.value)}
-                    placeholder="e.g. CCS 538"
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white uppercase font-bold"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Type</label>
-                  <select
-                    value={newType}
-                    onChange={(e) => setNewType(e.target.value as ManagedRoom["type"])}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
-                  >
-                    <option value="room">Classroom / Lab</option>
-                    <option value="facility">Office / Facility</option>
-                    <option value="stairs">Stairwell</option>
-                    <option value="elevator">Elevator</option>
-                    <option value="restroom">Restroom</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Descriptive Room Name</label>
+            <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
+              <div className="space-y-1">
+                <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Facility Name</label>
                 <input
                   type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. Software Engineering Lecture Hall"
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
+                  value={editingRoom.name}
+                  onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                   required
                 />
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Cap</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">X Coordinate (px)</label>
                   <input
                     type="number"
-                    value={newCapacity}
-                    onChange={(e) => setNewCapacity(Number(e.target.value))}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-mono"
+                    value={editingRoom.x}
+                    onChange={(e) => setEditingRoom({ ...editingRoom, x: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                    required
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">SVG X</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Y Coordinate (px)</label>
                   <input
                     type="number"
-                    value={newX}
-                    onChange={(e) => setNewX(Number(e.target.value))}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-mono"
-                  />
-                </div>
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">SVG Y</label>
-                  <input
-                    type="number"
-                    value={newY}
-                    onChange={(e) => setNewY(Number(e.target.value))}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-mono"
+                    value={editingRoom.y}
+                    onChange={(e) => setEditingRoom({ ...editingRoom, y: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                    required
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#507495]/20">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <button
                   type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#507495]/30 text-[#74777E] hover:text-white"
+                  onClick={() => setEditingRoom(null)}
+                  className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#1D7DD7] text-white font-black hover:bg-[#1D7DD7]/90 shadow-md"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-xs font-black text-white hover:bg-primary/90 shadow-md shadow-primary/30"
                 >
-                  Create Room
+                  <Save className="size-3.5" />
+                  <span>Save Changes</span>
                 </button>
               </div>
             </form>
@@ -386,88 +383,98 @@ export default function BuildingRoomManagerPage() {
         </div>
       )}
 
-      {/* Edit Room Modal */}
-      {editingRoom && (
+      {/* Create Room Modal */}
+      {isCreateOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-md rounded-3xl border border-[#507495]/30 bg-[#141E28] p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
-              <h3 className="text-base font-black text-white">Edit Room: {editingRoom.code}</h3>
-              <button onClick={() => setEditingRoom(null)} className="p-1 text-[#74777E] hover:text-white">
-                <X className="size-5" />
+          <div className="w-full max-w-md rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <h3 className="text-sm font-black text-foreground">Add New Facility to Floor {activeFloor}</h3>
+              <button
+                onClick={() => setIsCreateOpen(false)}
+                className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-4" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEdit} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateRoom} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Room Code</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Room Code</label>
                   <input
                     type="text"
-                    value={editingRoom.code}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, code: e.target.value })}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-bold"
+                    value={newCode}
+                    onChange={(e) => setNewCode(e.target.value)}
+                    placeholder="e.g. CCS 538"
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                     required
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Floor</label>
+
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Facility Type</label>
                   <select
-                    value={editingRoom.floor}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, floor: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
+                    value={newType}
+                    onChange={(e) => setNewType(e.target.value as any)}
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                   >
-                    {[1, 2, 3, 4, 5].map((fl) => (
-                      <option key={fl} value={fl}>Floor {fl}</option>
-                    ))}
+                    <option value="room">Classroom / Lab</option>
+                    <option value="facility">Office / Facility</option>
+                    <option value="stairs">Stairway</option>
+                    <option value="elevator">Elevator</option>
                   </select>
                 </div>
               </div>
 
-              <div>
-                <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Room Name</label>
+              <div className="space-y-1">
+                <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Facility Full Name</label>
                 <input
                   type="text"
-                  value={editingRoom.name}
-                  onChange={(e) => setEditingRoom({ ...editingRoom, name: e.target.value })}
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="e.g. Software Engineering Lab"
+                  className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">SVG X Coordinate</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">X Coordinate</label>
                   <input
                     type="number"
-                    value={editingRoom.x}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, x: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-mono"
+                    value={newX}
+                    onChange={(e) => setNewX(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                    required
                   />
                 </div>
-                <div>
-                  <label className="text-[11px] font-extrabold text-[#74777E] uppercase">SVG Y Coordinate</label>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Y Coordinate</label>
                   <input
                     type="number"
-                    value={editingRoom.y}
-                    onChange={(e) => setEditingRoom({ ...editingRoom, y: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white font-mono"
+                    value={newY}
+                    onChange={(e) => setNewY(Number(e.target.value))}
+                    className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-mono focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                    required
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-[#507495]/20">
+              <div className="flex justify-end gap-2 pt-3 border-t border-border">
                 <button
                   type="button"
-                  onClick={() => setEditingRoom(null)}
-                  className="px-4 py-2 rounded-xl border border-[#507495]/30 text-[#74777E] hover:text-white"
+                  onClick={() => setIsCreateOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:bg-accent hover:text-foreground"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#1D7DD7] text-white font-black hover:bg-[#1D7DD7]/90 shadow-md"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-xs font-black text-white hover:bg-primary/90 shadow-md shadow-primary/30"
                 >
-                  Save Coordinates
+                  <Plus className="size-3.5" />
+                  <span>Create Facility</span>
                 </button>
               </div>
             </form>

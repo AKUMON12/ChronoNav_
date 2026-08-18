@@ -85,28 +85,28 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-      <div className="w-full max-w-lg rounded-3xl border border-[#507495]/30 bg-[#141E28] p-6 shadow-2xl space-y-5 animate-in zoom-in-95">
+      <div className="w-full max-w-lg rounded-3xl border border-border bg-card p-6 shadow-2xl space-y-5 animate-in zoom-in-95 transition-colors duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#507495]/20">
+        <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-[#1D7DD7]/20 text-[#1D7DD7]">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
               <UserPlus className="size-5" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white">Provision New User Account</h3>
-              <p className="text-[11px] text-[#74777E]">Admin System User Control</p>
+              <h3 className="text-base font-black text-foreground">Provision New User Account</h3>
+              <p className="text-[11px] text-muted-foreground">Admin System User Control</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#74777E] hover:text-white transition-colors"
+            className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground transition-colors"
           >
             <X className="size-5" />
           </button>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-400">
+          <div className="p-3 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs font-bold text-rose-500">
             {error}
           </div>
         )}
@@ -114,7 +114,7 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
         <form onSubmit={handleSubmit} className="space-y-4 text-xs">
           {/* Role Selector Tabs */}
           <div className="space-y-1.5">
-            <label className="text-[11px] font-extrabold text-[#74777E] uppercase tracking-wider block">
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
               Account Role Assignment
             </label>
             <div className="grid grid-cols-3 gap-2">
@@ -123,8 +123,8 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
                 onClick={() => setRole("student")}
                 className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
                   role === "student"
-                    ? "bg-[#1D7DD7] text-white shadow-md shadow-[#1D7DD7]/30"
-                    : "bg-[#0E151B] border border-[#507495]/20 text-[#74777E] hover:text-white"
+                    ? "bg-primary text-white shadow-md shadow-primary/30"
+                    : "bg-background border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <GraduationCap className="size-3.5" />
@@ -136,7 +136,7 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
                 className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
                   role === "faculty"
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/30"
-                    : "bg-[#0E151B] border border-[#507495]/20 text-[#74777E] hover:text-white"
+                    : "bg-background border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <User className="size-3.5" />
@@ -148,7 +148,7 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
                 className={`py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 ${
                   role === "admin"
                     ? "bg-rose-600 text-white shadow-md shadow-rose-600/30"
-                    : "bg-[#0E151B] border border-[#507495]/20 text-[#74777E] hover:text-white"
+                    : "bg-background border border-border text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Shield className="size-3.5" />
@@ -160,24 +160,24 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           {/* Name Fields */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">First Name</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">First Name</label>
               <input
                 type="text"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 placeholder="e.g. Maria"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Last Name</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Last Name</label>
               <input
                 type="text"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 placeholder="e.g. Santos"
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
             </div>
@@ -186,26 +186,26 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           {/* UC ID Number & Program */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">UC ID Number</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">UC ID Number</label>
               <input
                 type="text"
                 value={idNumber}
                 onChange={(e) => handleIdChange(e.target.value)}
                 placeholder="e.g. 22684955"
                 maxLength={9}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                 required
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">
                 {role === "student" ? "Program / Major" : "Department"}
               </label>
               <select
                 value={program}
                 onChange={(e) => setProgram(e.target.value)}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 <option value="BSCS">BS Computer Science</option>
                 <option value="BSIT">BS Information Technology</option>
@@ -219,13 +219,13 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
 
           {/* Email Address */}
           <div className="space-y-1">
-            <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Email Address</label>
+            <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Email Address</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="e.g. maria.santos@uc.edu.ph"
-              className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+              className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
           </div>
@@ -233,20 +233,20 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           {/* Temporary Password & Account Status */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Temporary Password</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Temporary Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Temp password"
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 pr-8 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                  className="w-full rounded-xl border border-border bg-background p-2.5 pr-8 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#74777E]"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                 </button>
@@ -254,11 +254,11 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-[#74777E] uppercase">Account Status</label>
+              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Account Status</label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as "Active" | "Suspended")}
-                className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
                 <option value="Active">Active Status</option>
                 <option value="Suspended">Suspended</option>
@@ -267,18 +267,18 @@ export function CreateUserModal({ isOpen, onClose, onCreate }: CreateUserModalPr
           </div>
 
           {/* Action Buttons */}
-          <div className="flex justify-end gap-2.5 pt-3 border-t border-[#507495]/20">
+          <div className="flex justify-end gap-2.5 pt-3 border-t border-border">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-[#507495]/30 text-[#74777E] hover:text-white"
+              className="px-4 py-2 rounded-xl border border-border text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-[#1D7DD7] text-white font-black hover:bg-[#1D7DD7]/90 shadow-md shadow-[#1D7DD7]/30 transition-all disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2 rounded-xl bg-primary text-white font-black hover:bg-primary/90 shadow-md shadow-primary/30 transition-all disabled:opacity-50"
             >
               {loading && <Loader2 className="size-3.5 animate-spin" />}
               <span>Provision User</span>
