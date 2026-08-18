@@ -7,6 +7,18 @@ import type { UserRole } from "@/types/database";
  * Enforces strict role-based access control and public route protection.
  */
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 0. Immediate bypass for Next.js internals, hot-module reload, static chunks, and APIs
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api") ||
+    pathname.startsWith("/favicon.ico") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
+  }
+
   let supabaseResponse = NextResponse.next({
     request,
   });
@@ -44,8 +56,6 @@ export async function middleware(request: NextRequest) {
   const devMockRole = request.cookies.get("sb-mock-role")?.value as UserRole | undefined;
   const role: UserRole | undefined = (user?.user_metadata?.role as UserRole) || devMockRole;
   const isAuthenticated = !!user || !!devMockRole;
-
-  const { pathname } = request.nextUrl;
 
   // 1. Define Public Route Allowlist
   const isPublicRoute =
@@ -105,6 +115,6 @@ export async function middleware(request: NextRequest) {
  */
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|css|js)$).*)",
   ],
 };
