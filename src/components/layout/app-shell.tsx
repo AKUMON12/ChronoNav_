@@ -22,6 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { signOut, getCurrentUser } from "@/lib/supabase/auth";
 import type { UserRole } from "@/types/database";
 
@@ -219,8 +220,12 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </nav>
         </div>
 
-        {/* Sidebar Footer: Sign Out Button */}
+        {/* Sidebar Footer: Theme Toggle & Sign Out Button */}
         <div className="space-y-3 pt-4 border-t border-[#507495]/20">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[11px] font-bold text-[#74777E]">Interface Theme</span>
+            <ThemeToggle compact={true} />
+          </div>
           <button
             onClick={handleSignOut}
             disabled={isSigningOut}
@@ -254,6 +259,9 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </div>
 
           <div className="flex items-center gap-2.5">
+            {/* Theme Toggle */}
+            <ThemeToggle compact={true} />
+
             {/* Guest Explorer Link */}
             <Link
               href="/explore"

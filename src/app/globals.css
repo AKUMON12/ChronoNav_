@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --background: #F8FAFB;
+    /* ChronoNav Light Theme Tokens */
+    --background: #F4F6F9;
     --foreground: #0E151B;
 
     --card: #FFFFFF;
@@ -19,30 +20,31 @@
     --secondary: #507495;
     --secondary-foreground: #FFFFFF;
 
-    --muted: #E8EDF3;
-    --muted-foreground: #74777E;
+    --muted: #E2E8F0;
+    --muted-foreground: #64748B;
 
-    --accent: #E8EDF3;
+    --accent: #E8F1FB;
     --accent-foreground: #1D7DD7;
 
     --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
 
-    --border: #E8EDF3;
-    --input: #E8EDF3;
+    --border: #E2E8F0;
+    --input: #E2E8F0;
     --ring: #1D7DD7;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
+    /* ChronoNav Dark Theme Tokens */
     --background: #0E151B;
     --foreground: #F8FAFB;
 
-    --card: #15202B;
+    --card: #141E28;
     --card-foreground: #F8FAFB;
 
-    --popover: #15202B;
+    --popover: #141E28;
     --popover-foreground: #F8FAFB;
 
     --primary: #1D7DD7;
@@ -51,18 +53,20 @@
     --secondary: #507495;
     --secondary-foreground: #FFFFFF;
 
-    --muted: #1E2C3A;
-    --muted-foreground: #94A3B8;
+    --muted: #1A2634;
+    --muted-foreground: #74777E;
 
-    --accent: #1E2C3A;
+    --accent: #192D42;
     --accent-foreground: #38BDF8;
 
-    --destructive: #991B1B;
+    --destructive: #EF4444;
     --destructive-foreground: #FFFFFF;
 
     --border: #243447;
     --input: #243447;
     --ring: #1D7DD7;
+
+    --radius: 0.75rem;
   }
 }
 
@@ -75,4 +79,36 @@
     color: var(--foreground);
     font-family: var(--font-inter), var(--font-noto-sans), sans-serif;
   }
+}
+
+/* Custom shimmer animation for skeleton components */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
+}
+
+.dark .animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(80, 116, 149, 0.15) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s infinite;
 }

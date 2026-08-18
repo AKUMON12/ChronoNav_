@@ -4,26 +4,31 @@ import React, { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ScanLine,
   Calendar,
   Clock,
   MapPin,
-  BookOpen,
-  ArrowRight,
   Plus,
-  CheckCircle2,
-  Navigation,
+  ScanLine,
   Compass,
+  ArrowRight,
+  Sparkles,
+  Layers,
   LayoutGrid,
+  ListFilter,
+  CheckCircle2,
+  AlertCircle,
+  Building2,
+  Trash2,
+  Edit2,
+  BookOpen,
   List,
   Filter,
   X,
   User,
-  Building2,
-  Trash2,
 } from "lucide-react";
 import { ClassScheduleItem, ParsedScheduleItem, DayOfWeek } from "@/types/schedule";
 import { OCRUploadModal } from "@/components/schedule/ocr-upload-modal";
+import { ScheduleCRUDModal } from "@/components/schedule/schedule-crud-modal";
 import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 
 /** Initial Student Schedule with CCS 538 and other real university classes */
@@ -119,17 +124,9 @@ function ScheduleContent() {
   const [selectedDay, setSelectedDay] = useState<string>("All");
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("daily");
   const [isOCRModalOpen, setIsOCRModalOpen] = useState<boolean>(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
+  const [isCRUDModalOpen, setIsCRUDModalOpen] = useState<boolean>(false);
+  const [editingItem, setEditingItem] = useState<ClassScheduleItem | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
-
-  // Form states for manual subject addition
-  const [newCourseCode, setNewCourseCode] = useState<string>("");
-  const [newCourseTitle, setNewCourseTitle] = useState<string>("");
-  const [newInstructor, setNewInstructor] = useState<string>("");
-  const [newRoom, setNewRoom] = useState<string>("CCS 538");
-  const [newDay, setNewDay] = useState<DayOfWeek>("Mon");
-  const [newStartTime, setNewStartTime] = useState<string>("08:00 AM");
-  const [newEndTime, setNewEndTime] = useState<string>("10:30 AM");
 
   // Automatically trigger OCR modal if `?ocr=open` is in search params
   useEffect(() => {
@@ -169,33 +166,22 @@ function ScheduleContent() {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  const handleAddManualSubject = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newCourseCode || !newCourseTitle) return;
-
-    const newItem: ClassScheduleItem = {
-      id: `manual-${Date.now()}`,
-      courseCode: newCourseCode.trim().toUpperCase(),
-      courseTitle: newCourseTitle.trim(),
-      instructor: newInstructor.trim() || "CCS Faculty",
-      building: "CCS Building",
-      room: newRoom.trim() || "CCS 538",
-      dayOfWeek: newDay,
-      startTime: newStartTime,
-      endTime: newEndTime,
-    };
-
-    setSchedules((prev) => [newItem, ...prev]);
-    setIsAddModalOpen(false);
-    setNewCourseCode("");
-    setNewCourseTitle("");
-    setNewInstructor("");
-    setNotification(`Added ${newItem.courseCode} to your schedule.`);
+  const handleSaveSchedule = (item: ClassScheduleItem) => {
+    setSchedules((prev) => {
+      const exists = prev.some((s) => s.id === item.id);
+      if (exists) {
+        return prev.map((s) => (s.id === item.id ? item : s));
+      }
+      return [item, ...prev];
+    });
+    setNotification(`Saved class schedule for ${item.courseCode}.`);
     setTimeout(() => setNotification(null), 4000);
   };
 
   const handleDeleteSubject = (id: string) => {
     setSchedules((prev) => prev.filter((s) => s.id !== id));
+    setNotification("Subject removed from your timetable.");
+    setTimeout(() => setNotification(null), 3000);
   };
 
   return (
@@ -240,7 +226,10 @@ function ScheduleContent() {
           </div>
 
           <button
-            onClick={() => setIsAddModalOpen(true)}
+            onClick={() => {
+              setEditingItem(null);
+              setIsCRUDModalOpen(true);
+            }}
             className="flex items-center gap-1.5 rounded-2xl border border-[#507495]/30 bg-[#141E28] px-3.5 py-2 text-xs font-black text-white hover:bg-[#0E151B] transition-colors"
           >
             <Plus className="size-4 text-[#1D7DD7]" />
@@ -378,6 +367,16 @@ function ScheduleContent() {
                       <ArrowRight className="size-3.5" />
                     </button>
                     <button
+                      onClick={() => {
+                        setEditingItem(item);
+                        setIsCRUDModalOpen(true);
+                      }}
+                      className="p-2.5 rounded-xl border border-[#507495]/20 bg-[#0E151B] text-[#74777E] hover:text-white hover:border-[#1D7DD7]/50 transition-colors"
+                      title="Edit Subject"
+                    >
+                      <Edit2 className="size-4" />
+                    </button>
+                    <button
                       onClick={() => handleDeleteSubject(item.id)}
                       className="p-2.5 rounded-xl border border-[#507495]/20 bg-[#0E151B] text-[#74777E] hover:text-rose-400 hover:border-rose-500/30 transition-colors"
                       title="Remove Subject"
@@ -461,137 +460,13 @@ function ScheduleContent() {
         </div>
       )}
 
-      {/* ── ADD SUBJECT MANUALLY MODAL ── */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-3xl border border-[#507495]/30 bg-[#141E28] p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between pb-2 border-b border-[#507495]/20">
-              <h3 className="text-base font-black text-white flex items-center gap-2">
-                <Plus className="size-5 text-[#1D7DD7]" />
-                <span>Add Class Manually</span>
-              </h3>
-              <button
-                onClick={() => setIsAddModalOpen(false)}
-                className="p-1 rounded-lg text-[#74777E] hover:text-white"
-              >
-                <X className="size-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddManualSubject} className="space-y-3.5 text-xs">
-              <div className="space-y-1">
-                <label className="font-extrabold text-[#74777E] uppercase">Course Code</label>
-                <input
-                  type="text"
-                  value={newCourseCode}
-                  onChange={(e) => setNewCourseCode(e.target.value)}
-                  placeholder="e.g. CS 301 or IT-CPSTONE41"
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
-                  required
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-extrabold text-[#74777E] uppercase">Course Title</label>
-                <input
-                  type="text"
-                  value={newCourseTitle}
-                  onChange={(e) => setNewCourseTitle(e.target.value)}
-                  placeholder="e.g. Data Structures and Algorithms"
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
-                  required
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="font-extrabold text-[#74777E] uppercase">Assigned Room</label>
-                  <select
-                    value={newRoom}
-                    onChange={(e) => setNewRoom(e.target.value)}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
-                  >
-                    <option value="CCS 538">CCS 538 (5F)</option>
-                    <option value="Mac Lab 101">Mac Lab 101 (1F)</option>
-                    <option value="CCS 201">CCS 201 (2F)</option>
-                    <option value="Lecture 202">Lecture 202 (2F)</option>
-                    <option value="CCS 301">CCS 301 (3F)</option>
-                    <option value="CCS 302">CCS 302 (3F)</option>
-                    <option value="AV Hall 401">AV Hall 401 (4F)</option>
-                    <option value="Innovation 501">Innovation 501 (5F)</option>
-                  </select>
-                </div>
-
-                <div className="space-y-1">
-                  <label className="font-extrabold text-[#74777E] uppercase">Day of Week</label>
-                  <select
-                    value={newDay}
-                    onChange={(e) => setNewDay(e.target.value as DayOfWeek)}
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
-                  >
-                    <option value="Mon">Mon</option>
-                    <option value="Tue">Tue</option>
-                    <option value="Wed">Wed</option>
-                    <option value="Thu">Thu</option>
-                    <option value="Fri">Fri</option>
-                    <option value="Sat">Sat</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="font-extrabold text-[#74777E] uppercase">Start Time</label>
-                  <input
-                    type="text"
-                    value={newStartTime}
-                    onChange={(e) => setNewStartTime(e.target.value)}
-                    placeholder="08:00 AM"
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="font-extrabold text-[#74777E] uppercase">End Time</label>
-                  <input
-                    type="text"
-                    value={newEndTime}
-                    onChange={(e) => setNewEndTime(e.target.value)}
-                    placeholder="10:30 AM"
-                    className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="font-extrabold text-[#74777E] uppercase">Instructor Name</label>
-                <input
-                  type="text"
-                  value={newInstructor}
-                  onChange={(e) => setNewInstructor(e.target.value)}
-                  placeholder="e.g. Dr. Maria Santos"
-                  className="w-full rounded-xl border border-[#507495]/30 bg-[#0E151B] p-2.5 text-white"
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-3 border-t border-[#507495]/20">
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 rounded-xl border border-[#507495]/30 text-[#74777E] hover:text-white"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-xl bg-[#1D7DD7] text-white font-black hover:bg-[#1D7DD7]/90 shadow-md shadow-[#1D7DD7]/30"
-                >
-                  Save Subject
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* ── SCHEDULE CRUD MODAL ── */}
+      <ScheduleCRUDModal
+        isOpen={isCRUDModalOpen}
+        item={editingItem}
+        onClose={() => setIsCRUDModalOpen(false)}
+        onSave={handleSaveSchedule}
+      />
 
       {/* ── OCR UPLOAD MODAL ── */}
       <OCRUploadModal

@@ -1,326 +1,469 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { 
-  Users, 
-  Search, 
-  Filter, 
-  UserCheck, 
-  UserX, 
-  Shield, 
-  GraduationCap, 
-  UserCog, 
-  MoreVertical, 
-  ChevronLeft, 
-  ChevronRight,
+import {
+  Users,
+  UserPlus,
+  Search,
+  Filter,
+  Shield,
+  GraduationCap,
+  User,
+  Edit2,
+  Trash2,
   CheckCircle2,
-  AlertCircle
+  AlertTriangle,
+  ChevronLeft,
+  ChevronRight,
+  ShieldCheck,
+  RefreshCw,
 } from "lucide-react";
-import { UserRole } from "@/types/database";
-
-interface ManagedUser {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  status: "Active" | "Suspended" | "Inactive";
-  createdAt: string;
-}
+import { CreateUserModal, CreateUserData } from "@/components/admin/create-user-modal";
+import { EditUserModal, ManagedUser } from "@/components/admin/edit-user-modal";
+import type { UserRole } from "@/types/database";
 
 const initialUsers: ManagedUser[] = [
   {
-    id: "usr-101",
-    firstName: "Juan",
-    lastName: "Dela Cruz",
-    email: "student@uc.edu.ph",
+    id: "u-1",
+    id_number: "22684955",
+    first_name: "Tristan",
+    last_name: "Developer",
+    email: "22684955@uc.edu.ph",
     role: "student",
+    program: "BSCS",
     status: "Active",
-    createdAt: "2026-01-15",
+    created_at: "2026-08-01",
   },
   {
-    id: "usr-102",
-    firstName: "Maria",
-    lastName: "Santos",
-    email: "faculty@uc.edu.ph",
+    id: "u-2",
+    id_number: "21589412",
+    first_name: "Maria",
+    last_name: "Santos",
+    email: "maria.santos@uc.edu.ph",
     role: "faculty",
+    program: "CCS",
     status: "Active",
-    createdAt: "2026-01-10",
+    created_at: "2026-07-15",
   },
   {
-    id: "usr-103",
-    firstName: "System",
-    lastName: "Administrator",
+    id: "u-3",
+    id_number: "20194821",
+    first_name: "Admin",
+    last_name: "Superuser",
     email: "admin@uc.edu.ph",
     role: "admin",
+    program: "CCS",
     status: "Active",
-    createdAt: "2026-01-01",
+    created_at: "2026-06-10",
   },
   {
-    id: "usr-104",
-    firstName: "Pedro",
-    lastName: "Cruz",
-    email: "pedro.cruz@uc.edu.ph",
-    role: "faculty",
+    id: "u-4",
+    id_number: "22784910",
+    first_name: "Pedro",
+    last_name: "Cruz",
+    email: "22784910@uc.edu.ph",
+    role: "student",
+    program: "BSIT",
     status: "Active",
-    createdAt: "2026-02-01",
+    created_at: "2026-08-05",
   },
   {
-    id: "usr-105",
-    firstName: "Ana",
-    lastName: "Reyes",
+    id: "u-5",
+    id_number: "22490123",
+    first_name: "Ana",
+    last_name: "Reyes",
     email: "ana.reyes@uc.edu.ph",
-    role: "student",
-    status: "Suspended",
-    createdAt: "2026-02-05",
-  },
-  {
-    id: "usr-106",
-    firstName: "Ramon",
-    lastName: "Garcia",
-    email: "ramon.garcia@uc.edu.ph",
     role: "faculty",
+    program: "CCS",
     status: "Active",
-    createdAt: "2026-02-10",
+    created_at: "2026-07-20",
   },
   {
-    id: "usr-107",
-    firstName: "Angela",
-    lastName: "Mercado",
-    email: "angela.m@uc.edu.ph",
+    id: "u-6",
+    id_number: "21984712",
+    first_name: "Carlos",
+    last_name: "Tan",
+    email: "21984712@uc.edu.ph",
     role: "student",
-    status: "Inactive",
-    createdAt: "2026-02-12",
+    program: "ACT",
+    status: "Suspended",
+    created_at: "2026-07-28",
   },
 ];
 
-export default function UserManagementPage() {
+export default function AdminUsersPage() {
   const [users, setUsers] = useState<ManagedUser[]>(initialUsers);
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<string>("All");
-  const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 5;
+  const [searchQuery, setSearchQuery] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("ALL");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
-  // Filter users
+  // Modal States
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<ManagedUser | null>(null);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+  const [notification, setNotification] = useState<string | null>(null);
+
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Filtered Users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
-      const matchesSearch = 
-        `${u.firstName} ${u.lastName}`.toLowerCase().includes(search.toLowerCase()) ||
-        u.email.toLowerCase().includes(search.toLowerCase());
-      const matchesRole = roleFilter === "All" || u.role === roleFilter.toLowerCase();
-      const matchesStatus = statusFilter === "All" || u.status === statusFilter;
+      const matchesSearch =
+        u.first_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.last_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (u.id_number && u.id_number.includes(searchQuery));
+
+      const matchesRole =
+        roleFilter === "ALL" || u.role.toLowerCase() === roleFilter.toLowerCase();
+      const matchesStatus =
+        statusFilter === "ALL" || u.status.toLowerCase() === statusFilter.toLowerCase();
+
       return matchesSearch && matchesRole && matchesStatus;
     });
-  }, [users, search, roleFilter, statusFilter]);
+  }, [users, searchQuery, roleFilter, statusFilter]);
 
-  const totalPages = Math.ceil(filteredUsers.length / pageSize) || 1;
+  // Paginated Slices
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
   const paginatedUsers = useMemo(() => {
-    const start = (currentPage - 1) * pageSize;
-    return filteredUsers.slice(start, start + pageSize);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(start, start + itemsPerPage);
   }, [filteredUsers, currentPage]);
 
-  const handleRoleChange = (userId: string, newRole: UserRole) => {
-    setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
-    );
+  const showNotification = (msg: string) => {
+    setNotification(msg);
+    setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleStatusChange = (userId: string, newStatus: "Active" | "Suspended" | "Inactive") => {
+  // Create User Handler
+  const handleCreateUser = (data: CreateUserData) => {
+    const newUser: ManagedUser = {
+      id: `u-${Date.now()}`,
+      id_number: data.id_number,
+      first_name: data.first_name,
+      last_name: data.last_name,
+      email: data.email,
+      role: data.role,
+      program: data.program,
+      status: data.status,
+      created_at: new Date().toISOString().split("T")[0],
+    };
+
+    setUsers((prev) => [newUser, ...prev]);
+    showNotification(`Account successfully provisioned for ${newUser.first_name} ${newUser.last_name}!`);
+  };
+
+  // Update User Handler
+  const handleUpdateUser = (updatedUser: ManagedUser) => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === userId ? { ...u, status: newStatus } : u))
+      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
     );
+    showNotification(`User details updated for ${updatedUser.first_name} ${updatedUser.last_name}.`);
+  };
+
+  // Delete User Handler
+  const handleDeleteUser = () => {
+    if (!deletingUser || deleteConfirmationText !== "DELETE") return;
+
+    setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
+    showNotification(`Account ${deletingUser.email} has been purged.`);
+    setDeletingUser(null);
+    setDeleteConfirmationText("");
+  };
+
+  const getRoleBadge = (role: UserRole) => {
+    switch (role) {
+      case "admin":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 text-[10px] font-black text-rose-400">
+            <Shield className="size-3" />
+            <span>Admin</span>
+          </span>
+        );
+      case "faculty":
+        return (
+          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[10px] font-black text-indigo-400">
+            <User className="size-3" />
+            <span>Faculty</span>
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 rounded-lg bg-[#1D7DD7]/15 border border-[#1D7DD7]/30 px-2 py-0.5 text-[10px] font-black text-[#1D7DD7]">
+            <GraduationCap className="size-3" />
+            <span>Student</span>
+          </span>
+        );
+    }
   };
 
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#507495]/20 pb-5">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2">
-            <Users className="size-8 text-[#1D7DD7]" />
-            <span>User Management Panel</span>
+          <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-2.5">
+            <Users className="size-7 text-[#1D7DD7]" />
+            <span>User Accounts & Identity Management</span>
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Manage registered student, faculty, and admin accounts, role permissions, and active statuses.
+          <p className="text-xs sm:text-sm text-[#74777E] mt-1">
+            Provision, inspect, and manage role-based credentials for UC Main Campus students, faculty, and administrators.
           </p>
         </div>
+
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-2xl bg-[#1D7DD7] px-4 py-2.5 text-xs font-black text-white hover:bg-[#1D7DD7]/90 shadow-lg shadow-[#1D7DD7]/30 transition-all shrink-0"
+        >
+          <UserPlus className="size-4" />
+          <span>Provision New User</span>
+        </button>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-card border border-border p-4 rounded-2xl shadow-sm">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      {/* Notification Toast */}
+      {notification && (
+        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-400 font-bold animate-in fade-in">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{notification}</span>
+        </div>
+      )}
+
+      {/* Filters & Search Controls */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-[#74777E]" />
           <input
             type="text"
-            value={search}
+            value={searchQuery}
             onChange={(e) => {
-              setSearch(e.target.value);
+              setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search users by name or email..."
-            className="w-full pl-9 pr-3 py-2 text-xs font-bold rounded-xl border border-input bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+            placeholder="Search by name, email, or UC ID Number..."
+            className="w-full rounded-2xl border border-[#507495]/30 bg-[#0E151B] py-2.5 pl-10 pr-4 text-xs font-medium text-white placeholder:text-[#74777E] focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
           />
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-            <Filter className="size-3.5 text-[#1D7DD7]" />
-            <span>Role:</span>
-            <select
-              value={roleFilter}
-              onChange={(e) => {
-                setRoleFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-input bg-background px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none"
-            >
-              <option value="All">All Roles</option>
-              <option value="student">Student</option>
-              <option value="faculty">Faculty</option>
-              <option value="admin">Admin</option>
-            </select>
+        {/* Role and Status Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-2xl border border-[#507495]/30 bg-[#0E151B] p-1 text-xs">
+            {["ALL", "STUDENT", "FACULTY", "ADMIN"].map((role) => (
+              <button
+                key={role}
+                onClick={() => {
+                  setRoleFilter(role);
+                  setCurrentPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-xl font-black capitalize transition-all ${
+                  roleFilter === role
+                    ? "bg-[#1D7DD7] text-white shadow-sm"
+                    : "text-[#74777E] hover:text-white"
+                }`}
+              >
+                {role.toLowerCase()}
+              </button>
+            ))}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-            <span>Status:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="rounded-xl border border-input bg-background px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none"
-            >
-              <option value="All">All Statuses</option>
-              <option value="Active">Active</option>
-              <option value="Suspended">Suspended</option>
-              <option value="Inactive">Inactive</option>
-            </select>
-          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-2xl border border-[#507495]/30 bg-[#0E151B] px-3 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#1D7DD7]"
+          >
+            <option value="ALL">All Statuses</option>
+            <option value="Active">Active Only</option>
+            <option value="Suspended">Suspended Only</option>
+          </select>
         </div>
       </div>
 
       {/* Users Data Table */}
-      <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+      <div className="rounded-3xl border border-[#507495]/20 bg-[#141E28] overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-muted text-muted-foreground font-extrabold uppercase border-b border-border text-[10px] tracking-wider">
+            <thead className="border-b border-[#507495]/20 bg-[#0E151B]/80 text-[#74777E] uppercase font-black tracking-wider text-[10px]">
               <tr>
-                <th className="p-4">User</th>
-                <th className="p-4">Email</th>
-                <th className="p-4">Role</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Joined Date</th>
-                <th className="p-4 text-center">Status Action</th>
+                <th className="py-3.5 px-4">UC ID Number</th>
+                <th className="py-3.5 px-4">Full Name</th>
+                <th className="py-3.5 px-4">Email Address</th>
+                <th className="py-3.5 px-4">Program / Role</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Created Date</th>
+                <th className="py-3.5 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {paginatedUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-muted/40 transition-colors">
-                  <td className="p-4 font-bold text-foreground">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex size-8 items-center justify-center rounded-full bg-[#1D7DD7]/10 text-[#1D7DD7] font-black text-xs">
-                        {user.firstName[0]}
-                      </div>
-                      <div>
-                        <p className="font-extrabold text-foreground">{user.firstName} {user.lastName}</p>
-                        <p className="text-[10px] text-muted-foreground">ID: {user.id}</p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="p-4 text-muted-foreground font-medium">{user.email}</td>
-
-                  {/* Role Selector Toggle */}
-                  <td className="p-4">
-                    <select
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                      className="rounded-xl border border-input bg-background px-2.5 py-1 text-xs font-extrabold text-foreground capitalize focus:ring-2 focus:ring-[#1D7DD7]"
-                    >
-                      <option value="student">🎓 Student</option>
-                      <option value="faculty">👨‍🏫 Faculty</option>
-                      <option value="admin">🛡️ Admin</option>
-                    </select>
-                  </td>
-
-                  {/* Status Badge */}
-                  <td className="p-4">
-                    <span
-                      className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[10px] font-extrabold ${
-                        user.status === "Active"
-                          ? "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
-                          : user.status === "Suspended"
-                          ? "bg-rose-500/10 text-rose-600 border border-rose-500/30"
-                          : "bg-muted text-muted-foreground border border-border"
-                      }`}
-                    >
-                      <span className={`size-1.5 rounded-full ${
-                        user.status === "Active" ? "bg-emerald-500" : user.status === "Suspended" ? "bg-rose-500" : "bg-muted-foreground"
-                      }`} />
-                      {user.status}
-                    </span>
-                  </td>
-
-                  <td className="p-4 text-muted-foreground font-semibold">{user.createdAt}</td>
-
-                  {/* Status Controls */}
-                  <td className="p-4 text-center">
-                    <div className="flex items-center justify-center gap-1.5">
-                      {user.status !== "Active" && (
-                        <button
-                          onClick={() => handleStatusChange(user.id, "Active")}
-                          className="px-2.5 py-1 rounded-lg bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 text-[11px] font-extrabold"
-                        >
-                          Enable
-                        </button>
-                      )}
-                      {user.status !== "Suspended" && (
-                        <button
-                          onClick={() => handleStatusChange(user.id, "Suspended")}
-                          className="px-2.5 py-1 rounded-lg bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 text-[11px] font-extrabold"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                    </div>
+            <tbody className="divide-y divide-[#507495]/10">
+              {paginatedUsers.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center text-[#74777E]">
+                    <Users className="size-8 mx-auto mb-2 opacity-40" />
+                    <p className="font-bold">No user accounts found matching query.</p>
                   </td>
                 </tr>
-              ))}
+              ) : (
+                paginatedUsers.map((user) => (
+                  <tr key={user.id} className="hover:bg-[#0E151B]/40 transition-colors">
+                    <td className="py-3.5 px-4 font-mono font-bold text-white">
+                      {user.id_number || "—"}
+                    </td>
+                    <td className="py-3.5 px-4 font-extrabold text-white">
+                      {user.first_name} {user.last_name}
+                    </td>
+                    <td className="py-3.5 px-4 text-[#74777E] font-medium">{user.email}</td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2">
+                        {getRoleBadge(user.role)}
+                        {user.program && (
+                          <span className="text-[10px] font-bold text-[#74777E] bg-[#0E151B] px-1.5 py-0.5 rounded">
+                            {user.program}
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-black ${
+                          user.status === "Active"
+                            ? "bg-emerald-500/15 text-emerald-400"
+                            : "bg-rose-500/15 text-rose-400"
+                        }`}
+                      >
+                        {user.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-[#74777E] font-medium">{user.created_at}</td>
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <button
+                          onClick={() => setEditingUser(user)}
+                          className="p-1.5 rounded-lg text-[#74777E] hover:text-white hover:bg-[#0E151B] transition-colors"
+                          title="Edit User"
+                        >
+                          <Edit2 className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeletingUser(user)}
+                          className="p-1.5 rounded-lg text-[#74777E] hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                          title="Delete User"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination Footer */}
-        <div className="flex items-center justify-between p-4 border-t border-border bg-muted/20 text-xs font-bold text-muted-foreground">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-[#507495]/20 bg-[#0E151B]/40 text-xs text-[#74777E]">
           <span>
-            Showing {paginatedUsers.length} of {filteredUsers.length} Users
+            Showing <strong>{paginatedUsers.length}</strong> of <strong>{filteredUsers.length}</strong> accounts
           </span>
 
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
               disabled={currentPage === 1}
-              onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
-              className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-50"
+              className="p-1.5 rounded-xl border border-[#507495]/30 hover:bg-[#0E151B] disabled:opacity-30"
             >
               <ChevronLeft className="size-4" />
             </button>
-
-            <span>
+            <span className="font-bold text-white">
               Page {currentPage} of {totalPages}
             </span>
-
             <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage === totalPages}
-              onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
-              className="p-1.5 rounded-lg border border-border bg-background hover:bg-accent disabled:opacity-50"
+              className="p-1.5 rounded-xl border border-[#507495]/30 hover:bg-[#0E151B] disabled:opacity-30"
             >
               <ChevronRight className="size-4" />
             </button>
           </div>
         </div>
       </div>
+
+      {/* Modals */}
+      <CreateUserModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onCreate={handleCreateUser}
+      />
+
+      <EditUserModal
+        isOpen={!!editingUser}
+        user={editingUser}
+        onClose={() => setEditingUser(null)}
+        onUpdate={handleUpdateUser}
+      />
+
+      {/* Secure Delete Confirmation Dialog */}
+      {deletingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-md rounded-3xl border border-rose-500/40 bg-[#141E28] p-6 shadow-2xl space-y-4 animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="flex size-10 items-center justify-center rounded-2xl bg-rose-500/20">
+                <AlertTriangle className="size-5 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white">Purge User Account</h3>
+                <p className="text-xs text-[#74777E]">Irreversible Account Action</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300">
+              Are you sure you want to delete{" "}
+              <strong className="text-white">
+                {deletingUser.first_name} {deletingUser.last_name} ({deletingUser.email})
+              </strong>
+              ? This will revoke all campus indoor navigation and schedule data immediately.
+            </p>
+
+            <div className="space-y-1.5 pt-2">
+              <label className="text-[11px] font-black text-[#74777E] uppercase">
+                Type <strong className="text-rose-400">DELETE</strong> to confirm:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirmationText}
+                onChange={(e) => setDeleteConfirmationText(e.target.value)}
+                placeholder="DELETE"
+                className="w-full rounded-xl border border-rose-500/40 bg-[#0E151B] p-2.5 text-xs font-mono font-bold text-white focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-[#507495]/20">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeletingUser(null);
+                  setDeleteConfirmationText("");
+                }}
+                className="px-4 py-2 rounded-xl border border-[#507495]/30 text-xs font-bold text-[#74777E] hover:text-white"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={deleteConfirmationText !== "DELETE"}
+                onClick={handleDeleteUser}
+                className="px-4 py-2 rounded-xl bg-rose-600 text-xs font-black text-white hover:bg-rose-500 transition-all disabled:opacity-40"
+              >
+                Confirm Purge
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
