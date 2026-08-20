@@ -172,8 +172,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground antialiased selection:bg-primary selection:text-white transition-colors duration-200">
       {/* ── Desktop Left Sidebar (≥1024px / lg breakpoint) ── */}
-      <aside className="hidden lg:flex w-64 flex-col justify-between border-r border-border bg-card p-5 shrink-0 z-30 transition-colors duration-200">
-        <div className="space-y-6">
+      <aside className="hidden lg:flex w-64 sticky top-0 h-screen flex-col justify-between border-r border-border bg-card p-5 shrink-0 z-30 transition-colors duration-200">
+        <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-1">
           {/* Brand Logo Header */}
           <Link href="/dashboard" className="flex items-center gap-3 px-2">
             <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
@@ -243,8 +243,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </nav>
         </div>
 
-        {/* Sidebar Footer: Theme Toggle & Sign Out Button */}
-        <div className="space-y-3 pt-4 border-t border-border">
+        {/* Sidebar Footer: Theme Toggle & Sign Out Button (Always visible / not scrolled) */}
+        <div className="shrink-0 space-y-3 pt-4 border-t border-border mt-auto">
           <div className="flex items-center justify-between px-1">
             <span className="text-[11px] font-bold text-muted-foreground">Interface Theme</span>
             <ThemeToggle />
@@ -327,7 +327,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           />
 
           <div className="fixed inset-y-0 left-0 w-72 bg-card border-r border-border p-5 flex flex-col justify-between shadow-2xl z-50 animate-in slide-in-from-left duration-200">
-            <div className="space-y-6">
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-1">
               <div className="flex items-center justify-between">
                 <Link
                   href="/dashboard"
@@ -405,8 +405,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               </nav>
             </div>
 
-            {/* Mobile Drawer Footer */}
-            <div className="space-y-3 pt-4 border-t border-border">
+            {/* Mobile Drawer Footer (Always visible / not scrolled) */}
+            <div className="shrink-0 space-y-3 pt-4 border-t border-border mt-auto">
               <div className="flex items-center justify-between px-1">
                 <span className="text-xs font-bold text-muted-foreground">Theme</span>
                 <ThemeToggle />
