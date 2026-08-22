@@ -65,12 +65,13 @@ export async function middleware(request: NextRequest) {
     pathname === "/register" ||
     pathname === "/privacy";
 
-  // 2. Unauthenticated route protection -> Redirect guest visitors to /explore
+  // 2. Unauthenticated route protection -> Redirect guest visitors to /login
   if (!isAuthenticated && !isPublicRoute) {
-    const exploreUrl = request.nextUrl.clone();
-    exploreUrl.pathname = "/explore";
-    return NextResponse.redirect(exploreUrl);
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = "/login";
+    return NextResponse.redirect(loginUrl);
   }
+
 
   // 3. Authenticated Role-Based Access Control (RBAC)
   if (isAuthenticated && role) {

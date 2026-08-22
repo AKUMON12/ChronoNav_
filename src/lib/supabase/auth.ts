@@ -109,22 +109,84 @@ export async function signUp(
   }
 }
 
-/** Sign out the current user session */
+/** Sign out the current user session and thoroughly destroy all auth cookies/tokens */
 export async function signOut() {
   if (typeof window !== "undefined") {
+    // 1. Purge all local storage tokens & cached profile payloads
     localStorage.removeItem("chrononav_user_session");
-    document.cookie = "sb-mock-role=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    localStorage.removeItem("sb-access-token");
+    localStorage.removeItem("sb-refresh-token");
+    sessionStorage.clear();
+
+    // 2. Expire development and edge middleware cookies across domain
+    const cookieNames = [
+      "sb-mock-role",
+      "sb-access-token",
+      "sb-refresh-token",
+      "supabase-auth-token",
+    ];
+
+    cookieNames.forEach((name) => {
+      document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+      document.cookie = `${name}=; path=/; domain=${window.location.hostname}; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+    });
   }
 
   if (!isPlaceholderEnv()) {
     try {
-      const { error } = await supabase.auth.signOut();
+      const { error } = await supabase.auth.signOut({ scope: "global" });
       return { error: error?.message || null };
     } catch {
       return { error: null };
     }
   }
   return { error: null };
+}
+
+/** Update user profile information across active session and Supabase */
+export async function updateUserProfile(updates: {
+  first_name?: string;
+  last_name?: string;
+  id_number?: string;
+  program?: string;
+  avatar_url?: string;
+  address?: string;
+  city?: string;
+  phone?: string;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  bio?: string;
+}) {
+  if (typeof window !== "undefined") {
+    const current = await getCurrentUser();
+    if (current) {
+      const updatedMetadata = {
+        ...(current.user_metadata || {}),
+        ...updates,
+      };
+      const updatedUser = {
+        ...current,
+        user_metadata: updatedMetadata,
+      };
+      localStorage.setItem("chrononav_user_session", JSON.stringify(updatedUser));
+    }
+  }
+
+  if (!isPlaceholderEnv()) {
+    try {
+      const { data, error } = await supabase.auth.updateUser({
+        data: updates,
+      });
+      if (error) return { user: null, error: error.message };
+      return { user: data.user, error: null };
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update profile.";
+      return { user: null, error: msg };
+    }
+  }
+
+  const user = await getCurrentUser();
+  return { user, error: null };
 }
 
 /** Get the currently authenticated user profile */
@@ -162,3 +224,4 @@ export function onAuthStateChange(
   }
   return supabase.auth.onAuthStateChange(callback);
 }
+

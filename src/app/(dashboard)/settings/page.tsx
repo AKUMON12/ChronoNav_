@@ -121,102 +121,40 @@ export default function AccountSettingsPage() {
         </p>
       </div>
 
-      {/* ── SECTION 1: PROFILE DETAILS ── */}
-      <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl space-y-6">
-        <div className="flex items-center justify-between border-b border-border pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 border border-primary/30 text-primary font-black text-lg">
-              {firstName.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <h2 className="text-base font-black text-foreground">
+      {/* ── SECTION 1: PROFILE REDIRECTION BANNER ── */}
+      <div className="rounded-3xl border border-primary/30 bg-primary/5 p-6 sm:p-8 shadow-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-primary text-white font-black text-xl shadow-lg shadow-primary/25 shrink-0">
+            {firstName.charAt(0).toUpperCase()}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-black text-foreground">
                 {firstName} {lastName}
               </h2>
-              <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md uppercase">
-                {userRole} Account
+              <span className="text-[10px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md uppercase">
+                {userRole}
               </span>
             </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              UC ID: <span className="font-mono font-bold text-foreground">{idNumber}</span> • {program}
+            </p>
           </div>
         </div>
 
-        {profileNotification && (
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-500/15 border border-emerald-500/30 p-3 text-xs font-bold text-emerald-500">
-            <CheckCircle2 className="size-4 shrink-0" />
-            <span>{profileNotification}</span>
-          </div>
-        )}
-
-        <form onSubmit={handleSaveProfile} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">First Name</label>
-              <input
-                type="text"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Last Name</label>
-              <input
-                type="text"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">UC ID Number</label>
-              <input
-                type="text"
-                value={idNumber}
-                onChange={(e) => setIdNumber(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-mono font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                required
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Program / Dept</label>
-              <input
-                type="text"
-                value={program}
-                onChange={(e) => setProgram(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground font-bold focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Email Address</label>
-            <input
-              type="email"
-              value={email}
-              disabled
-              className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-muted-foreground cursor-not-allowed"
-            />
-            <span className="text-[10px] text-muted-foreground">Institutional email address is managed via CCS Registry.</span>
-          </div>
-
-          <div className="flex justify-end pt-2">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-black hover:bg-primary/90 shadow-md shadow-primary/30 transition-all"
-            >
-              <Save className="size-4" />
-              <span>Save Profile Details</span>
-            </button>
-          </div>
-        </form>
+        <a
+          href="/profile"
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-black text-xs hover:bg-primary/90 shadow-md shadow-primary/30 transition-all shrink-0"
+        >
+          <User className="size-4" />
+          <span>Edit Profile & Address</span>
+        </a>
       </div>
+
 
       {/* ── SECTION 2: PASSWORD & SECURITY ── */}
       <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl space-y-6">
+
         <div className="border-b border-border pb-3">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
             <KeyRound className="size-5 text-primary" />

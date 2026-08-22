@@ -65,6 +65,12 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student", "faculty", "admin"],
   },
   {
+    label: "My Profile",
+    href: "/profile",
+    icon: User,
+    roles: ["student", "faculty", "admin"],
+  },
+  {
     label: "Settings",
     href: "/settings",
     icon: Settings,
@@ -103,6 +109,7 @@ const navigationConfig: NavigationItem[] = [
     roles: ["admin"],
   },
 ];
+
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -147,13 +154,39 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     item.roles.includes(userRole)
   );
 
-  // Mobile Bottom Dock Items (Top 4 core items + profile)
-  const mobileDockItems = filteredNavItems.slice(0, 4);
+  // Mobile Bottom Dock Items (Overview, Schedule, Map, Profile)
+  const mobileDockItems: NavigationItem[] = [
+    {
+      label: "Overview",
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      roles: ["student", "faculty", "admin"],
+    },
+    {
+      label: "Schedule",
+      href: "/schedule",
+      icon: Calendar,
+      roles: ["student", "faculty", "admin"],
+    },
+    {
+      label: "Campus Map",
+      href: "/map",
+      icon: MapPin,
+      roles: ["student", "faculty", "admin"],
+    },
+    {
+      label: "Profile",
+      href: "/profile",
+      icon: User,
+      roles: ["student", "faculty", "admin"],
+    },
+  ];
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
     await signOut();
-    router.push("/login");
+    // Complete hard navigation to login and clear router cache
+    window.location.href = "/login";
   };
 
   const getRoleBadgeStyle = (role: UserRole) => {
@@ -187,13 +220,20 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             </div>
           </Link>
 
-          {/* User Profile Card */}
-          <div className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0">
+          {/* User Profile Card (Clickable link to /profile) */}
+          <Link
+            href="/profile"
+            className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-all duration-200 group block"
+            title="Manage My Profile"
+          >
+            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0 group-hover:scale-105 transition-transform">
               {userName.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden flex-1">
-              <p className="text-xs font-black text-foreground truncate">{userName}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-black text-foreground truncate">{userName}</p>
+                <ChevronRight className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
                   className={`rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider ${getRoleBadgeStyle(
@@ -202,9 +242,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 >
                   {userRole}
                 </span>
+                <span className="text-[9px] font-bold text-muted-foreground">View Profile</span>
               </div>
             </div>
-          </div>
+          </Link>
+
 
           {/* Dynamic Navigation Links */}
           <nav className="space-y-1.5" aria-label="Desktop Navigation">
@@ -301,15 +343,19 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <span>Campus Map View</span>
             </Link>
 
-            {/* User Avatar Badge */}
-            <div className="flex items-center gap-2 pl-2 border-l border-border">
+            {/* User Avatar Badge (Clickable link to /profile) */}
+            <Link
+              href="/profile"
+              className="flex items-center gap-2 pl-2 border-l border-border hover:opacity-85 transition-opacity"
+              title="View Profile"
+            >
               <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-black">
                 {userName.charAt(0).toUpperCase()}
               </div>
               <span className="hidden sm:inline text-xs font-black text-foreground capitalize">
                 {userRole}
               </span>
-            </div>
+            </Link>
           </div>
         </header>
 
@@ -356,8 +402,12 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 </button>
               </div>
 
-              {/* User Identity Card */}
-              <div className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3">
+              {/* User Identity Card (Clickable to /profile) */}
+              <Link
+                href="/profile"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-colors block"
+              >
                 <div className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary font-black text-sm">
                   {userName.charAt(0).toUpperCase()}
                 </div>
@@ -371,7 +421,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                     {userRole}
                   </span>
                 </div>
-              </div>
+              </Link>
+
 
               {/* Mobile Nav Links */}
               <nav className="space-y-1" aria-label="Mobile Navigation Drawer">
