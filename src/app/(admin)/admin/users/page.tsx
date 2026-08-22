@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
   Users,
   UserPlus,
@@ -17,12 +18,36 @@ import {
   ChevronRight,
   ShieldCheck,
   RefreshCw,
+  Eye,
+  Mail,
+  Phone,
+  MapPin,
+  Calendar,
+  BookOpen,
+  X,
+  Sparkles,
+  Lock,
+  UserCheck,
+  UserX,
 } from "lucide-react";
 import { CreateUserModal, CreateUserData } from "@/components/admin/create-user-modal";
 import { EditUserModal, ManagedUser } from "@/components/admin/edit-user-modal";
 import type { UserRole } from "@/types/database";
+import { BackButton } from "@/components/shared/back-button";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
-const initialUsers: ManagedUser[] = [
+interface DetailedManagedUser extends ManagedUser {
+  phone?: string;
+  address?: string;
+  emergency_contact?: string;
+  emergency_phone?: string;
+  year_level?: string;
+  enrolled_or_teaching_count?: number;
+  last_login?: string;
+  bio?: string;
+}
+
+const initialUsers: DetailedManagedUser[] = [
   {
     id: "u-1",
     id_number: "22684955",
@@ -31,7 +56,15 @@ const initialUsers: ManagedUser[] = [
     email: "22684955@uc.edu.ph",
     role: "student",
     program: "BSCS",
+    year_level: "3rd Year",
     status: "Active",
+    phone: "+63 917 123 4567",
+    address: "Sanciangko St, Sambag I, Cebu City",
+    emergency_contact: "Elena Developer (Parent)",
+    emergency_phone: "+63 918 987 6543",
+    enrolled_or_teaching_count: 5,
+    last_login: "2026-08-22 21:40",
+    bio: "Undergraduate computer science student researching graph-based indoor wayfinding and algorithms.",
     created_at: "2026-08-01",
   },
   {
@@ -42,7 +75,15 @@ const initialUsers: ManagedUser[] = [
     email: "maria.santos@uc.edu.ph",
     role: "faculty",
     program: "CCS",
+    year_level: "Faculty Instructor",
     status: "Active",
+    phone: "+63 920 445 1122",
+    address: "Banilad, Cebu City",
+    emergency_contact: "Dr. Roberto Santos (Spouse)",
+    emergency_phone: "+63 917 555 4321",
+    enrolled_or_teaching_count: 4,
+    last_login: "2026-08-22 18:30",
+    bio: "Professor in Computer Science handling Data Structures, Algorithms, and Software Engineering.",
     created_at: "2026-07-15",
   },
   {
@@ -53,7 +94,15 @@ const initialUsers: ManagedUser[] = [
     email: "admin@uc.edu.ph",
     role: "admin",
     program: "CCS",
+    year_level: "System Administrator",
     status: "Active",
+    phone: "+63 919 000 1111",
+    address: "UC Main Campus Administration Suite",
+    emergency_contact: "CCS Dean Office",
+    emergency_phone: "+63 (032) 255-7777",
+    enrolled_or_teaching_count: 0,
+    last_login: "2026-08-22 23:15",
+    bio: "Chief campus administrator overseeing ChronoNav database, user provisioning, and indoor navigation calibration.",
     created_at: "2026-06-10",
   },
   {
@@ -64,7 +113,15 @@ const initialUsers: ManagedUser[] = [
     email: "22784910@uc.edu.ph",
     role: "student",
     program: "BSIT",
+    year_level: "3rd Year",
     status: "Active",
+    phone: "+63 922 789 0123",
+    address: "Urgello St, Sambag II, Cebu City",
+    emergency_contact: "Carlos Cruz (Brother)",
+    emergency_phone: "+63 917 888 9999",
+    enrolled_or_teaching_count: 6,
+    last_login: "2026-08-21 14:10",
+    bio: "Information Technology undergraduate specializing in network infrastructure and systems administration.",
     created_at: "2026-08-05",
   },
   {
@@ -75,7 +132,15 @@ const initialUsers: ManagedUser[] = [
     email: "ana.reyes@uc.edu.ph",
     role: "faculty",
     program: "CCS",
+    year_level: "Associate Professor",
     status: "Active",
+    phone: "+63 933 654 3210",
+    address: "Mandaue City, Cebu",
+    emergency_contact: "Prof. Miguel Reyes",
+    emergency_phone: "+63 918 111 2233",
+    enrolled_or_teaching_count: 3,
+    last_login: "2026-08-22 09:20",
+    bio: "Cisco Certified Instructor heading Enterprise Networking and Cybersecurity courses in CCS 301.",
     created_at: "2026-07-20",
   },
   {
@@ -86,27 +151,41 @@ const initialUsers: ManagedUser[] = [
     email: "21984712@uc.edu.ph",
     role: "student",
     program: "ACT",
+    year_level: "2nd Year",
     status: "Suspended",
+    phone: "+63 915 999 8888",
+    address: "Guadalupe, Cebu City",
+    emergency_contact: "Lucia Tan (Mother)",
+    emergency_phone: "+63 920 333 4444",
+    enrolled_or_teaching_count: 4,
+    last_login: "2026-08-10 11:00",
+    bio: "Associate in Computer Technology student.",
     created_at: "2026-07-28",
   },
 ];
 
+/**
+ * Enterprise Admin User Management Suite
+ * Full CRUD, role elevation/reassignment, active/suspended status toggling,
+ * and comprehensive User Inspection Modal with detailed personal & academic data.
+ */
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<ManagedUser[]>(initialUsers);
+  const [users, setUsers] = useState<DetailedManagedUser[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("ALL");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
 
   // Modal States
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
-  const [deletingUser, setDeletingUser] = useState<ManagedUser | null>(null);
+  const [editingUser, setEditingUser] = useState<DetailedManagedUser | null>(null);
+  const [inspectingUser, setInspectingUser] = useState<DetailedManagedUser | null>(null);
+  const [deletingUser, setDeletingUser] = useState<DetailedManagedUser | null>(null);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const [notification, setNotification] = useState<string | null>(null);
 
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 6;
 
   // Filtered Users
   const filteredUsers = useMemo(() => {
@@ -140,7 +219,7 @@ export default function AdminUsersPage() {
 
   // Create User Handler
   const handleCreateUser = (data: CreateUserData) => {
-    const newUser: ManagedUser = {
+    const newUser: DetailedManagedUser = {
       id: `u-${Date.now()}`,
       id_number: data.id_number,
       first_name: data.first_name,
@@ -148,20 +227,49 @@ export default function AdminUsersPage() {
       email: data.email,
       role: data.role,
       program: data.program,
+      year_level: data.role === "student" ? "1st Year" : "Faculty",
       status: data.status,
+      phone: "+63 900 000 0000",
+      address: "Cebu City, Philippines",
+      enrolled_or_teaching_count: 0,
+      last_login: "Never",
       created_at: new Date().toISOString().split("T")[0],
     };
 
     setUsers((prev) => [newUser, ...prev]);
-    showNotification(`Account successfully provisioned for ${newUser.first_name} ${newUser.last_name}!`);
+    showNotification(`Account created for ${newUser.first_name} ${newUser.last_name}!`);
   };
 
   // Update User Handler
   const handleUpdateUser = (updatedUser: ManagedUser) => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+      prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
     );
-    showNotification(`User details updated for ${updatedUser.first_name} ${updatedUser.last_name}.`);
+    showNotification(`Updated profile for ${updatedUser.first_name} ${updatedUser.last_name}.`);
+    setEditingUser(null);
+  };
+
+  // Toggle User Status (Active <-> Suspended)
+  const handleToggleStatus = (user: DetailedManagedUser) => {
+    const newStatus = user.status === "Active" ? "Suspended" : "Active";
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, status: newStatus } : u))
+    );
+    if (inspectingUser?.id === user.id) {
+      setInspectingUser({ ...inspectingUser, status: newStatus });
+    }
+    showNotification(`Status for ${user.first_name} set to ${newStatus}.`);
+  };
+
+  // Role Elevation Handler
+  const handleChangeRole = (user: DetailedManagedUser, newRole: UserRole) => {
+    setUsers((prev) =>
+      prev.map((u) => (u.id === user.id ? { ...u, role: newRole } : u))
+    );
+    if (inspectingUser?.id === user.id) {
+      setInspectingUser({ ...inspectingUser, role: newRole });
+    }
+    showNotification(`Role for ${user.first_name} changed to ${newRole.toUpperCase()}.`);
   };
 
   // Delete User Handler
@@ -169,7 +277,7 @@ export default function AdminUsersPage() {
     if (!deletingUser || deleteConfirmationText !== "DELETE") return;
 
     setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
-    showNotification(`Account ${deletingUser.email} has been purged.`);
+    showNotification(`Account ${deletingUser.email} has been permanently deleted.`);
     setDeletingUser(null);
     setDeleteConfirmationText("");
   };
@@ -178,64 +286,107 @@ export default function AdminUsersPage() {
     switch (role) {
       case "admin":
         return (
-          <span className="inline-flex items-center gap-1 rounded-lg bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 text-[10px] font-black text-rose-500 dark:text-rose-400">
-            <Shield className="size-3" />
-            <span>Admin</span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/15 border border-rose-500/30 px-2 py-0.5 text-[10px] font-black uppercase text-rose-500">
+            <Shield className="size-3" /> Admin
           </span>
         );
       case "faculty":
         return (
-          <span className="inline-flex items-center gap-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[10px] font-black text-indigo-600 dark:text-indigo-400">
-            <User className="size-3" />
-            <span>Faculty</span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-indigo-500/15 border border-indigo-500/30 px-2 py-0.5 text-[10px] font-black uppercase text-indigo-500">
+            <GraduationCap className="size-3" /> Faculty
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-lg bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black text-primary">
-            <GraduationCap className="size-3" />
-            <span>Student</span>
+          <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 border border-primary/30 px-2 py-0.5 text-[10px] font-black uppercase text-primary">
+            <User className="size-3" /> Student
           </span>
         );
     }
   };
 
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
-      {/* Header */}
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
+      {/* ── Top Header Navigation Bar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight flex items-center gap-2.5">
-            <Users className="size-7 text-primary" />
-            <span>User Accounts & Identity Management</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Provision, inspect, and manage role-based credentials for UC Main Campus students, faculty, and administrators.
-          </p>
+        <div className="flex items-center gap-3">
+          <BackButton fallbackUrl="/admin/dashboard" showLabel={false} />
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
+              <Users className="size-7 text-primary" />
+              <span>User Accounts Directory & Management</span>
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+              Administrative master registry for Student, Faculty, and Staff accounts with full CRUD & RBAC control
+            </p>
+          </div>
         </div>
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs font-black text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all shrink-0"
-        >
-          <UserPlus className="size-4" />
-          <span>Provision New User</span>
-        </button>
+        <div className="flex items-center gap-3 self-end sm:self-auto">
+          <ThemeToggle />
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-primary text-white font-black text-xs hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all shrink-0"
+          >
+            <UserPlus className="size-4" />
+            <span>Provision User Account</span>
+          </button>
+        </div>
       </div>
 
-      {/* Notification Toast */}
+      {/* ── Status Toast ── */}
       {notification && (
-        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-3.5 text-xs text-emerald-500 font-bold animate-in fade-in">
-          <CheckCircle2 className="size-4 shrink-0" />
+        <div className="flex items-center gap-2.5 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 p-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-in fade-in shadow-sm">
+          <CheckCircle2 className="size-5 shrink-0" />
           <span>{notification}</span>
         </div>
       )}
 
-      {/* Filters & Search Controls */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
-        {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+      {/* ── Role Count Summary Cards ── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+            TOTAL ACCOUNTS
+          </span>
+          <span className="text-2xl font-black text-foreground">{users.length}</span>
+          <span className="text-[11px] font-bold text-primary block">Active Registered</span>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            STUDENTS
+          </span>
+          <span className="text-2xl font-black text-foreground">
+            {users.filter((u) => u.role === "student").length}
+          </span>
+          <span className="text-[11px] font-bold text-emerald-500 block">Enrolled Portal</span>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            FACULTY MEMBERS
+          </span>
+          <span className="text-2xl font-black text-foreground">
+            {users.filter((u) => u.role === "faculty").length}
+          </span>
+          <span className="text-[11px] font-bold text-indigo-500 block">Teaching Instructors</span>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
+          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            ADMINISTRATORS
+          </span>
+          <span className="text-2xl font-black text-rose-500">
+            {users.filter((u) => u.role === "admin").length}
+          </span>
+          <span className="text-[11px] font-bold text-muted-foreground block">Full System Control</span>
+        </div>
+      </div>
+
+      {/* ── Search & Filter Controls ── */}
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 text-xs">
+        <div className="relative flex-1">
+          <Search className="size-4 text-muted-foreground absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             value={searchQuery}
@@ -243,31 +394,25 @@ export default function AdminUsersPage() {
               setSearchQuery(e.target.value);
               setCurrentPage(1);
             }}
-            placeholder="Search by name, email, or UC ID Number..."
-            className="w-full rounded-2xl border border-border bg-card py-2.5 pl-10 pr-4 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+            placeholder="Search by UC ID, name, email, or degree program..."
+            className="w-full rounded-xl border border-border bg-background py-2 pl-9 pr-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
           />
         </div>
 
-        {/* Role and Status Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex rounded-2xl border border-border bg-card p-1 text-xs">
-            {["ALL", "STUDENT", "FACULTY", "ADMIN"].map((role) => (
-              <button
-                key={role}
-                onClick={() => {
-                  setRoleFilter(role);
-                  setCurrentPage(1);
-                }}
-                className={`px-3 py-1.5 rounded-xl font-black capitalize transition-all ${
-                  roleFilter === role
-                    ? "bg-primary text-white shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {role.toLowerCase()}
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2">
+          <select
+            value={roleFilter}
+            onChange={(e) => {
+              setRoleFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+            className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+          >
+            <option value="ALL">All Roles</option>
+            <option value="STUDENT">Students</option>
+            <option value="FACULTY">Faculty</option>
+            <option value="ADMIN">Administrators</option>
+          </select>
 
           <select
             value={statusFilter}
@@ -275,28 +420,28 @@ export default function AdminUsersPage() {
               setStatusFilter(e.target.value);
               setCurrentPage(1);
             }}
-            className="rounded-2xl border border-border bg-card px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            className="rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
           >
-            <option value="ALL">All Statuses</option>
-            <option value="Active">Active Only</option>
-            <option value="Suspended">Suspended Only</option>
+            <option value="ALL">All Status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="SUSPENDED">Suspended</option>
           </select>
         </div>
       </div>
 
-      {/* Users Data Table */}
-      <div className="rounded-3xl border border-border bg-card overflow-hidden shadow-xl">
+      {/* ── User Directory Data Table ── */}
+      <div className="rounded-3xl border border-border bg-card shadow-xl overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-black tracking-wider text-[10px]">
-              <tr>
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase text-[10px] font-black tracking-wider">
                 <th className="py-3.5 px-4">UC ID Number</th>
                 <th className="py-3.5 px-4">Full Name</th>
-                <th className="py-3.5 px-4">Email Address</th>
-                <th className="py-3.5 px-4">Program / Role</th>
-                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Institutional Email</th>
+                <th className="py-3.5 px-4">Role & Dept</th>
+                <th className="py-3.5 px-4">Account Status</th>
                 <th className="py-3.5 px-4">Created Date</th>
-                <th className="py-3.5 px-4 text-right">Actions</th>
+                <th className="py-3.5 px-4 text-right">Administrative Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -328,23 +473,32 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-black ${
+                      <button
+                        onClick={() => handleToggleStatus(user)}
+                        title="Click to Toggle Status"
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-black transition-transform active:scale-90 ${
                           user.status === "Active"
-                            ? "bg-emerald-500/15 text-emerald-500"
-                            : "bg-rose-500/15 text-rose-500"
+                            ? "bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25"
+                            : "bg-rose-500/15 text-rose-500 hover:bg-rose-500/25"
                         }`}
                       >
                         {user.status}
-                      </span>
+                      </button>
                     </td>
                     <td className="py-3.5 px-4 text-muted-foreground font-medium">{user.created_at}</td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
                         <button
+                          onClick={() => setInspectingUser(user)}
+                          className="p-1.5 rounded-lg text-primary hover:bg-primary/10 transition-colors"
+                          title="Inspect Detailed Profile"
+                        >
+                          <Eye className="size-4" />
+                        </button>
+                        <button
                           onClick={() => setEditingUser(user)}
                           className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                          title="Edit User"
+                          title="Edit User Info"
                         >
                           <Edit2 className="size-4" />
                         </button>
@@ -392,13 +546,185 @@ export default function AdminUsersPage() {
         </div>
       </div>
 
-      {/* Modals */}
+      {/* ── DETAILED USER INSPECTION MODAL ── */}
+      {inspectingUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="w-full max-w-2xl rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-2xl space-y-6 animate-in zoom-in-95 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border pb-4">
+              <div className="flex items-center gap-3">
+                <div className="flex size-14 items-center justify-center rounded-2xl bg-primary/15 border border-primary/30 text-primary font-black text-xl">
+                  {inspectingUser.first_name.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-foreground">
+                      {inspectingUser.first_name} {inspectingUser.last_name}
+                    </h3>
+                    {getRoleBadge(inspectingUser.role)}
+                  </div>
+                  <p className="text-xs font-mono text-muted-foreground mt-0.5">
+                    UC ID: <span className="text-foreground font-bold">{inspectingUser.id_number}</span> •{" "}
+                    {inspectingUser.program} ({inspectingUser.year_level || "Academic Member"})
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setInspectingUser(null)}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-3 gap-3">
+              <div className="rounded-2xl border border-border bg-muted/40 p-3 text-center">
+                <span className="text-[10px] font-black text-muted-foreground uppercase block">
+                  STATUS
+                </span>
+                <span
+                  className={`text-sm font-black ${
+                    inspectingUser.status === "Active" ? "text-emerald-500" : "text-rose-500"
+                  }`}
+                >
+                  {inspectingUser.status}
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/40 p-3 text-center">
+                <span className="text-[10px] font-black text-muted-foreground uppercase block">
+                  {inspectingUser.role === "faculty" ? "TEACHING LOAD" : "ENROLLED CLASSES"}
+                </span>
+                <span className="text-sm font-black text-primary">
+                  {inspectingUser.enrolled_or_teaching_count || 4} Subjects
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/40 p-3 text-center">
+                <span className="text-[10px] font-black text-muted-foreground uppercase block">
+                  LAST SESSION
+                </span>
+                <span className="text-xs font-bold text-foreground truncate block">
+                  {inspectingUser.last_login || "Today"}
+                </span>
+              </div>
+            </div>
+
+            {/* In-depth details */}
+            <div className="space-y-4 text-xs">
+              <div className="rounded-2xl border border-border bg-muted/20 p-4 space-y-3">
+                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
+                  Contact & Permanent Residence
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="flex items-center gap-2">
+                    <Mail className="size-4 text-muted-foreground shrink-0" />
+                    <span className="text-foreground font-mono">{inspectingUser.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Phone className="size-4 text-muted-foreground shrink-0" />
+                    <span className="text-foreground font-mono">{inspectingUser.phone || "—"}</span>
+                  </div>
+                  <div className="flex items-center gap-2 sm:col-span-2">
+                    <MapPin className="size-4 text-primary shrink-0" />
+                    <span className="text-foreground">{inspectingUser.address || "Cebu City, Cebu"}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-muted/20 p-4 space-y-3">
+                <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
+                  Emergency Contact Record
+                </h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <span className="text-[10px] text-muted-foreground block">Contact Person:</span>
+                    <span className="font-bold text-foreground">
+                      {inspectingUser.emergency_contact || "Registrar Emergency File"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] text-muted-foreground block">Emergency Phone:</span>
+                    <span className="font-mono font-bold text-foreground">
+                      {inspectingUser.emergency_phone || "+63 900 000 0000"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {inspectingUser.bio && (
+                <div className="rounded-2xl border border-border bg-muted/20 p-4 space-y-1.5">
+                  <h4 className="text-[11px] font-black text-muted-foreground uppercase tracking-wider">
+                    Bio / Academic Profile
+                  </h4>
+                  <p className="text-muted-foreground leading-relaxed">{inspectingUser.bio}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Quick Admin Privileges on User */}
+            <div className="border-t border-border pt-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs">
+                <span className="font-bold text-muted-foreground">Assign Role:</span>
+                <button
+                  onClick={() => handleChangeRole(inspectingUser, "student")}
+                  className={`px-2.5 py-1 rounded-lg font-bold border transition-colors ${
+                    inspectingUser.role === "student"
+                      ? "bg-primary text-white border-primary"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Student
+                </button>
+                <button
+                  onClick={() => handleChangeRole(inspectingUser, "faculty")}
+                  className={`px-2.5 py-1 rounded-lg font-bold border transition-colors ${
+                    inspectingUser.role === "faculty"
+                      ? "bg-indigo-600 text-white border-indigo-600"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Faculty
+                </button>
+                <button
+                  onClick={() => handleChangeRole(inspectingUser, "admin")}
+                  className={`px-2.5 py-1 rounded-lg font-bold border transition-colors ${
+                    inspectingUser.role === "admin"
+                      ? "bg-rose-600 text-white border-rose-600"
+                      : "border-border text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Admin
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleToggleStatus(inspectingUser)}
+                  className={`px-4 py-2 rounded-xl text-xs font-black transition-colors ${
+                    inspectingUser.status === "Active"
+                      ? "bg-rose-500/10 text-rose-500 border border-rose-500/30 hover:bg-rose-500/20"
+                      : "bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 hover:bg-emerald-500/20"
+                  }`}
+                >
+                  {inspectingUser.status === "Active" ? "Suspend Account" : "Activate Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── CREATE USER MODAL ── */}
       <CreateUserModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateUser}
       />
 
+      {/* ── EDIT USER MODAL ── */}
       <EditUserModal
         isOpen={!!editingUser}
         user={editingUser}
@@ -406,7 +732,7 @@ export default function AdminUsersPage() {
         onUpdate={handleUpdateUser}
       />
 
-      {/* Secure Delete Confirmation Dialog */}
+      {/* ── SECURE DELETE DIALOG ── */}
       {deletingUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
           <div className="w-full max-w-md rounded-3xl border border-rose-500/40 bg-card p-6 shadow-2xl space-y-4 animate-in zoom-in-95">

@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
+
 import { usePathname, useRouter } from "next/navigation";
 import {
   Compass,
@@ -37,69 +38,85 @@ interface NavigationItem {
 
 /** Dynamic Role-Based Navigation Configuration */
 const navigationConfig: NavigationItem[] = [
-  // Student Portal Core
+  // ── 1. Student Portal Core ──
   {
     label: "Overview",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["student", "faculty", "admin"],
+    roles: ["student"],
   },
   {
     label: "My Schedule",
     href: "/schedule",
     icon: Calendar,
-    roles: ["student", "faculty", "admin"],
+    roles: ["student"],
   },
   {
     label: "Campus Map",
     href: "/map",
     icon: MapPin,
     badge: "5 Floors",
-    roles: ["student", "faculty", "admin"],
+    roles: ["student", "faculty"],
   },
   {
     label: "Scan Load",
     href: "/schedule?ocr=open",
     icon: ScanLine,
     badge: "OCR",
-    roles: ["student", "faculty", "admin"],
+    roles: ["student"],
   },
-  {
-    label: "My Profile",
-    href: "/profile",
-    icon: User,
-    roles: ["student", "faculty", "admin"],
-  },
+  // {
+  //   label: "My Profile",
+  //   href: "/profile",
+  //   icon: User,
+  //   roles: ["student", "faculty", "admin"],
+  // },
   {
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: ["student", "faculty", "admin"],
+    roles: ["student", "faculty"],
   },
-  // Faculty Hub Access
+
+  // ── 2. Faculty Hub Access ──
   {
     label: "Faculty Hub",
     href: "/faculty/dashboard",
     icon: GraduationCap,
-    roles: ["faculty", "admin"],
+    roles: ["faculty"],
   },
-  // Admin Suite Access
   {
-    label: "Admin Suite",
+    label: "Teaching Timetable",
+    href: "/schedule",
+    icon: Calendar,
+    roles: ["faculty"],
+  },
+
+  // ── 3. Dedicated Admin Suite (Exclusive Management Control) ──
+  {
+    label: "Analytics Dashboard",
     href: "/admin/dashboard",
     icon: Shield,
     roles: ["admin"],
   },
   {
-    label: "User Accounts",
+    label: "Master Schedules",
+    href: "/admin/schedules",
+    icon: Calendar,
+    badge: "Full Control",
+    roles: ["admin"],
+  },
+  {
+    label: "User Directory & CRUD",
     href: "/admin/users",
     icon: Users,
     roles: ["admin"],
   },
   {
-    label: "Room Calibrator",
+    label: "Room & POI Calibrator",
     href: "/admin/rooms",
     icon: Map,
+    badge: "5 Floors",
     roles: ["admin"],
   },
   {
@@ -108,8 +125,19 @@ const navigationConfig: NavigationItem[] = [
     icon: Bell,
     roles: ["admin"],
   },
+  {
+    label: "System Audit Logs",
+    href: "/admin/logs",
+    icon: LayoutDashboard,
+    roles: ["admin"],
+  },
+  {
+    label: "Admin Settings",
+    href: "/admin/settings",
+    icon: Settings,
+    roles: ["admin"],
+  },
 ];
-
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -125,7 +153,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const router = useRouter();
 
   const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
-  const [userName, setUserName] = useState<string>("Student");
+  const [userName, setUserName] = useState<string>("User");
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
@@ -154,33 +182,95 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     item.roles.includes(userRole)
   );
 
-  // Mobile Bottom Dock Items (Overview, Schedule, Map, Profile)
-  const mobileDockItems: NavigationItem[] = [
-    {
-      label: "Overview",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      roles: ["student", "faculty", "admin"],
-    },
-    {
-      label: "Schedule",
-      href: "/schedule",
-      icon: Calendar,
-      roles: ["student", "faculty", "admin"],
-    },
-    {
-      label: "Campus Map",
-      href: "/map",
-      icon: MapPin,
-      roles: ["student", "faculty", "admin"],
-    },
-    {
-      label: "Profile",
-      href: "/profile",
-      icon: User,
-      roles: ["student", "faculty", "admin"],
-    },
-  ];
+  // Dynamic Mobile Bottom Dock based on Role
+  const mobileDockItems: NavigationItem[] = useMemo(() => {
+    if (userRole === "admin") {
+      return [
+        {
+          label: "Analytics",
+          href: "/admin/dashboard",
+          icon: Shield,
+          roles: ["admin"],
+        },
+        {
+          label: "Schedules",
+          href: "/admin/schedules",
+          icon: Calendar,
+          roles: ["admin"],
+        },
+        {
+          label: "Users",
+          href: "/admin/users",
+          icon: Users,
+          roles: ["admin"],
+        },
+        {
+          label: "Rooms",
+          href: "/admin/rooms",
+          icon: Map,
+          roles: ["admin"],
+        },
+      ];
+    }
+
+    if (userRole === "faculty") {
+      return [
+        {
+          label: "Hub",
+          href: "/faculty/dashboard",
+          icon: GraduationCap,
+          roles: ["faculty"],
+        },
+        {
+          label: "Schedule",
+          href: "/schedule",
+          icon: Calendar,
+          roles: ["faculty"],
+        },
+        {
+          label: "Map",
+          href: "/map",
+          icon: MapPin,
+          roles: ["faculty"],
+        },
+        {
+          label: "Profile",
+          href: "/profile",
+          icon: User,
+          roles: ["faculty"],
+        },
+      ];
+    }
+
+    // Default: Student
+    return [
+      {
+        label: "Overview",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+        roles: ["student"],
+      },
+      {
+        label: "Schedule",
+        href: "/schedule",
+        icon: Calendar,
+        roles: ["student"],
+      },
+      {
+        label: "Campus Map",
+        href: "/map",
+        icon: MapPin,
+        roles: ["student"],
+      },
+      {
+        label: "Profile",
+        href: "/profile",
+        icon: User,
+        roles: ["student"],
+      },
+    ];
+  }, [userRole]);
+
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -263,11 +353,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${
-                    isActive
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${isActive
                       ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="size-4 shrink-0" />
@@ -435,11 +524,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${
-                        isActive
+                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${isActive
                           ? "bg-primary text-white shadow-md shadow-primary/30"
                           : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      }`}
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="size-4" />
@@ -489,16 +577,14 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
-                  isActive
+                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${isActive
                     ? "text-primary font-black scale-105"
                     : "text-muted-foreground hover:text-foreground font-semibold"
-                }`}
+                  }`}
               >
                 <div
-                  className={`p-1.5 rounded-xl transition-colors ${
-                    isActive ? "bg-primary/15 text-primary" : ""
-                  }`}
+                  className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-primary/15 text-primary" : ""
+                    }`}
                 >
                   <Icon className="size-4.5" />
                 </div>

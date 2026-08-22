@@ -1,3 +1,4 @@
+Please be adviced with the guidelines:
 - Be very specific for the code
 - Be consistent with what have been made
 - Be consistent with the UI theme
