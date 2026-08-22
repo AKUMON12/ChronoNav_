@@ -45,18 +45,17 @@ export default function AdminAnalyticsDashboard() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
             <ShieldCheck className="size-8 text-primary" />
-            <span>Campus System Analytics & Telemetry</span>
+            <span>Admin Campus Overview</span>
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Real-time indoor campus wayfinding telemetry, OCR performance, and user mobility metrics for UC Main Campus (CCS).
+            Real-time campus map searches, study load scans, and room utilization for UC Main Campus (CCS).
           </p>
         </div>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          <ThemeToggle />
           <span className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-3.5 py-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
             <span className="size-2 rounded-full bg-emerald-500 animate-ping" />
-            <span>All Engines Operational</span>
+            <span>System Online</span>
           </span>
         </div>
       </div>
@@ -67,7 +66,7 @@ export default function AdminAnalyticsDashboard() {
         <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              TOTAL REGISTERED USERS
+              TOTAL USERS
             </span>
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Users className="size-5" />
@@ -88,7 +87,7 @@ export default function AdminAnalyticsDashboard() {
         <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              DAILY PATH CALCULATIONS
+              TODAY'S MAP SEARCHES
             </span>
             <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Navigation className="size-5" />
@@ -100,7 +99,7 @@ export default function AdminAnalyticsDashboard() {
               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center">
                 <ArrowUpRight className="size-3.5" /> +18.4%
               </span>
-              <span>Dijkstra client paths computed</span>
+              <span>room directions found</span>
             </div>
           </div>
         </div>
@@ -109,7 +108,7 @@ export default function AdminAnalyticsDashboard() {
         <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              OCR STUDY LOAD ACCURACY
+              STUDY LOAD SCANS
             </span>
             <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
               <ScanLine className="size-5" />
@@ -119,7 +118,7 @@ export default function AdminAnalyticsDashboard() {
             <div className="text-3xl font-black text-foreground">96.8%</div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">482 / 498</span>
-              <span>official loads parsed</span>
+              <span>files parsed automatically</span>
             </div>
           </div>
         </div>
@@ -128,21 +127,22 @@ export default function AdminAnalyticsDashboard() {
         <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              CALIBRATED CAMPUS WAYPOINTS
+              CAMPUS ROOMS
             </span>
             <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500">
               <Building2 className="size-5" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-foreground">48 Nodes</div>
+            <div className="text-3xl font-black text-foreground">48 Rooms</div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
-              <span className="text-indigo-500 font-extrabold">5 Floors</span>
-              <span>• CCS Multi-Story Building</span>
+              <span className="text-indigo-500 font-extrabold">Floors 1 through 5</span>
+              <span>• CCS Building</span>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* ── VISUAL ANALYTICS SECTION WITH INTERACTIVE CHARTS ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

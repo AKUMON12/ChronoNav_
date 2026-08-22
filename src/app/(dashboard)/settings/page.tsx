@@ -154,13 +154,12 @@ export default function AccountSettingsPage() {
 
       {/* ── SECTION 2: PASSWORD & SECURITY ── */}
       <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl space-y-6">
-
         <div className="border-b border-border pb-3">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
             <KeyRound className="size-5 text-primary" />
-            <span>Password & Security Controls</span>
+            <span>Change Password</span>
           </h2>
-          <p className="text-xs text-muted-foreground">Update your login password and manage session authentication.</p>
+          <p className="text-xs text-muted-foreground">Update your password to keep your account secure.</p>
         </div>
 
         {securityError && (
@@ -248,11 +247,11 @@ export default function AccountSettingsPage() {
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className={`size-3.5 ${passwordCriteria.hasNumber ? "text-emerald-500" : "text-muted-foreground"}`} />
-                <span className={passwordCriteria.hasNumber ? "text-foreground font-bold" : "text-muted-foreground"}>1 numeric digit</span>
+                <span className={passwordCriteria.hasNumber ? "text-foreground font-bold" : "text-muted-foreground"}>1 number</span>
               </div>
               <div className="flex items-center gap-1.5 sm:col-span-2">
                 <CheckCircle2 className={`size-3.5 ${passwordCriteria.hasSpecial ? "text-emerald-500" : "text-muted-foreground"}`} />
-                <span className={passwordCriteria.hasSpecial ? "text-foreground font-bold" : "text-muted-foreground"}>1 special symbol (!@#$%^&*)</span>
+                <span className={passwordCriteria.hasSpecial ? "text-foreground font-bold" : "text-muted-foreground"}>1 symbol (!@#$%^&*)</span>
               </div>
             </div>
           )}
@@ -275,24 +274,16 @@ export default function AccountSettingsPage() {
         <div className="border-b border-border pb-3">
           <h2 className="text-base font-black text-foreground flex items-center gap-2">
             <Volume2 className="size-5 text-primary" />
-            <span>Navigation & System Preferences</span>
+            <span>Map & Notification Preferences</span>
           </h2>
-          <p className="text-xs text-muted-foreground">Configure speech guidance, interface theme, and broadcast notifications.</p>
+          <p className="text-xs text-muted-foreground">Adjust voice navigation and class reminders.</p>
         </div>
 
         <div className="space-y-4">
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-muted/40 border border-border">
             <div>
-              <p className="text-xs font-bold text-foreground">Color Theme Interface</p>
-              <p className="text-[11px] text-muted-foreground">Toggle between Light, Dark, or System synchronization.</p>
-            </div>
-            <ThemeToggle />
-          </div>
-
-          <div className="flex items-center justify-between p-3.5 rounded-2xl bg-muted/40 border border-border">
-            <div>
-              <p className="text-xs font-bold text-foreground">Audio Turn-by-Turn Guidance</p>
-              <p className="text-[11px] text-muted-foreground">Synthesize voice directions during indoor walking transitions.</p>
+              <p className="text-xs font-bold text-foreground">Voice Directions</p>
+              <p className="text-[11px] text-muted-foreground">Play voice instructions while walking between campus rooms.</p>
             </div>
             <input
               type="checkbox"
@@ -304,8 +295,8 @@ export default function AccountSettingsPage() {
 
           <div className="flex items-center justify-between p-3.5 rounded-2xl bg-muted/40 border border-border">
             <div>
-              <p className="text-xs font-bold text-foreground">Class Schedule Alerts</p>
-              <p className="text-[11px] text-muted-foreground">Receive countdown reminders 15 minutes before next lecture.</p>
+              <p className="text-xs font-bold text-foreground">Class Start Reminders</p>
+              <p className="text-[11px] text-muted-foreground">Get a notification 15 minutes before your scheduled class.</p>
             </div>
             <input
               type="checkbox"
@@ -319,3 +310,4 @@ export default function AccountSettingsPage() {
     </div>
   );
 }
+

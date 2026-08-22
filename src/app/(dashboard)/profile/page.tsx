@@ -159,22 +159,21 @@ export default function ProfilePage() {
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground flex items-center gap-2.5">
               <User className="size-7 text-primary" />
-              <span>User Profile & Identity</span>
+              <span>My Profile</span>
             </h1>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-              Official University of Cebu (CCS) student & personnel credentials
+              View and update your personal and contact details
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-3 self-end sm:self-auto">
-          <ThemeToggle />
           <Link
             href="/settings"
             className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3.5 py-2 text-xs font-bold text-foreground hover:bg-accent transition-colors shadow-sm"
           >
             <Shield className="size-3.5 text-primary" />
-            <span>Security Settings</span>
+            <span>Password & Security</span>
           </Link>
         </div>
       </div>
@@ -193,6 +192,7 @@ export default function ProfilePage() {
           <span>{errorMessage}</span>
         </div>
       )}
+
 
       {/* ── SECTION 1: PROFILE HERO CARD & AVATAR EDITOR ── */}
       <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl relative overflow-hidden transition-colors duration-200">
@@ -312,13 +312,13 @@ export default function ProfilePage() {
 
       {/* ── SECTION 2: EDITABLE PROFILE DETAILS FORM ── */}
       <form onSubmit={handleSaveProfile} className="space-y-6 sm:space-y-8">
-        {/* Personal Details */}
+        {/* Academic Details */}
         <div className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl space-y-6">
           <div className="border-b border-border pb-3 flex items-center gap-2.5">
             <GraduationCap className="size-5 text-primary" />
             <div>
-              <h3 className="text-base font-black text-foreground">Academic & Identity Information</h3>
-              <p className="text-xs text-muted-foreground">Official registrar identifiers and departmental records</p>
+              <h3 className="text-base font-black text-foreground">School Information</h3>
+              <p className="text-xs text-muted-foreground">Your student ID, program, and year level</p>
             </div>
           </div>
 
@@ -351,7 +351,7 @@ export default function ProfilePage() {
 
             <div className="space-y-1.5">
               <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                University ID Number
+                Student ID Number
               </label>
               <input
                 type="text"
@@ -376,7 +376,7 @@ export default function ProfilePage() {
 
             <div className="space-y-1.5">
               <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                Academic Standing / Year Level
+                Year Level
               </label>
               <select
                 value={yearLevel}
@@ -394,7 +394,7 @@ export default function ProfilePage() {
 
             <div className="space-y-1.5">
               <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">
-                Institutional Email Address
+                School Email Address
               </label>
               <div className="relative">
                 <input
@@ -410,13 +410,13 @@ export default function ProfilePage() {
 
           <div className="space-y-1.5 text-xs">
             <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">
-              Profile Biography & Research Interests
+              About Me / Bio
             </label>
             <textarea
               rows={3}
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell other students or instructors about your academic specialization..."
+              placeholder="Tell others about yourself..."
               className="w-full rounded-xl border border-border bg-background p-3 text-foreground font-medium focus:outline-none focus:ring-2 focus:ring-primary shadow-sm resize-none"
             />
           </div>
@@ -427,10 +427,11 @@ export default function ProfilePage() {
           <div className="border-b border-border pb-3 flex items-center gap-2.5">
             <MapPin className="size-5 text-primary" />
             <div>
-              <h3 className="text-base font-black text-foreground">Contact & Residential Address</h3>
-              <p className="text-xs text-muted-foreground">Permanent address and communication details for campus alerts</p>
+              <h3 className="text-base font-black text-foreground">Address & Contact Info</h3>
+              <p className="text-xs text-muted-foreground">Your home address and mobile number</p>
             </div>
           </div>
+
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 text-xs">
             <div className="space-y-1.5 sm:col-span-2">

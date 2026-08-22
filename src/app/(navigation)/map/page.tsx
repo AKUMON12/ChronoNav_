@@ -193,13 +193,13 @@ function InteractiveMapContent() {
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h2 className="text-xs font-black text-foreground flex items-center gap-2 tracking-wide uppercase">
                 <Navigation className="size-4 text-primary" />
-                <span>Indoor Route Configurator</span>
+                <span>Find Directions</span>
               </h2>
               {startNodeId && targetNodeId && (
                 <button
                   onClick={handleSwapLocations}
                   className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground hover:text-primary transition-colors bg-muted/40 px-2.5 py-1 rounded-lg border border-border"
-                  title="Swap Origin and Destination"
+                  title="Swap Starting Point and Destination"
                 >
                   <ArrowUpDown className="size-3.5" />
                   <span>Swap</span>
@@ -211,7 +211,7 @@ function InteractiveMapContent() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-emerald-500 flex items-center gap-1.5 uppercase">
                 <MapPin className="size-3.5 text-emerald-500" />
-                <span>Origin Start Location</span>
+                <span>Starting Point</span>
               </label>
               <select
                 value={startNodeId}
@@ -223,7 +223,7 @@ function InteractiveMapContent() {
                 }}
                 className="w-full rounded-2xl border border-border bg-background px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               >
-                <option value="">-- Choose Origin Point --</option>
+                <option value="">-- Choose Starting Point --</option>
                 {filteredStartNodes.map((node) => (
                   <option key={node.id} value={node.id}>
                     Floor {node.floor} — {node.name}
@@ -236,7 +236,7 @@ function InteractiveMapContent() {
             <div className="space-y-1.5">
               <label className="text-[11px] font-black text-primary flex items-center gap-1.5 uppercase">
                 <Compass className="size-3.5 text-primary" />
-                <span>Destination Target Room</span>
+                <span>Destination Room</span>
               </label>
               <select
                 value={targetNodeId}
@@ -263,8 +263,9 @@ function InteractiveMapContent() {
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <h3 className="text-xs font-black text-foreground uppercase tracking-wide flex items-center gap-2">
                 <Footprints className="size-4 text-primary" />
-                <span>Turn-by-Turn Navigation Guide</span>
+                <span>Walking Directions</span>
               </h3>
+
               {pathResult && (
                 <span className="text-[11px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                   ~{Math.max(15, Math.round(pathResult.totalDistance * 1.5))} sec

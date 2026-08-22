@@ -38,15 +38,15 @@ interface NavigationItem {
 
 /** Dynamic Role-Based Navigation Configuration */
 const navigationConfig: NavigationItem[] = [
-  // ── 1. Student Portal Core ──
+  // ── 1. Student Portal ──
   {
-    label: "Overview",
+    label: "Home",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["student"],
   },
   {
-    label: "My Schedule",
+    label: "My Classes",
     href: "/schedule",
     icon: Calendar,
     roles: ["student"],
@@ -59,18 +59,12 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student", "faculty"],
   },
   {
-    label: "Scan Load",
+    label: "Scan Study Load",
     href: "/schedule?ocr=open",
     icon: ScanLine,
-    badge: "OCR",
+    badge: "Scan",
     roles: ["student"],
   },
-  // {
-  //   label: "My Profile",
-  //   href: "/profile",
-  //   icon: User,
-  //   roles: ["student", "faculty", "admin"],
-  // },
   {
     label: "Settings",
     href: "/settings",
@@ -78,55 +72,54 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student", "faculty"],
   },
 
-  // ── 2. Faculty Hub Access ──
+  // ── 2. Faculty Portal ──
   {
-    label: "Faculty Hub",
+    label: "Faculty Home",
     href: "/faculty/dashboard",
     icon: GraduationCap,
     roles: ["faculty"],
   },
   {
-    label: "Teaching Timetable",
+    label: "Teaching Schedule",
     href: "/schedule",
     icon: Calendar,
     roles: ["faculty"],
   },
 
-  // ── 3. Dedicated Admin Suite (Exclusive Management Control) ──
+  // ── 3. Administrator Suite ──
   {
-    label: "Analytics Dashboard",
+    label: "Campus Overview",
     href: "/admin/dashboard",
     icon: Shield,
     roles: ["admin"],
   },
   {
-    label: "Master Schedules",
+    label: "All Schedules",
     href: "/admin/schedules",
     icon: Calendar,
-    badge: "Full Control",
     roles: ["admin"],
   },
   {
-    label: "User Directory & CRUD",
+    label: "User Accounts",
     href: "/admin/users",
     icon: Users,
     roles: ["admin"],
   },
   {
-    label: "Room & POI Calibrator",
+    label: "Manage Rooms",
     href: "/admin/rooms",
     icon: Map,
     badge: "5 Floors",
     roles: ["admin"],
   },
   {
-    label: "Broadcast Bulletin",
+    label: "Announcements",
     href: "/admin/bulletin",
     icon: Bell,
     roles: ["admin"],
   },
   {
-    label: "System Audit Logs",
+    label: "Activity Logs",
     href: "/admin/logs",
     icon: LayoutDashboard,
     roles: ["admin"],
@@ -146,7 +139,7 @@ interface AppShellProps {
 
 /**
  * Enterprise Responsive Role-Aware App Shell
- * Fully dynamic theme engine supporting clean Light and Dark modes.
+ * Clean, user-friendly, and responsive across Mobile, Tablet, and Desktop.
  */
 export function AppShell({ children, forcedRole }: AppShellProps) {
   const pathname = usePathname();
@@ -187,7 +180,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     if (userRole === "admin") {
       return [
         {
-          label: "Analytics",
+          label: "Overview",
           href: "/admin/dashboard",
           icon: Shield,
           roles: ["admin"],
@@ -216,13 +209,13 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     if (userRole === "faculty") {
       return [
         {
-          label: "Hub",
+          label: "Home",
           href: "/faculty/dashboard",
           icon: GraduationCap,
           roles: ["faculty"],
         },
         {
-          label: "Schedule",
+          label: "Classes",
           href: "/schedule",
           icon: Calendar,
           roles: ["faculty"],
@@ -245,7 +238,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     // Default: Student
     return [
       {
-        label: "Overview",
+        label: "Home",
         href: "/dashboard",
         icon: LayoutDashboard,
         roles: ["student"],
@@ -257,7 +250,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
         roles: ["student"],
       },
       {
-        label: "Campus Map",
+        label: "Map",
         href: "/map",
         icon: MapPin,
         roles: ["student"],
@@ -271,11 +264,9 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     ];
   }, [userRole]);
 
-
   const handleSignOut = async () => {
     setIsSigningOut(true);
     await signOut();
-    // Complete hard navigation to login and clear router cache
     window.location.href = "/login";
   };
 
@@ -290,7 +281,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     }
   };
 
-  const isRootDashboard = pathname === "/dashboard" || pathname === "/student" || pathname === "/faculty/dashboard" || pathname === "/admin/dashboard";
+  const isRootDashboard =
+    pathname === "/dashboard" ||
+    pathname === "/student" ||
+    pathname === "/faculty/dashboard" ||
+    pathname === "/admin/dashboard";
 
   return (
     <div className="min-h-screen flex w-full bg-background text-foreground antialiased selection:bg-primary selection:text-white transition-colors duration-200">
@@ -303,7 +298,9 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Compass className="size-6" />
             </div>
             <div>
-              <span className="text-base font-black tracking-tight text-foreground block">CHRONONAV</span>
+              <span className="text-base font-black tracking-tight text-foreground block">
+                CHRONONAV
+              </span>
               <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
                 UC Main • CCS
               </span>
@@ -332,16 +329,15 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 >
                   {userRole}
                 </span>
-                <span className="text-[9px] font-bold text-muted-foreground">View Profile</span>
+                <span className="text-[9px] font-bold text-muted-foreground">My Profile</span>
               </div>
             </div>
           </Link>
 
-
           {/* Dynamic Navigation Links */}
           <nav className="space-y-1.5" aria-label="Desktop Navigation">
             <span className="text-[10px] font-black text-muted-foreground px-3 uppercase tracking-wider block pb-1">
-              CAMPUS SUITE
+              MENU
             </span>
             {filteredNavItems.map((item) => {
               const isActive =
@@ -353,10 +349,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${isActive
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${
+                    isActive
                       ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]"
                       : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    }`}
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="size-4 shrink-0" />
@@ -374,26 +371,22 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </nav>
         </div>
 
-        {/* Sidebar Footer: Theme Toggle & Sign Out Button (Always visible / not scrolled) */}
-        <div className="shrink-0 space-y-3 pt-4 border-t border-border mt-auto">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-bold text-muted-foreground">Interface Theme</span>
-            <ThemeToggle />
-          </div>
+        {/* Sidebar Footer: Clean Sign Out Button */}
+        <div className="shrink-0 pt-4 border-t border-border mt-auto">
           <button
             onClick={handleSignOut}
             disabled={isSigningOut}
             className="flex w-full items-center gap-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3.5 py-2.5 text-xs font-black text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-50"
           >
             <LogOut className="size-4" />
-            <span>{isSigningOut ? "Signing out..." : "Sign Out Session"}</span>
+            <span>{isSigningOut ? "Signing out..." : "Sign Out"}</span>
           </button>
         </div>
       </aside>
 
       {/* ── Main Content Viewport Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Universal Top Header Bar with Consistent Top-Left Back Button & Top-Right Theme Toggle */}
+        {/* Universal Top Header Bar with Back Button & Single Top-Right Theme Toggle */}
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/90 backdrop-blur px-4 sm:px-6 transition-colors duration-200">
           <div className="flex items-center gap-2.5 sm:gap-3">
             <button
@@ -404,7 +397,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Menu className="size-5" />
             </button>
 
-            {/* Top-Left Back Button (Always accessible on sub-views) */}
+            {/* Top-Left Back Button */}
             {!isRootDashboard ? (
               <BackButton fallbackUrl="/dashboard" showLabel={false} />
             ) : (
@@ -420,16 +413,16 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </div>
 
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Top-Right Light/Dark Theme Switcher */}
-            <ThemeToggle compact={false} />
+            {/* Single Clean Theme Toggle */}
+            <ThemeToggle />
 
-            {/* Guest Explorer CTA */}
+            {/* Campus Map Shortcut for Desktop */}
             <Link
-              href="/explore"
+              href="/map"
               className="hidden md:flex items-center gap-1.5 rounded-xl border border-border bg-muted/50 px-3 py-1.5 text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
             >
               <Map className="size-3.5 text-primary" />
-              <span>Campus Map View</span>
+              <span>Campus Map</span>
             </Link>
 
             {/* User Avatar Badge (Clickable link to /profile) */}
@@ -448,7 +441,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           </div>
         </header>
 
-        {/* Dynamic Page Content (pb-24 on mobile for bottom dock clearance) */}
+        {/* Dynamic Page Content */}
         <main className="flex-1 pb-24 lg:pb-8 overflow-x-hidden">{children}</main>
       </div>
 
@@ -491,7 +484,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 </button>
               </div>
 
-              {/* User Identity Card (Clickable to /profile) */}
+              {/* User Identity Card */}
               <Link
                 href="/profile"
                 onClick={() => setMobileMenuOpen(false)}
@@ -512,7 +505,6 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 </div>
               </Link>
 
-
               {/* Mobile Nav Links */}
               <nav className="space-y-1" aria-label="Mobile Navigation Drawer">
                 {filteredNavItems.map((item) => {
@@ -524,10 +516,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${isActive
+                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${
+                        isActive
                           ? "bg-primary text-white shadow-md shadow-primary/30"
                           : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="size-4" />
@@ -544,12 +537,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               </nav>
             </div>
 
-            {/* Mobile Drawer Footer (Always visible / not scrolled) */}
-            <div className="shrink-0 space-y-3 pt-4 border-t border-border mt-auto">
-              <div className="flex items-center justify-between px-1">
-                <span className="text-xs font-bold text-muted-foreground">Theme</span>
-                <ThemeToggle />
-              </div>
+            {/* Mobile Drawer Footer: Clean Sign Out Button */}
+            <div className="shrink-0 pt-4 border-t border-border mt-auto">
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
@@ -577,14 +566,16 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${isActive
+                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
+                  isActive
                     ? "text-primary font-black scale-105"
                     : "text-muted-foreground hover:text-foreground font-semibold"
-                  }`}
+                }`}
               >
                 <div
-                  className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-primary/15 text-primary" : ""
-                    }`}
+                  className={`p-1.5 rounded-xl transition-colors ${
+                    isActive ? "bg-primary/15 text-primary" : ""
+                  }`}
                 >
                   <Icon className="size-4.5" />
                 </div>
@@ -599,3 +590,4 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
     </div>
   );
 }
+
