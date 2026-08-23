@@ -33,10 +33,17 @@ export default function AccountSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   // Preferences
   const [enableNotifications, setEnableNotifications] = useState(true);
-  const [enableAudioGuidance, setEnableAudioGuidance] = useState(true);
+  const [enableAudioGuidance, setEnableAudioGuidance] = useState(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("chrononav_voice_guidance");
+      return stored !== null ? stored === "true" : true;
+    }
+    return true;
+  });
 
   // Status
   const [profileNotification, setProfileNotification] = useState<string | null>(null);
@@ -190,7 +197,9 @@ export default function AccountSettingsPage() {
               <button
                 type="button"
                 onClick={() => setShowCurrent(!showCurrent)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                aria-label={showCurrent ? "Hide current password" : "Show current password"}
+                aria-pressed={showCurrent}
               >
                 {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
               </button>
@@ -211,7 +220,9 @@ export default function AccountSettingsPage() {
                 <button
                   type="button"
                   onClick={() => setShowNew(!showNew)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label={showNew ? "Hide new password" : "Show new password"}
+                  aria-pressed={showNew}
                 >
                   {showNew ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
                 </button>
@@ -220,13 +231,24 @@ export default function AccountSettingsPage() {
 
             <div className="space-y-1">
               <label className="text-[11px] font-extrabold text-muted-foreground uppercase">Confirm New Password</label>
-              <input
-                type={showNew ? "text" : "password"}
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Re-enter new password"
-                className="w-full rounded-xl border border-border bg-background p-2.5 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-              />
+              <div className="relative">
+                <input
+                  type={showConfirm ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  className="w-full rounded-xl border border-border bg-background p-2.5 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-primary"
+                  aria-label={showConfirm ? "Hide confirm new password" : "Show confirm new password"}
+                  aria-pressed={showConfirm}
+                >
+                  {showConfirm ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -251,7 +273,7 @@ export default function AccountSettingsPage() {
               </div>
               <div className="flex items-center gap-1.5 sm:col-span-2">
                 <CheckCircle2 className={`size-3.5 ${passwordCriteria.hasSpecial ? "text-emerald-500" : "text-muted-foreground"}`} />
-                <span className={passwordCriteria.hasSpecial ? "text-foreground font-bold" : "text-muted-foreground"}>1 symbol (!@#$%^&*)</span>
+                <span className={passwordCriteria.hasSpecial ? "text-foreground font-bold" : "text-muted-foreground"}>1 special character</span>
               </div>
             </div>
           )}
@@ -260,7 +282,7 @@ export default function AccountSettingsPage() {
             <button
               type="submit"
               disabled={!isPasswordValid || !isConfirmMatch || !currentPassword}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white font-black hover:bg-primary/90 shadow-md shadow-primary/30 transition-all disabled:opacity-40"
+              className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all disabled:opacity-50"
             >
               <KeyRound className="size-4" />
               <span>Update Password</span>
@@ -288,7 +310,13 @@ export default function AccountSettingsPage() {
             <input
               type="checkbox"
               checked={enableAudioGuidance}
-              onChange={(e) => setEnableAudioGuidance(e.target.checked)}
+              onChange={(e) => {
+                const nextVal = e.target.checked;
+                setEnableAudioGuidance(nextVal);
+                if (typeof window !== "undefined") {
+                  localStorage.setItem("chrononav_voice_guidance", String(nextVal));
+                }
+              }}
               className="size-5 accent-primary rounded cursor-pointer"
             />
           </div>

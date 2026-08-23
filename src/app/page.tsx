@@ -61,7 +61,7 @@ export default function LandingPage() {
               href="/register"
               className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-white hover:bg-primary/90 transition-colors shadow-sm shadow-primary/25"
             >
-              Get Started Free
+              Register Study Load
             </Link>
           </div>
 
@@ -86,7 +86,7 @@ export default function LandingPage() {
             <Link href="/privacy" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Privacy</Link>
             <div className="flex gap-2 pt-2 border-t border-border">
               <Link href="/login" className="flex-1 text-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-black text-foreground">Log In</Link>
-              <Link href="/register" className="flex-1 text-center rounded-xl bg-primary px-3 py-2 text-xs font-black text-white">Get Started</Link>
+              <Link href="/register" className="flex-1 text-center rounded-xl bg-primary px-3 py-2 text-xs font-black text-white">Register Load</Link>
             </div>
           </div>
         )}
@@ -117,7 +117,7 @@ export default function LandingPage() {
               href="/register"
               className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
             >
-              <span>Get Started Free</span>
+              <span>Register Study Load</span>
               <ArrowRight className="size-4" />
             </Link>
             <Link

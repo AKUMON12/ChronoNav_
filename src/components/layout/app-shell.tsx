@@ -267,7 +267,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const handleSignOut = async () => {
     setIsSigningOut(true);
     await signOut();
-    window.location.href = "/login";
+    // Return user to the public landing page upon sign out
+    window.location.href = "/";
   };
 
   const getRoleBadgeStyle = (role: UserRole) => {

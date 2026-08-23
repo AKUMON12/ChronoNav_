@@ -50,8 +50,38 @@ function InteractiveMapContent() {
   const [currentFloor, setCurrentFloor] = useState<number>(5);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
-  // Settings: Voice Guidance toggle
-  const [voiceGuidance, setVoiceGuidance] = useState<boolean>(true);
+  // Settings: Voice Guidance toggle initialized from localStorage (defaults to true)
+  const [voiceGuidance, setVoiceGuidance] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("chrononav_voice_guidance");
+      return stored !== null ? stored === "true" : true;
+    }
+    return true;
+  });
+
+  // Toggle voice guidance with immediate speech cancellation on disable & localStorage persistence
+  const handleToggleVoice = () => {
+    setVoiceGuidance((prev) => {
+      const next = !prev;
+      if (typeof window !== "undefined") {
+        localStorage.setItem("chrononav_voice_guidance", String(next));
+        if (!next && "speechSynthesis" in window) {
+          window.speechSynthesis.cancel();
+        }
+      }
+      return next;
+    });
+  };
+
+  // Helper to speak a given direction instruction
+  const speakInstruction = (text: string) => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window && text) {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    }
+  };
 
   // Synchronize search params if passed (e.g. /map?start=F1_ENTRANCE&target=F5_LECTURE_538)
   useEffect(() => {
@@ -79,16 +109,15 @@ function InteractiveMapContent() {
     return findShortestPath(graph, startNodeId, targetNodeId);
   }, [graph, startNodeId, targetNodeId]);
 
-  // Voice speech synthesis for turn-by-turn guidance
+  // Voice speech synthesis for turn-by-turn guidance when route updates or voice turns on
   useEffect(() => {
     if (voiceGuidance && pathResult && typeof window !== "undefined" && "speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
       const firstStep = pathResult.instructions[0];
       if (firstStep) {
-        const utterance = new SpeechSynthesisUtterance(firstStep);
-        utterance.rate = 1.0;
-        window.speechSynthesis.speak(utterance);
+        speakInstruction(firstStep);
       }
+    } else if (!voiceGuidance && typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
     }
   }, [pathResult, voiceGuidance]);
 
@@ -170,16 +199,18 @@ function InteractiveMapContent() {
           <ThemeToggle />
 
           <button
-            onClick={() => setVoiceGuidance(!voiceGuidance)}
-            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all shadow-sm ${
+            onClick={handleToggleVoice}
+            className={`flex items-center gap-1.5 sm:gap-2 rounded-xl border px-3 py-1.5 text-xs font-bold transition-all shadow-sm focus:outline-none focus:ring-2 focus:ring-primary ${
               voiceGuidance
                 ? "bg-primary/15 text-primary border-primary/40 ring-1 ring-primary/30"
                 : "bg-card text-muted-foreground border-border hover:text-foreground"
             }`}
-            aria-label="Toggle Voice Guidance"
+            aria-label={voiceGuidance ? "Turn off voice guidance" : "Turn on voice guidance"}
+            aria-pressed={voiceGuidance}
+            title={voiceGuidance ? "Voice Guidance is ON" : "Voice Guidance is OFF"}
           >
             {voiceGuidance ? <Volume2 className="size-4 animate-pulse" /> : <VolumeX className="size-4" />}
-            <span className="hidden md:inline">Voice: {voiceGuidance ? "ON" : "OFF"}</span>
+            <span className="text-xs">Voice: {voiceGuidance ? "ON" : "OFF"}</span>
           </button>
         </div>
       </header>
@@ -267,9 +298,23 @@ function InteractiveMapContent() {
               </h3>
 
               {pathResult && (
-                <span className="text-[11px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                  ~{Math.max(15, Math.round(pathResult.totalDistance * 1.5))} sec
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md">
+                    ~{Math.max(15, Math.round(pathResult.totalDistance * 1.5))} sec
+                  </span>
+                  <button
+                    onClick={() => {
+                      if (pathResult.instructions[0]) {
+                        speakInstruction(pathResult.instructions[0]);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg border border-border bg-muted/40 hover:bg-accent text-foreground transition-colors"
+                    aria-label="Replay current step voice direction"
+                    title="Play voice direction"
+                  >
+                    <Volume2 className="size-3.5 text-primary" />
+                  </button>
+                </div>
               )}
             </div>
 
@@ -296,12 +341,22 @@ function InteractiveMapContent() {
                   {pathResult.instructions.map((step, idx) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-3 p-3 rounded-2xl bg-muted/30 border border-border text-xs leading-relaxed"
+                      className="group flex items-start justify-between gap-3 p-3 rounded-2xl bg-muted/30 hover:bg-muted/50 border border-border text-xs leading-relaxed transition-colors"
                     >
-                      <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-white font-black text-[11px]">
-                        {idx + 1}
+                      <div className="flex items-start gap-3">
+                        <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-white font-black text-[11px]">
+                          {idx + 1}
+                        </div>
+                        <p className="text-foreground font-medium pt-0.5">{step}</p>
                       </div>
-                      <p className="text-foreground font-medium pt-0.5">{step}</p>
+                      <button
+                        onClick={() => speakInstruction(step)}
+                        className="opacity-60 group-hover:opacity-100 p-1 rounded-md text-muted-foreground hover:text-primary transition-all shrink-0"
+                        aria-label={`Speak step ${idx + 1}`}
+                        title="Speak this step"
+                      >
+                        <Volume2 className="size-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>
