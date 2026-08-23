@@ -434,11 +434,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             {/* Single Clean Theme Toggle */}
             <ThemeToggle />
 
-            {/* Notification Indicator -> Navigates to Bulletin */}
+            {/* Notification Indicator -> Navigates to Notifications / Bulletin */}
             <Link
-              href="/admin/bulletin"
+              href={userRole === "admin" ? "/admin/bulletin" : "/notifications"}
               className="relative p-2 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="View Campus Bulletins"
+              aria-label="View Campus Notifications"
             >
               <Bell className="size-5" />
               <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />

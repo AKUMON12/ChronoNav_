@@ -74,12 +74,14 @@ export function Header({
         </button>
 
         {/* Notification bell */}
-        <button
-          className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-accent transition-colors"
+        <Link
+          href="/notifications"
+          className="flex size-9 items-center justify-center rounded-lg border border-border bg-card text-foreground hover:bg-accent transition-colors relative"
           aria-label="View notifications"
         >
           <Bell className="size-4" />
-        </button>
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
+        </Link>
 
         {/* User avatar placeholder */}
         <div className="flex size-9 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">
