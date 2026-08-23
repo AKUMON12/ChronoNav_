@@ -174,8 +174,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
 
   const [mounted, setMounted] = useState(false);
   const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
-  const [userName, setUserName] = useState<string>("Student");
-  const [userFullName, setUserFullName] = useState<string>("Student Account");
+  const [userName, setUserName] = useState<string>("User");
+  const [userFullName, setUserFullName] = useState<string>("User Profile");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
@@ -203,22 +203,34 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   useEffect(() => {
     setMounted(true);
     async function loadUserData() {
-      if (forcedRole) {
-        setUserRole(forcedRole);
-        return;
-      }
       const user = await getCurrentUser();
       if (user) {
-        const metadataRole = user.user_metadata?.role as UserRole;
+        const metadataRole = (user.user_metadata?.role as UserRole) || forcedRole;
         if (metadataRole) setUserRole(metadataRole);
-        if (user.user_metadata?.first_name) {
-          setUserName(`${user.user_metadata.first_name}`);
-          const last = user.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : "";
-          setUserFullName(`${user.user_metadata.first_name}${last}`);
+        
+        const firstName = user.user_metadata?.first_name;
+        const lastName = user.user_metadata?.last_name;
+        
+        if (firstName) {
+          const last = lastName ? ` ${lastName}` : "";
+          setUserName(firstName);
+          setUserFullName(`${firstName}${last}`);
         } else if (user.email) {
           const prefix = user.email.split("@")[0];
           setUserName(prefix);
           setUserFullName(prefix);
+        }
+      } else if (forcedRole) {
+        setUserRole(forcedRole);
+        if (forcedRole === "faculty") {
+          setUserName("Faculty");
+          setUserFullName("Faculty Member");
+        } else if (forcedRole === "admin") {
+          setUserName("Admin");
+          setUserFullName("System Administrator");
+        } else {
+          setUserName("Student");
+          setUserFullName("Student Account");
         }
       }
     }
