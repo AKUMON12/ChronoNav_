@@ -95,10 +95,11 @@ export function NotificationPopover({
       ref={popoverRef}
       role="dialog"
       aria-label="Notifications overview"
-      className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-3xl border border-border bg-card/95 backdrop-blur-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors"
+      className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm rounded-3xl border border-border bg-popover text-popover-foreground shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150 transition-colors"
+      style={{ backgroundColor: "var(--popover)" }}
     >
       {/* ── Popover Header ── */}
-      <div className="flex items-center justify-between border-b border-border px-4 py-3.5 bg-muted/30">
+      <div className="flex items-center justify-between border-b border-border px-4 py-3.5 bg-muted/40">
         <div className="flex items-center gap-2">
           <div className="flex size-7 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <Bell className="size-4" />
@@ -134,7 +135,7 @@ export function NotificationPopover({
       </div>
 
       {/* ── Recent Notifications List ── */}
-      <div className="max-h-80 overflow-y-auto divide-y divide-border/60">
+      <div className="max-h-80 overflow-y-auto divide-y divide-border/60 bg-popover">
         {recentNotifications.length === 0 ? (
           <div className="p-8 text-center space-y-2">
             <Bell className="size-8 mx-auto text-muted-foreground/40" />
@@ -198,11 +199,11 @@ export function NotificationPopover({
       </div>
 
       {/* ── Popover Footer CTA ── */}
-      <div className="border-t border-border p-2 bg-muted/20">
+      <div className="border-t border-border p-2.5 bg-muted/40">
         <Link
           href={viewAllHref}
           onClick={onClose}
-          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-muted/60 hover:bg-primary hover:text-white py-2 px-3 text-xs font-extrabold text-foreground transition-all group"
+          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-card border border-border/80 hover:bg-primary hover:text-white py-2.5 px-3 text-xs font-extrabold text-foreground transition-all shadow-sm group"
         >
           <span>View All Notifications</span>
           <ArrowRight className="size-3.5 group-hover:translate-x-0.5 transition-transform" />
