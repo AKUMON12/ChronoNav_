@@ -20,6 +20,16 @@ export const metadata: Metadata = {
   title: "ChronoNav | UC Main Campus Navigation & Schedule System",
   description:
     "Indoor campus navigation and schedule-management web system for the University of Cebu Main Campus.",
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+      { url: "https://res.cloudinary.com/deua2yipj/image/upload/v1758917007/ChronoNav_logo_muon27.png" }
+    ],
+    apple: [
+      { url: "https://res.cloudinary.com/deua2yipj/image/upload/v1758917007/ChronoNav_logo_muon27.png" }
+    ],
+    shortcut: ["/favicon.png"],
+  },
 };
 
 export default function RootLayout({
