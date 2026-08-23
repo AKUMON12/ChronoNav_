@@ -158,49 +158,16 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Helper to synchronously read cached session from localStorage
-  const getCachedSession = () => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("chrononav_user_session");
-        if (stored) return JSON.parse(stored);
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  };
-
-  const cachedSession = getCachedSession();
-
-  const [userRole, setUserRole] = useState<UserRole>(() => {
-    if (forcedRole) return forcedRole;
-    if (cachedSession?.user_metadata?.role) return cachedSession.user_metadata.role;
-    return "student";
-  });
-
-  const [userName, setUserName] = useState<string>(() => {
-    if (cachedSession?.user_metadata?.first_name) {
-      return `${cachedSession.user_metadata.first_name}`;
-    }
-    if (cachedSession?.email) {
-      return cachedSession.email.split("@")[0];
-    }
-    return "Student";
-  });
-
-  const [userFullName, setUserFullName] = useState<string>(() => {
-    if (cachedSession?.user_metadata?.first_name) {
-      const last = cachedSession.user_metadata.last_name ? ` ${cachedSession.user_metadata.last_name}` : "";
-      return `${cachedSession.user_metadata.first_name}${last}`;
-    }
-    return "Student Account";
-  });
+  const [mounted, setMounted] = useState(false);
+  const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
+  const [userName, setUserName] = useState<string>("Student");
+  const [userFullName, setUserFullName] = useState<string>("Student Account");
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
   useEffect(() => {
+    setMounted(true);
     async function loadUserData() {
       if (forcedRole) {
         setUserRole(forcedRole);
@@ -372,18 +339,22 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             }`}
             title="Manage My Profile"
           >
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0 group-hover:scale-105 transition-transform">
+            <div 
+              suppressHydrationWarning
+              className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0 group-hover:scale-105 transition-transform"
+            >
               {userName.charAt(0).toUpperCase()}
             </div>
             <div className="overflow-hidden flex-1">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-black text-foreground truncate">{userFullName}</p>
+                <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userFullName}</p>
                 <ChevronRight className={`size-3 transition-colors ${
                   pathname === "/profile" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
                 }`} />
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
+                  suppressHydrationWarning
                   className={`rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider ${getRoleBadgeStyle(
                     userRole
                   )}`}
@@ -551,12 +522,16 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-colors block"
               >
-                <div className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary font-black text-sm">
+                <div 
+                  suppressHydrationWarning
+                  className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary font-black text-sm"
+                >
                   {userName.charAt(0).toUpperCase()}
                 </div>
                 <div className="overflow-hidden">
-                  <p className="text-xs font-black text-foreground truncate">{userName}</p>
+                  <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userName}</p>
                   <span
+                    suppressHydrationWarning
                     className={`inline-block rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase mt-0.5 ${getRoleBadgeStyle(
                       userRole
                     )}`}
