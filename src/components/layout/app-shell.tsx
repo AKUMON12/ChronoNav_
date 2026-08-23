@@ -26,6 +26,12 @@ import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 import { Logo } from "@/components/shared/logo";
+import { NotificationPopover } from "@/components/notifications/notification-popover";
+import {
+  CampusNotification,
+  getStoredNotifications,
+  saveStoredNotifications,
+} from "@/lib/notifications";
 import { signOut, getCurrentUser } from "@/lib/supabase/auth";
 import type { UserRole } from "@/types/database";
 
@@ -166,6 +172,26 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
+  const [notifications, setNotifications] = useState<CampusNotification[]>(() =>
+    getStoredNotifications()
+  );
+
+  // Sync notifications across tabs or component updates
+  useEffect(() => {
+    function handleSync() {
+      setNotifications(getStoredNotifications());
+    }
+    window.addEventListener("chrononav:notifications_updated", handleSync);
+    return () => {
+      window.removeEventListener("chrononav:notifications_updated", handleSync);
+    };
+  }, []);
+
+  const unreadNotificationsCount = useMemo(
+    () => notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -434,15 +460,35 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             {/* Single Clean Theme Toggle */}
             <ThemeToggle />
 
-            {/* Notification Indicator -> Navigates to Notifications / Bulletin */}
-            <Link
-              href={userRole === "admin" ? "/admin/bulletin" : "/notifications"}
-              className="relative p-2 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-              aria-label="View Campus Notifications"
-            >
-              <Bell className="size-5" />
-              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
-            </Link>
+            {/* Notification Indicator -> Toggles Notification Preview Popover */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                aria-haspopup="dialog"
+                aria-expanded={isNotificationsOpen}
+                className={`relative p-2 rounded-xl transition-colors ${
+                  isNotificationsOpen
+                    ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+                aria-label="View Campus Notifications Preview"
+              >
+                <Bell className="size-5" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
+                )}
+              </button>
+
+              {/* Accessible Preview Popover */}
+              <NotificationPopover
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+                userRole={userRole}
+                notifications={notifications}
+                onNotificationsChange={setNotifications}
+              />
+            </div>
 
             {/* User Profile Quick Avatar Button */}
             <Link

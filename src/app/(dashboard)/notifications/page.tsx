@@ -19,81 +19,20 @@ import {
   Sparkles,
 } from "lucide-react";
 import { BackButton } from "@/components/shared/back-button";
-
-export interface CampusNotification {
-  id: string;
-  title: string;
-  message: string;
-  timestamp: string;
-  category: "announcement" | "reminder" | "navigation" | "system";
-  priority: "urgent" | "important" | "normal";
-  read: boolean;
-  actionUrl?: string;
-  actionLabel?: string;
-  roomTarget?: string;
-}
-
-const INITIAL_NOTIFICATIONS: CampusNotification[] = [
-  {
-    id: "notif-1",
-    title: "1st Semester Midterm Examination Rooms Published",
-    message: "Midterm room assignments across Floors 1 through 5 of the CCS Building are now active in your student schedule.",
-    timestamp: "10 minutes ago",
-    category: "announcement",
-    priority: "urgent",
-    read: false,
-    actionUrl: "/schedule",
-    actionLabel: "View Schedule",
-  },
-  {
-    id: "notif-2",
-    title: "Class Transition: CS 301 - Data Structures & Algorithms",
-    message: "Your upcoming lecture begins in 15 minutes at CCS 538 (5th Floor). Tap below for turn-by-turn indoor directions.",
-    timestamp: "25 minutes ago",
-    category: "reminder",
-    priority: "important",
-    read: false,
-    actionUrl: "/map",
-    actionLabel: "Start Navigation",
-    roomTarget: "CCS 538",
-  },
-  {
-    id: "notif-3",
-    title: "Elevator 2 Scheduled Maintenance",
-    message: "Floor 4 elevator servicing scheduled today from 4:00 PM to 6:00 PM. Please use the central stairwell.",
-    timestamp: "2 hours ago",
-    category: "announcement",
-    priority: "normal",
-    read: false,
-  },
-  {
-    id: "notif-4",
-    title: "Study Load OCR Scanner Synchronized",
-    message: "5 courses and 10 classroom slots were automatically parsed and added to your weekly timeline.",
-    timestamp: "Yesterday",
-    category: "system",
-    priority: "normal",
-    read: true,
-    actionUrl: "/schedule",
-    actionLabel: "Open Classes",
-  },
-  {
-    id: "notif-5",
-    title: "Innovation Lab 501 Open Hackathon Registration",
-    message: "Annual Inter-College Software Development Hackathon is now accepting student applications at the 5th floor.",
-    timestamp: "2 days ago",
-    category: "announcement",
-    priority: "normal",
-    read: true,
-  },
-];
+import {
+  CampusNotification,
+  getStoredNotifications,
+  saveStoredNotifications,
+} from "@/lib/notifications";
 
 /**
  * Enterprise Campus Notification Hub Page
  * Supports real-time announcement feeds, class reminders, indoor map jump links, and filter controls.
  */
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<CampusNotification[]>(INITIAL_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<CampusNotification[]>(() =>
+    getStoredNotifications()
+  );
   const [activeFilter, setActiveFilter] = useState<"all" | "unread" | "announcement" | "reminder">("all");
 
   const unreadCount = useMemo(
@@ -111,17 +50,23 @@ export default function NotificationsPage() {
   }, [notifications, activeFilter]);
 
   const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    const updated = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(updated);
+    saveStoredNotifications(updated);
   };
 
   const toggleReadStatus = (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: !n.read } : n))
+    const updated = notifications.map((n) =>
+      n.id === id ? { ...n, read: !n.read } : n
     );
+    setNotifications(updated);
+    saveStoredNotifications(updated);
   };
 
   const clearNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    const updated = notifications.filter((n) => n.id !== id);
+    setNotifications(updated);
+    saveStoredNotifications(updated);
   };
 
   return (
