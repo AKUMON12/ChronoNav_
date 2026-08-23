@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { 
   Users, 
@@ -28,15 +28,35 @@ import {
   Server,
   ArrowRight,
 } from "lucide-react";
-import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { SampleCCSGraph } from "@/lib/navigation/pathfinding";
 
 /**
  * Enterprise Admin System Analytics & Telemetry Dashboard
  * Complete full-system oversight, campus mobility patterns, room utilization heatmaps,
- * OCR accuracy distribution, real-time device breakdown, and exclusive administrative controls.
+ * OCR accuracy distribution, real-time device breakdown, and clickable administrative controls.
  */
 export default function AdminAnalyticsDashboard() {
   const [activeMetricTab, setActiveMetricTab] = useState<"foot_traffic" | "ocr" | "devices">("foot_traffic");
+  
+  // Real dynamic metrics calculated from system state & graph data
+  const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
+  
+  const roomMetrics = useMemo(() => {
+    const allNodes = Object.values(graph);
+    // Filter actual rooms, labs, and key facilities
+    const roomsOnly = allNodes.filter(n => n.type !== "corridor");
+    const classrooms = allNodes.filter(n => n.category === "classroom");
+    const labs = allNodes.filter(n => n.category === "lab");
+    const offices = allNodes.filter(n => n.category === "office");
+    
+    return {
+      totalNodes: allNodes.length,
+      totalRooms: roomsOnly.length,
+      classroomsCount: classrooms.length,
+      labsCount: labs.length,
+      officesCount: offices.length,
+    };
+  }, [graph]);
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
@@ -60,20 +80,27 @@ export default function AdminAnalyticsDashboard() {
         </div>
       </div>
 
-      {/* ── METRIC OVERVIEW CARDS ── */}
+      {/* ── INTERACTIVE METRIC OVERVIEW CARDS (CLICKABLE) ── */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Registered Users */}
-        <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
+        {/* Total Registered Users -> Navigates to /admin/users */}
+        <Link
+          href="/admin/users"
+          className="group rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-xl hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary block"
+          aria-label="View and manage system users"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">
               TOTAL USERS
             </span>
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <Users className="size-5" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-foreground">1,482</div>
+            <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors flex items-center justify-between">
+              <span>1,482</span>
+              <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+            </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center">
                 <ArrowUpRight className="size-3.5" /> +14.2%
@@ -81,66 +108,87 @@ export default function AdminAnalyticsDashboard() {
               <span>(1,240 Students • 242 Faculty)</span>
             </div>
           </div>
-        </div>
+        </Link>
 
-        {/* Daily Navigation Queries */}
-        <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
+        {/* Daily Navigation Queries -> Navigates to /map */}
+        <Link
+          href="/map"
+          className="group rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-xl hover:border-primary/50 transition-all focus:outline-none focus:ring-2 focus:ring-primary block"
+          aria-label="Open Interactive Campus Map"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              TODAY'S MAP SEARCHES
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider group-hover:text-primary transition-colors">
+              CAMPUS MAP SEARCHES
             </span>
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-110 transition-transform">
               <Navigation className="size-5" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-foreground">3,840</div>
+            <div className="text-3xl font-black text-foreground group-hover:text-primary transition-colors flex items-center justify-between">
+              <span>3,840</span>
+              <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity text-primary" />
+            </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold flex items-center">
                 <ArrowUpRight className="size-3.5" /> +18.4%
               </span>
-              <span>room directions found</span>
+              <span>Dijkstra routes calculated</span>
             </div>
           </div>
-        </div>
+        </Link>
 
-        {/* OCR Engine Success Rate */}
-        <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
+        {/* Master Schedules & Scans -> Navigates to /admin/schedules */}
+        <Link
+          href="/admin/schedules"
+          className="group rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-xl hover:border-emerald-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 block"
+          aria-label="View and manage master academic schedules"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              STUDY LOAD SCANS
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider group-hover:text-emerald-500 transition-colors">
+              MASTER SCHEDULES
             </span>
-            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform">
               <ScanLine className="size-5" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-foreground">96.8%</div>
+            <div className="text-3xl font-black text-foreground group-hover:text-emerald-500 transition-colors flex items-center justify-between">
+              <span>96.8%</span>
+              <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500" />
+            </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
               <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">482 / 498</span>
-              <span>files parsed automatically</span>
+              <span>study loads parsed</span>
             </div>
           </div>
-        </div>
+        </Link>
 
-        {/* Calibrated Rooms & Nodes */}
-        <div className="rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-lg transition-all">
+        {/* Calibrated Campus Rooms -> Navigates to /admin/rooms */}
+        <Link
+          href="/admin/rooms"
+          className="group rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-xl hover:border-indigo-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 block"
+          aria-label="View and calibrate campus rooms and POIs"
+        >
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-              CAMPUS ROOMS
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider group-hover:text-indigo-500 transition-colors">
+              CAMPUS ROOMS & POIs
             </span>
-            <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 group-hover:scale-110 transition-transform">
               <Building2 className="size-5" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-black text-foreground">48 Rooms</div>
+            <div className="text-3xl font-black text-foreground group-hover:text-indigo-500 transition-colors flex items-center justify-between">
+              <span>{roomMetrics.totalRooms} Rooms</span>
+              <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity text-indigo-500" />
+            </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
-              <span className="text-indigo-500 font-extrabold">Floors 1 through 5</span>
-              <span>• CCS Building</span>
+              <span className="text-indigo-500 font-extrabold">Floors 1 to 5</span>
+              <span>• {roomMetrics.classroomsCount} Classrooms • {roomMetrics.labsCount} Labs</span>
             </div>
           </div>
-        </div>
+        </Link>
       </section>
 
 
