@@ -82,6 +82,12 @@ const navigationConfig: NavigationItem[] = [
 
   // ── 2. Faculty Portal ──
   {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roles: ["faculty"],
+  },
+  {
     label: "Faculty Workspace",
     href: "/faculty/dashboard",
     icon: GraduationCap,
@@ -350,14 +356,13 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           {/* User Profile Card (Clickable link to /profile) */}
           <Link
             href="/profile"
-            className={`rounded-2xl border p-3 flex items-center gap-3 transition-all duration-200 group block focus:outline-none focus:ring-2 focus:ring-primary ${
-              pathname === "/profile"
-                ? "bg-primary/10 border-primary/50 ring-1 ring-primary/30 shadow-md"
-                : "border-border bg-muted/40 hover:bg-muted/70 shadow-sm"
-            }`}
+            className={`rounded-2xl border p-3 flex items-center gap-3 transition-all duration-200 group block focus:outline-none focus:ring-2 focus:ring-primary ${pathname === "/profile"
+              ? "bg-primary/10 border-primary/50 ring-1 ring-primary/30 shadow-md"
+              : "border-border bg-muted/40 hover:bg-muted/70 shadow-sm"
+              }`}
             title="Manage My Profile"
           >
-            <div 
+            <div
               suppressHydrationWarning
               className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0 group-hover:scale-105 transition-transform"
             >
@@ -366,9 +371,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             <div className="overflow-hidden flex-1">
               <div className="flex items-center justify-between">
                 <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userFullName}</p>
-                <ChevronRight className={`size-3 transition-colors ${
-                  pathname === "/profile" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                }`} />
+                <ChevronRight className={`size-3 transition-colors ${pathname === "/profile" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                  }`} />
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
@@ -399,11 +403,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${
-                    isActive
-                      ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                  }`}
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all duration-200 ${isActive
+                    ? "bg-primary text-white shadow-lg shadow-primary/25 scale-[1.02]"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <Icon className="size-4 shrink-0" />
@@ -468,11 +471,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
                 aria-haspopup="dialog"
                 aria-expanded={isNotificationsOpen}
-                className={`relative p-2 rounded-xl transition-colors ${
-                  isNotificationsOpen
-                    ? "bg-primary/15 text-primary ring-1 ring-primary/30"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
+                className={`relative p-2 rounded-xl transition-colors ${isNotificationsOpen
+                  ? "bg-primary/15 text-primary ring-1 ring-primary/30"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
                 aria-label="View Campus Notifications Preview"
               >
                 <Bell className="size-5" />
@@ -497,13 +499,13 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-2xl hover:bg-muted transition-colors border border-transparent hover:border-border"
               aria-label="Open User Profile"
             >
-              <div 
+              <div
                 suppressHydrationWarning
                 className="flex size-8 items-center justify-center rounded-xl bg-primary text-white font-black text-xs shadow-sm shadow-primary/25"
               >
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <span 
+              <span
                 suppressHydrationWarning
                 className="text-xs font-black text-foreground hidden md:inline truncate max-w-[100px]"
               >
@@ -554,7 +556,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 onClick={() => setMobileMenuOpen(false)}
                 className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-colors block"
               >
-                <div 
+                <div
                   suppressHydrationWarning
                   className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary font-black text-sm"
                 >
@@ -584,11 +586,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${
-                        isActive
-                          ? "bg-primary text-white shadow-md shadow-primary/30"
-                          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                      }`}
+                      className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-extrabold transition-all ${isActive
+                        ? "bg-primary text-white shadow-md shadow-primary/30"
+                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                        }`}
                     >
                       <div className="flex items-center gap-3">
                         <Icon className="size-4" />
@@ -634,16 +635,14 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${
-                  isActive
-                    ? "text-primary font-black scale-105"
-                    : "text-muted-foreground hover:text-foreground font-semibold"
-                }`}
+                className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all ${isActive
+                  ? "text-primary font-black scale-105"
+                  : "text-muted-foreground hover:text-foreground font-semibold"
+                  }`}
               >
                 <div
-                  className={`p-1.5 rounded-xl transition-colors ${
-                    isActive ? "bg-primary/15 text-primary" : ""
-                  }`}
+                  className={`p-1.5 rounded-xl transition-colors ${isActive ? "bg-primary/15 text-primary" : ""
+                    }`}
                 >
                   <Icon className="size-4.5" />
                 </div>
