@@ -36,11 +36,11 @@ interface NavigationItem {
   roles: UserRole[];
 }
 
-/** Dynamic Role-Based Navigation Configuration */
+/** Dynamic Role-Based Navigation Configuration following standard hierarchy */
 const navigationConfig: NavigationItem[] = [
   // ── 1. Student Portal ──
   {
-    label: "Home",
+    label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["student"],
@@ -52,13 +52,6 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student"],
   },
   {
-    label: "Campus Map",
-    href: "/map",
-    icon: MapPin,
-    badge: "5 Floors",
-    roles: ["student", "faculty"],
-  },
-  {
     label: "Scan Study Load",
     href: "/schedule?ocr=open",
     icon: ScanLine,
@@ -66,17 +59,24 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student"],
   },
   {
+    label: "Campus Map",
+    href: "/map",
+    icon: MapPin,
+    badge: "5 Floors",
+    roles: ["student"],
+  },
+  {
     label: "Settings",
     href: "/settings",
     icon: Settings,
-    roles: ["student", "faculty"],
+    roles: ["student"],
   },
 
   // ── 2. Faculty Portal ──
   {
-    label: "Faculty Home",
+    label: "Dashboard",
     href: "/faculty/dashboard",
-    icon: GraduationCap,
+    icon: LayoutDashboard,
     roles: ["faculty"],
   },
   {
@@ -85,18 +85,25 @@ const navigationConfig: NavigationItem[] = [
     icon: Calendar,
     roles: ["faculty"],
   },
+  {
+    label: "Campus Map",
+    href: "/map",
+    icon: MapPin,
+    badge: "5 Floors",
+    roles: ["faculty"],
+  },
+  {
+    label: "Settings",
+    href: "/settings",
+    icon: Settings,
+    roles: ["faculty"],
+  },
 
   // ── 3. Administrator Suite ──
   {
-    label: "Campus Overview",
+    label: "Dashboard",
     href: "/admin/dashboard",
-    icon: Shield,
-    roles: ["admin"],
-  },
-  {
-    label: "All Schedules",
-    href: "/admin/schedules",
-    icon: Calendar,
+    icon: LayoutDashboard,
     roles: ["admin"],
   },
   {
@@ -106,7 +113,13 @@ const navigationConfig: NavigationItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Manage Rooms",
+    label: "Master Schedules",
+    href: "/admin/schedules",
+    icon: Calendar,
+    roles: ["admin"],
+  },
+  {
+    label: "Campus Rooms",
     href: "/admin/rooms",
     icon: Map,
     badge: "5 Floors",
@@ -121,11 +134,11 @@ const navigationConfig: NavigationItem[] = [
   {
     label: "Activity Logs",
     href: "/admin/logs",
-    icon: LayoutDashboard,
+    icon: Shield,
     roles: ["admin"],
   },
   {
-    label: "Admin Settings",
+    label: "Settings",
     href: "/admin/settings",
     icon: Settings,
     roles: ["admin"],
@@ -145,8 +158,45 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
-  const [userName, setUserName] = useState<string>("User");
+  // Helper to synchronously read cached session from localStorage
+  const getCachedSession = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("chrononav_user_session");
+        if (stored) return JSON.parse(stored);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const cachedSession = getCachedSession();
+
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    if (forcedRole) return forcedRole;
+    if (cachedSession?.user_metadata?.role) return cachedSession.user_metadata.role;
+    return "student";
+  });
+
+  const [userName, setUserName] = useState<string>(() => {
+    if (cachedSession?.user_metadata?.first_name) {
+      return `${cachedSession.user_metadata.first_name}`;
+    }
+    if (cachedSession?.email) {
+      return cachedSession.email.split("@")[0];
+    }
+    return "Student";
+  });
+
+  const [userFullName, setUserFullName] = useState<string>(() => {
+    if (cachedSession?.user_metadata?.first_name) {
+      const last = cachedSession.user_metadata.last_name ? ` ${cachedSession.user_metadata.last_name}` : "";
+      return `${cachedSession.user_metadata.first_name}${last}`;
+    }
+    return "Student Account";
+  });
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
 
@@ -162,8 +212,12 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
         if (metadataRole) setUserRole(metadataRole);
         if (user.user_metadata?.first_name) {
           setUserName(`${user.user_metadata.first_name}`);
+          const last = user.user_metadata?.last_name ? ` ${user.user_metadata.last_name}` : "";
+          setUserFullName(`${user.user_metadata.first_name}${last}`);
         } else if (user.email) {
-          setUserName(user.email.split("@")[0]);
+          const prefix = user.email.split("@")[0];
+          setUserName(prefix);
+          setUserFullName(prefix);
         }
       }
     }
@@ -311,7 +365,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           {/* User Profile Card (Clickable link to /profile) */}
           <Link
             href="/profile"
-            className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-all duration-200 group block"
+            className={`rounded-2xl border p-3 flex items-center gap-3 transition-all duration-200 group block focus:outline-none focus:ring-2 focus:ring-primary ${
+              pathname === "/profile"
+                ? "bg-primary/10 border-primary/50 ring-1 ring-primary/30 shadow-md"
+                : "border-border bg-muted/40 hover:bg-muted/70 shadow-sm"
+            }`}
             title="Manage My Profile"
           >
             <div className="flex size-10 items-center justify-center rounded-xl bg-primary/15 border border-primary/30 text-primary font-black text-sm shrink-0 group-hover:scale-105 transition-transform">
@@ -319,8 +377,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             </div>
             <div className="overflow-hidden flex-1">
               <div className="flex items-center justify-between">
-                <p className="text-xs font-black text-foreground truncate">{userName}</p>
-                <ChevronRight className="size-3 text-muted-foreground group-hover:text-primary transition-colors" />
+                <p className="text-xs font-black text-foreground truncate">{userFullName}</p>
+                <ChevronRight className={`size-3 transition-colors ${
+                  pathname === "/profile" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
+                }`} />
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
@@ -330,7 +390,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 >
                   {userRole}
                 </span>
-                <span className="text-[9px] font-bold text-muted-foreground">My Profile</span>
+                <span className="text-[9px] font-bold text-muted-foreground">Profile</span>
               </div>
             </div>
           </Link>

@@ -42,28 +42,42 @@ const AVATAR_PALETTES = [
  * contact numbers, emergency contact, academic details, and biography.
  */
 export default function ProfilePage() {
+  // Synchronously fetch cached user session to eliminate any UI layout shifts
+  const getCachedProfile = () => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("chrononav_user_session");
+        if (stored) return JSON.parse(stored);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const cached = getCachedProfile();
+  const cachedMeta = cached?.user_metadata || {};
+
   // Identity Fields
-  const [firstName, setFirstName] = useState<string>("Tristan");
-  const [lastName, setLastName] = useState<string>("Developer");
-  const [idNumber, setIdNumber] = useState<string>("22684955");
-  const [email, setEmail] = useState<string>("22684955@uc.edu.ph");
-  const [userRole, setUserRole] = useState<UserRole>("student");
-  const [program, setProgram] = useState<string>("BSCS - Computer Science");
-  const [yearLevel, setYearLevel] = useState<string>("3rd Year");
+  const [firstName, setFirstName] = useState<string>(() => cachedMeta.first_name || "Tristan");
+  const [lastName, setLastName] = useState<string>(() => cachedMeta.last_name || "Developer");
+  const [idNumber, setIdNumber] = useState<string>(() => cachedMeta.id_number || "22684955");
+  const [email, setEmail] = useState<string>(() => cached?.email || "22684955@uc.edu.ph");
+  const [userRole, setUserRole] = useState<UserRole>(() => cachedMeta.role || "student");
+  const [program, setProgram] = useState<string>(() => cachedMeta.program || "BSCS - Computer Science");
+  const [yearLevel, setYearLevel] = useState<string>(() => cachedMeta.year_level || "3rd Year");
 
   // Contact & Address Fields
-  const [phone, setPhone] = useState<string>("+63 917 123 4567");
-  const [streetAddress, setStreetAddress] = useState<string>("Sanciangko Street, Sambag I");
-  const [city, setCity] = useState<string>("Cebu City, 6000 Cebu");
-  const [emergencyContact, setEmergencyContact] = useState<string>("Elena Developer (Parent)");
-  const [emergencyPhone, setEmergencyPhone] = useState<string>("+63 918 987 6543");
-  const [bio, setBio] = useState<string>(
-    "Undergraduate student specialized in software engineering and algorithms at University of Cebu Main Campus (CCS)."
-  );
+  const [phone, setPhone] = useState<string>(() => cachedMeta.phone || "+63 917 123 4567");
+  const [streetAddress, setStreetAddress] = useState<string>(() => cachedMeta.address || "Sanciangko Street, Sambag I");
+  const [city, setCity] = useState<string>(() => cachedMeta.city || "Cebu City, 6000 Cebu");
+  const [emergencyContact, setEmergencyContact] = useState<string>(() => cachedMeta.emergency_contact || "Elena Developer (Parent)");
+  const [emergencyPhone, setEmergencyPhone] = useState<string>(() => cachedMeta.emergency_phone || "+63 918 987 6543");
+  const [bio, setBio] = useState<string>(() => cachedMeta.bio || "Undergraduate student specialized in software engineering and algorithms at University of Cebu Main Campus (CCS).");
 
   // Avatar & Theme customization
-  const [avatarGradient, setAvatarGradient] = useState<string>(AVATAR_PALETTES[0]);
-  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [avatarGradient, setAvatarGradient] = useState<string>(() => cachedMeta.avatar_gradient || AVATAR_PALETTES[0]);
+  const [avatarUrl, setAvatarUrl] = useState<string>(() => cachedMeta.avatar_url || "");
 
   // Form Status
   const [isSaving, setIsSaving] = useState<boolean>(false);
