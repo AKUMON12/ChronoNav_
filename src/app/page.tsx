@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { Logo } from "@/components/shared/logo";
 
 /**
  * ChronoNav Public Landing Page
@@ -35,10 +36,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <Compass className="size-5" />
-            </div>
-            <span className="text-lg font-bold tracking-tight text-foreground">CHRONONAV</span>
+            <Logo size="sm" showText={true} subtitle="" priority={true} />
           </Link>
 
           {/* Desktop nav links */}
@@ -196,7 +194,7 @@ export default function LandingPage() {
       <footer className="border-t border-border bg-card">
         <div className="mx-auto max-w-7xl px-4 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Compass className="size-4 text-primary" />
+            <Logo size="xs" priority={false} />
             <span>© 2026 ChronoNav — University of Cebu Main Campus</span>
           </div>
           <div className="flex items-center gap-6 text-sm text-muted-foreground">

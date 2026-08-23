@@ -19,6 +19,7 @@ import {
 import { signUp } from "@/lib/supabase/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
+import { Logo } from "@/components/shared/logo";
 
 const ACADEMIC_PROGRAMS = [
   { code: "BSCS", name: "BS Computer Science" },
@@ -142,10 +143,10 @@ export default function RegisterPage() {
           <div className="flex justify-center">
             <Link
               href="/"
-              className="flex size-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30 hover:scale-105 transition-transform"
+              className="hover:scale-105 transition-transform"
               aria-label="ChronoNav Home"
             >
-              <Compass className="size-8" />
+              <Logo size="lg" priority={true} />
             </Link>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">

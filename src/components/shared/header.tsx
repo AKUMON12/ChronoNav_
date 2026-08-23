@@ -1,9 +1,8 @@
-"use client";
-
 import React from "react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { Compass, Sun, Moon, Bell, Search, Menu, X } from "lucide-react";
+import { Sun, Moon, Bell, Search, Menu, X } from "lucide-react";
+import { Logo } from "@/components/shared/logo";
 
 interface HeaderProps {
   /** Page title displayed in the header bar */
@@ -44,9 +43,7 @@ export function Header({
         )}
 
         <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <Compass className="size-5" />
-          </div>
+          <Logo size="sm" priority={true} />
           <span className="text-base sm:text-lg font-bold text-foreground tracking-tight">
             {title}
           </span>

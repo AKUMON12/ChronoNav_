@@ -25,6 +25,7 @@ import {
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
+import { Logo } from "@/components/shared/logo";
 import { signOut, getCurrentUser } from "@/lib/supabase/auth";
 import type { UserRole } from "@/types/database";
 
@@ -315,18 +316,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
       <aside className="hidden lg:flex w-64 sticky top-0 h-screen flex-col justify-between border-r border-border bg-card p-5 shrink-0 z-30 transition-colors duration-200">
         <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-1">
           {/* Brand Logo Header */}
-          <Link href="/dashboard" className="flex items-center gap-3 px-2">
-            <div className="flex size-10 items-center justify-center rounded-2xl bg-primary text-white shadow-lg shadow-primary/30">
-              <Compass className="size-6" />
-            </div>
-            <div>
-              <span className="text-base font-black tracking-tight text-foreground block">
-                CHRONONAV
-              </span>
-              <span className="text-[10px] font-bold text-muted-foreground tracking-wider uppercase">
-                UC Main • CCS
-              </span>
-            </div>
+          <Link href="/dashboard" className="flex items-center gap-3 px-2 group">
+            <Logo size="md" showText={true} subtitle="UC Main • CCS" priority={true} />
           </Link>
 
           {/* User Profile Card (Clickable link to /profile) */}
@@ -429,17 +420,12 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Menu className="size-5" />
             </button>
 
-            {/* Top-Left Back Button */}
+            {/* Top-Left Back Button or Brand Logo */}
             {!isRootDashboard ? (
               <BackButton fallbackUrl="/dashboard" showLabel={false} />
             ) : (
               <Link href="/dashboard" className="flex items-center gap-2">
-                <div className="flex size-8 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/30">
-                  <Compass className="size-4.5" />
-                </div>
-                <span className="text-sm sm:text-base font-black tracking-tight text-foreground hidden xs:inline">
-                  CHRONONAV
-                </span>
+                <Logo size="sm" showText={true} subtitle="CCS" priority={true} />
               </Link>
             )}
           </div>
@@ -448,36 +434,45 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             {/* Single Clean Theme Toggle */}
             <ThemeToggle />
 
-            {/* Campus Map Shortcut for Desktop */}
+            {/* Notification Indicator -> Navigates to Bulletin */}
             <Link
-              href="/map"
-              className="hidden md:flex items-center gap-1.5 rounded-xl border border-border bg-muted/50 px-3 py-1.5 text-xs font-extrabold text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              href="/admin/bulletin"
+              className="relative p-2 rounded-xl text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+              aria-label="View Campus Bulletins"
             >
-              <Map className="size-3.5 text-primary" />
-              <span>Campus Map</span>
+              <Bell className="size-5" />
+              <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-card animate-pulse" />
             </Link>
 
-            {/* User Avatar Badge (Clickable link to /profile) */}
+            {/* User Profile Quick Avatar Button */}
             <Link
               href="/profile"
-              className="flex items-center gap-2 pl-2 border-l border-border hover:opacity-85 transition-opacity"
-              title="View Profile"
+              className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-2xl hover:bg-muted transition-colors border border-transparent hover:border-border"
+              aria-label="Open User Profile"
             >
-              <div className="flex size-8 items-center justify-center rounded-full bg-primary/15 border border-primary/30 text-primary text-xs font-black">
+              <div 
+                suppressHydrationWarning
+                className="flex size-8 items-center justify-center rounded-xl bg-primary text-white font-black text-xs shadow-sm shadow-primary/25"
+              >
                 {userName.charAt(0).toUpperCase()}
               </div>
-              <span className="hidden sm:inline text-xs font-black text-foreground capitalize">
-                {userRole}
+              <span 
+                suppressHydrationWarning
+                className="text-xs font-black text-foreground hidden md:inline truncate max-w-[100px]"
+              >
+                {userName}
               </span>
             </Link>
           </div>
         </header>
 
-        {/* Dynamic Page Content */}
-        <main className="flex-1 pb-24 lg:pb-8 overflow-x-hidden">{children}</main>
+        {/* Dynamic Page Content Slot */}
+        <main className="flex-1 min-w-0 pb-20 lg:pb-8">
+          {children}
+        </main>
       </div>
 
-      {/* ── Mobile Navigation Drawer Overlay (<1024px) ── */}
+      {/* ── Mobile Navigation Drawer Backdrop & Modal (<1024px) ── */}
       {mobileMenuOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
@@ -494,17 +489,7 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2.5"
                 >
-                  <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-white shadow-md shadow-primary/30">
-                    <Compass className="size-5" />
-                  </div>
-                  <div>
-                    <span className="text-base font-black tracking-tight text-foreground block">
-                      CHRONONAV
-                    </span>
-                    <span className="text-[9px] font-bold text-muted-foreground tracking-wider uppercase">
-                      UC Main Campus
-                    </span>
-                  </div>
+                  <Logo size="sm" showText={true} subtitle="UC Main Campus" priority={true} />
                 </Link>
 
                 <button

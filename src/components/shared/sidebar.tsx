@@ -13,9 +13,12 @@ import {
   BarChart3,
   FileText,
   Building2,
-  Compass,
   X,
+  ChevronRight,
+  Shield,
+  GraduationCap,
 } from "lucide-react";
+import { Logo } from "@/components/shared/logo";
 
 /** Navigation item configuration for the sidebar */
 interface NavItem {
@@ -86,10 +89,7 @@ export function Sidebar({ role = "student", isOpen, onClose }: SidebarProps) {
         {/* Sidebar header with logo */}
         <div className="flex h-14 sm:h-16 items-center justify-between border-b border-border px-4">
           <Link href="/" className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Compass className="size-5" />
-            </div>
-            <span className="text-base font-bold text-foreground tracking-tight">ChronoNav</span>
+            <Logo size="sm" showText={true} subtitle="" priority={true} />
           </Link>
 
           {/* Close button — mobile only */}
