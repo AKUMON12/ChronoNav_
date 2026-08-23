@@ -21,6 +21,7 @@ import {
   ChevronRight,
   User,
   Map,
+  FileText,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -47,7 +48,7 @@ interface NavigationItem {
 const navigationConfig: NavigationItem[] = [
   // ── 1. Student Portal ──
   {
-    label: "Dashboard",
+    label: "Student Hub",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["student"],
@@ -81,9 +82,9 @@ const navigationConfig: NavigationItem[] = [
 
   // ── 2. Faculty Portal ──
   {
-    label: "Dashboard",
+    label: "Faculty Workspace",
     href: "/faculty/dashboard",
-    icon: LayoutDashboard,
+    icon: GraduationCap,
     roles: ["faculty"],
   },
   {
@@ -108,9 +109,9 @@ const navigationConfig: NavigationItem[] = [
 
   // ── 3. Administrator Suite ──
   {
-    label: "Dashboard",
+    label: "System Overview",
     href: "/admin/dashboard",
-    icon: LayoutDashboard,
+    icon: Shield,
     roles: ["admin"],
   },
   {
@@ -141,7 +142,7 @@ const navigationConfig: NavigationItem[] = [
   {
     label: "Activity Logs",
     href: "/admin/logs",
-    icon: Shield,
+    icon: FileText,
     roles: ["admin"],
   },
   {
