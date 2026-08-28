@@ -20,6 +20,7 @@ import { signUp } from "@/lib/supabase/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 import { Logo } from "@/components/shared/logo";
+import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
 
 const ACADEMIC_PROGRAMS = [
   { code: "BSCS", name: "BS Computer Science" },
@@ -31,6 +32,7 @@ const ACADEMIC_PROGRAMS = [
 
 export default function RegisterPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   // Form Fields
   const [firstName, setFirstName] = useState("");
@@ -40,6 +42,14 @@ export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <AuthSkeleton />;
+  }
 
   // UI state
   const [showPassword, setShowPassword] = useState(false);

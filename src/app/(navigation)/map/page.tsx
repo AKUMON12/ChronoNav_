@@ -12,6 +12,7 @@ import {
 } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
+import { MapSkeleton } from "@/components/skeletons/map-skeleton";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 import {
@@ -446,13 +447,7 @@ function InteractiveMapContent() {
 
 export default function MapPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-12 text-center text-sm font-black text-muted-foreground">
-          Loading Campus Navigation Map...
-        </div>
-      }
-    >
+    <Suspense fallback={<MapSkeleton />}>
       <InteractiveMapContent />
     </Suspense>
   );

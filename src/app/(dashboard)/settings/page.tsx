@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { SettingsSkeleton } from "@/components/skeletons/settings-skeleton";
 
 export default function AccountSettingsPage() {
   // Profile Fields
@@ -50,7 +51,10 @@ export default function AccountSettingsPage() {
   const [securityNotification, setSecurityNotification] = useState<string | null>(null);
   const [securityError, setSecurityError] = useState<string | null>(null);
 
+  const [mounted, setMounted] = useState<boolean>(false);
+
   useEffect(() => {
+    setMounted(true);
     async function loadUser() {
       const user = await getCurrentUser();
       if (user) {
@@ -64,6 +68,10 @@ export default function AccountSettingsPage() {
     }
     loadUser();
   }, []);
+
+  if (!mounted) {
+    return <SettingsSkeleton />;
+  }
 
   // Password Criteria Validation
   const passwordCriteria = useMemo(() => {

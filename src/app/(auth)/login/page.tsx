@@ -18,6 +18,7 @@ import { signIn } from "@/lib/supabase/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 import { Logo } from "@/components/shared/logo";
+import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
 
 /**
  * Production Secure Login Page
@@ -26,11 +27,20 @@ import { Logo } from "@/components/shared/logo";
  */
 export default function LoginPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <AuthSkeleton />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

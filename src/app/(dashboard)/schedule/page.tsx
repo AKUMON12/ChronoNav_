@@ -28,6 +28,7 @@ import {
 import { ClassScheduleItem, ParsedScheduleItem, DayOfWeek } from "@/types/schedule";
 import { OCRUploadModal } from "@/components/schedule/ocr-upload-modal";
 import { ScheduleCRUDModal } from "@/components/schedule/schedule-crud-modal";
+import { ScheduleSkeleton } from "@/components/skeletons/schedule-skeleton";
 import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 
 /** Initial Student Schedule with CCS 538 and other real university classes */
@@ -501,13 +502,7 @@ function ScheduleContent() {
 
 export default function SchedulePage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-12 text-center text-sm font-black text-muted-foreground">
-          Loading Schedule Manager...
-        </div>
-      }
-    >
+    <Suspense fallback={<ScheduleSkeleton />}>
       <ScheduleContent />
     </Suspense>
   );

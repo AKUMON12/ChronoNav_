@@ -35,6 +35,7 @@ import { EditUserModal, ManagedUser } from "@/components/admin/edit-user-modal";
 import type { UserRole } from "@/types/database";
 import { BackButton } from "@/components/shared/back-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 interface DetailedManagedUser extends ManagedUser {
   phone?: string;
@@ -187,6 +188,11 @@ export default function AdminUsersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
+  const [mounted, setMounted] = useState<boolean>(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Filtered Users
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -304,6 +310,10 @@ export default function AdminUsersPage() {
         );
     }
   };
+
+  if (!mounted) {
+    return <TableSkeleton rows={6} />;
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">

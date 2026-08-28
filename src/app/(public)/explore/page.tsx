@@ -24,6 +24,7 @@ import {
 import { SampleCCSGraph, Node, FloorLevel } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
+import { MapSkeleton } from "@/components/skeletons/map-skeleton";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 
@@ -32,12 +33,17 @@ import { BackButton } from "@/components/shared/back-button";
  * Zero-login interactive campus map and facility directory across all 8 floors of UC Main Campus.
  */
 export default function PublicExplorePage() {
+  const [mounted, setMounted] = useState(false);
   const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
   const allNodes = useMemo(() => Object.values(graph), [graph]);
 
   // Active Floor & Map Control States
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Search & Category Filters
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -96,6 +102,10 @@ export default function PublicExplorePage() {
   };
 
   const allFloorLevels: FloorLevel[] = [1, "M", 2, 3, 4, 5, 6, 7];
+
+  if (!mounted) {
+    return <MapSkeleton />;
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground transition-colors duration-200">

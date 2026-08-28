@@ -24,6 +24,7 @@ import {
 import { ClassScheduleItem } from "@/types/schedule";
 import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 /** Enrolled Today's Classes for Student Dashboard */
 const todayClasses: (ClassScheduleItem & { status: "completed" | "in_progress" | "upcoming" })[] = [
@@ -121,6 +122,10 @@ export default function StudentDashboardPage() {
     const target = getGraphNodeForRoom(roomCode);
     router.push(`/map?start=F1_ENTRANCE&target=${target}`);
   };
+
+  if (!mounted) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">

@@ -29,6 +29,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { SampleCCSGraph } from "@/lib/navigation/pathfinding";
+import { AdminDashboardSkeleton } from "@/components/skeletons/admin-dashboard-skeleton";
 
 /**
  * Enterprise Admin System Analytics & Telemetry Dashboard
@@ -36,7 +37,12 @@ import { SampleCCSGraph } from "@/lib/navigation/pathfinding";
  * OCR accuracy distribution, real-time device breakdown, and clickable administrative controls.
  */
 export default function AdminAnalyticsDashboard() {
+  const [mounted, setMounted] = useState<boolean>(false);
   const [activeMetricTab, setActiveMetricTab] = useState<"foot_traffic" | "ocr" | "devices">("foot_traffic");
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   
   // Real dynamic metrics calculated from system state & graph data
   const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
@@ -57,6 +63,10 @@ export default function AdminAnalyticsDashboard() {
       officesCount: offices.length,
     };
   }, [graph]);
+
+  if (!mounted) {
+    return <AdminDashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">

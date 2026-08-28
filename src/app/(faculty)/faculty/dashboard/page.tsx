@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/supabase/auth";
 import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
+import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 const facultyTeachingSchedule = [
   {
@@ -57,9 +58,11 @@ const facultyTeachingSchedule = [
 
 export default function FacultyDashboardPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState<boolean>(false);
   const [facultyName, setFacultyName] = useState<string>("Dr. Santos");
 
   useEffect(() => {
+    setMounted(true);
     async function loadUser() {
       const user = await getCurrentUser();
       if (user?.user_metadata?.last_name) {
@@ -73,6 +76,10 @@ export default function FacultyDashboardPage() {
     const target = getGraphNodeForRoom(room);
     router.push(`/map?start=F1_ENTRANCE&target=${target}`);
   };
+
+  if (!mounted) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">

@@ -26,6 +26,7 @@ import { getCurrentUser, updateUserProfile } from "@/lib/supabase/auth";
 import type { UserRole } from "@/types/database";
 import { BackButton } from "@/components/shared/back-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { ProfileSkeleton } from "@/components/skeletons/profile-skeleton";
 
 const AVATAR_PALETTES = [
   "from-blue-600 to-indigo-600",
@@ -84,30 +85,36 @@ export default function ProfilePage() {
   const [notification, setNotification] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const [mounted, setMounted] = useState<boolean>(false);
+
   useEffect(() => {
+    setMounted(true);
     async function loadUserData() {
       const user = await getCurrentUser();
       if (user) {
-        const meta = user.user_metadata || {};
-        if (meta.first_name) setFirstName(meta.first_name);
-        if (meta.last_name) setLastName(meta.last_name);
-        if (meta.id_number) setIdNumber(meta.id_number);
+        if (user.user_metadata?.first_name) setFirstName(user.user_metadata.first_name);
+        if (user.user_metadata?.last_name) setLastName(user.user_metadata.last_name);
+        if (user.user_metadata?.id_number) setIdNumber(user.user_metadata.id_number);
         if (user.email) setEmail(user.email);
-        if (meta.role) setUserRole(meta.role);
-        if (meta.program) setProgram(meta.program);
-        if (meta.year_level) setYearLevel(meta.year_level);
-        if (meta.phone) setPhone(meta.phone);
-        if (meta.address) setStreetAddress(meta.address);
-        if (meta.city) setCity(meta.city);
-        if (meta.emergency_contact) setEmergencyContact(meta.emergency_contact);
-        if (meta.emergency_phone) setEmergencyPhone(meta.emergency_phone);
-        if (meta.bio) setBio(meta.bio);
-        if (meta.avatar_url) setAvatarUrl(meta.avatar_url);
-        if (meta.avatar_gradient) setAvatarGradient(meta.avatar_gradient);
+        if (user.user_metadata?.role) setUserRole(user.user_metadata.role);
+        if (user.user_metadata?.program) setProgram(user.user_metadata.program);
+        if (user.user_metadata?.year_level) setYearLevel(user.user_metadata.year_level);
+        if (user.user_metadata?.phone) setPhone(user.user_metadata.phone);
+        if (user.user_metadata?.address) setStreetAddress(user.user_metadata.address);
+        if (user.user_metadata?.city) setCity(user.user_metadata.city);
+        if (user.user_metadata?.emergency_contact) setEmergencyContact(user.user_metadata.emergency_contact);
+        if (user.user_metadata?.emergency_phone) setEmergencyPhone(user.user_metadata.emergency_phone);
+        if (user.user_metadata?.bio) setBio(user.user_metadata.bio);
+        if (user.user_metadata?.avatar_gradient) setAvatarGradient(user.user_metadata.avatar_gradient);
+        if (user.user_metadata?.avatar_url) setAvatarUrl(user.user_metadata.avatar_url);
       }
     }
     loadUserData();
   }, []);
+
+  if (!mounted) {
+    return <ProfileSkeleton />;
+  }
 
   const handleAvatarImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
