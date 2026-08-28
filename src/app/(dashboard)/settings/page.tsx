@@ -69,10 +69,6 @@ export default function AccountSettingsPage() {
     loadUser();
   }, []);
 
-  if (!mounted) {
-    return <SettingsSkeleton />;
-  }
-
   // Password Criteria Validation
   const passwordCriteria = useMemo(() => {
     return {
@@ -87,6 +83,10 @@ export default function AccountSettingsPage() {
   const passwordScore = useMemo(() => {
     return Object.values(passwordCriteria).filter(Boolean).length;
   }, [passwordCriteria]);
+
+  if (!mounted) {
+    return <SettingsSkeleton />;
+  }
 
   const isPasswordValid = passwordScore === 5;
   const isConfirmMatch = newPassword.length > 0 && newPassword === confirmPassword;

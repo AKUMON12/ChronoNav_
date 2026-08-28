@@ -43,19 +43,15 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return <AuthSkeleton />;
-  }
-
   // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Live UC ID Validation (7 to 9 digits, typically 8 like 22684955)
   const isIdNumberValid = useMemo(() => {
@@ -77,6 +73,10 @@ export default function RegisterPage() {
   const passwordScore = useMemo(() => {
     return Object.values(passwordCriteria).filter(Boolean).length;
   }, [passwordCriteria]);
+
+  if (!mounted) {
+    return <AuthSkeleton />;
+  }
 
   const isPasswordValid = passwordScore === 5;
   const isConfirmMatch = password.length > 0 && password === confirmPassword;
