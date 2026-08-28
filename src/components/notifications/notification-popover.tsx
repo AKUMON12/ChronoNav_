@@ -81,6 +81,12 @@ export function NotificationPopover({
     saveStoredNotifications(updated);
   };
 
+  const handleMarkAllUnread = () => {
+    const updated = notifications.map((n) => ({ ...n, read: false }));
+    onNotificationsChange(updated);
+    saveStoredNotifications(updated);
+  };
+
   const handleNotificationClick = (id: string) => {
     const updated = notifications.map((n) =>
       n.id === id ? { ...n, read: true } : n
@@ -115,13 +121,13 @@ export function NotificationPopover({
         </div>
 
         <div className="flex items-center gap-1">
-          {unreadCount > 0 && (
+          {notifications.length > 0 && (
             <button
-              onClick={handleMarkAllRead}
+              onClick={unreadCount > 0 ? handleMarkAllRead : handleMarkAllUnread}
               className="text-[11px] font-bold text-primary hover:underline px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors"
-              title="Mark all notifications as read"
+              title={unreadCount > 0 ? "Mark all notifications as read" : "Mark all notifications as unread"}
             >
-              Mark all read
+              {unreadCount > 0 ? "Mark all read" : "Mark all unread"}
             </button>
           )}
           <button

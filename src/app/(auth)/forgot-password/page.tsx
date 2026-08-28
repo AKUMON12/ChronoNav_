@@ -16,6 +16,7 @@ import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { BackButton } from "@/components/shared/back-button";
 import { Logo } from "@/components/shared/logo";
 import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
+import { createForgotPasswordRequest } from "@/lib/auth/password-manager";
 
 /**
  * Production Forgot Password Request Page
@@ -52,6 +53,10 @@ export default function ForgotPasswordPage() {
     setLoading(true);
 
     try {
+      // 1. Direct client-side store sync for immediate reactive updates & notifications
+      const localResult = createForgotPasswordRequest(identifier.trim(), reason.trim() || undefined);
+
+      // 2. Server API call
       const res = await fetch("/api/auth/password/forgot", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -67,7 +72,7 @@ export default function ForgotPasswordPage() {
       if (!res.ok) {
         setErrorMessage(data.error || "Failed to submit password reset request.");
       } else {
-        setSuccessMessage(data.message);
+        setSuccessMessage(data.message || localResult.message);
       }
     } catch {
       setLoading(false);

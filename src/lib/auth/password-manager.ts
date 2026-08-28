@@ -22,7 +22,35 @@ import { saveStoredNotifications, getStoredNotifications, CampusNotification } f
  */
 
 const STORAGE_PASSWORD_REQUESTS_KEY = "chrononav_password_change_requests";
-const inMemoryRequests: PasswordChangeRequest[] = [];
+const INITIAL_DEMO_REQUESTS: PasswordChangeRequest[] = [
+  {
+    id: "pwreq-sample-01",
+    user_id: "usr_student_22682702",
+    account_identifier: "22682702@uc.edu.ph",
+    user_name: "Vince Andrew Santoya",
+    role: "student",
+    type: "forgot_password",
+    status: "PENDING",
+    requested_at: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
+    reason: "Forgot password reset requested for 22682702",
+  },
+  {
+    id: "pwreq-sample-02",
+    user_id: "usr_faculty_santos",
+    account_identifier: "maria.santos@uc.edu.ph",
+    user_name: "Maria Santos",
+    role: "faculty",
+    type: "change_password",
+    status: "COMPLETED",
+    requested_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    reviewed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 3600000).toISOString(),
+    reviewed_by: "Admin Superuser",
+    completed_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000 + 4000000).toISOString(),
+    reason: "Periodic password rotation from profile settings",
+  },
+];
+
+const inMemoryRequests: PasswordChangeRequest[] = [...INITIAL_DEMO_REQUESTS];
 
 /**
  * Password Policy Enforcement:
@@ -94,16 +122,18 @@ export function getAllPasswordRequests(): PasswordChangeRequest[] {
 
   try {
     const raw = localStorage.getItem(STORAGE_PASSWORD_REQUESTS_KEY);
-    if (raw) {
-      const parsed: PasswordChangeRequest[] = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        return parsed;
-      }
+    if (!raw) {
+      localStorage.setItem(STORAGE_PASSWORD_REQUESTS_KEY, JSON.stringify(INITIAL_DEMO_REQUESTS));
+      return INITIAL_DEMO_REQUESTS;
+    }
+    const parsed: PasswordChangeRequest[] = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
   } catch (e) {
     console.error("Error loading password requests:", e);
   }
-  return inMemoryRequests;
+  return INITIAL_DEMO_REQUESTS;
 }
 
 export function resetPasswordRequestsStore(): void {
@@ -118,7 +148,10 @@ export function resetPasswordRequestsStore(): void {
 /**
  * Saves password requests array to persistent storage
  */
-function saveAllPasswordRequests(requests: PasswordChangeRequest[]): void {
+export function saveAllPasswordRequests(
+  requests: PasswordChangeRequest[],
+  emitEvent: boolean = true
+): void {
   const cloned = [...requests];
   inMemoryRequests.length = 0;
   inMemoryRequests.push(...cloned);
@@ -126,7 +159,9 @@ function saveAllPasswordRequests(requests: PasswordChangeRequest[]): void {
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem(STORAGE_PASSWORD_REQUESTS_KEY, JSON.stringify(requests));
-      window.dispatchEvent(new CustomEvent("chrononav:password_requests_updated"));
+      if (emitEvent) {
+        window.dispatchEvent(new CustomEvent("chrononav:password_requests_updated"));
+      }
     } catch (e) {
       console.error("Failed to save password requests:", e);
     }
@@ -229,6 +264,22 @@ export function createPasswordChangeRequest(
   requests.unshift(newRequest);
   saveAllPasswordRequests(requests);
 
+  // Notify Administrator in Notification Center
+  const notifications = getStoredNotifications();
+  const adminNotif: CampusNotification = {
+    id: `notif-pw-change-${Date.now()}`,
+    title: "🔐 Password Change Request Submitted",
+    message: `${user.user_metadata.first_name} ${user.user_metadata.last_name} (${user.email}) submitted a password change request from Profile Settings.`,
+    timestamp: "Just now",
+    category: "system",
+    priority: "important",
+    read: false,
+    actionUrl: "/admin/security",
+    actionLabel: "Review Request",
+  };
+  notifications.unshift(adminNotif);
+  saveStoredNotifications(notifications);
+
   // Record audit log
   recordAuditLog({
     category: "Auth",
@@ -250,7 +301,7 @@ export function createPasswordChangeRequest(
 export function createForgotPasswordRequest(
   identifier: string,
   reason?: string
-): { success: boolean; message: string } {
+): { success: boolean; message: string; request?: PasswordChangeRequest } {
   const genericMessage =
     "If an account matching this institutional identifier exists, a password reset request has been routed to the administrator for verification.";
 
@@ -273,6 +324,8 @@ export function createForgotPasswordRequest(
     (r) => r.user_id === user.id && r.status === "PENDING"
   );
 
+  let targetRequest: PasswordChangeRequest | undefined = existingPending;
+
   if (!existingPending) {
     const newRequest: PasswordChangeRequest = {
       id: `pwreq_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
@@ -286,8 +339,25 @@ export function createForgotPasswordRequest(
       reason: reason || `Forgot password reset requested for ${identifier.trim()}`,
     };
 
+    targetRequest = newRequest;
     requests.unshift(newRequest);
     saveAllPasswordRequests(requests);
+
+    // Notify Administrator in Notification Center
+    const notifications = getStoredNotifications();
+    const adminNotif: CampusNotification = {
+      id: `notif-pw-admin-${Date.now()}`,
+      title: "🔐 New Password Reset Request",
+      message: `${user.user_metadata.first_name} ${user.user_metadata.last_name} (${user.email}) submitted a password recovery request for administrative approval.`,
+      timestamp: "Just now",
+      category: "system",
+      priority: "urgent",
+      read: false,
+      actionUrl: "/admin/security",
+      actionLabel: "Review Request",
+    };
+    notifications.unshift(adminNotif);
+    saveStoredNotifications(notifications);
 
     recordAuditLog({
       category: "Auth",
@@ -298,7 +368,7 @@ export function createForgotPasswordRequest(
     });
   }
 
-  return { success: true, message: genericMessage };
+  return { success: true, message: genericMessage, request: targetRequest };
 }
 
 /**

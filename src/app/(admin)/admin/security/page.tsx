@@ -23,7 +23,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { PasswordChangeRequest, PasswordRequestStatus } from "@/types/database";
-import { getAllPasswordRequests } from "@/lib/auth/password-manager";
+import { getAllPasswordRequests, saveAllPasswordRequests } from "@/lib/auth/password-manager";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 /**
@@ -47,12 +47,33 @@ export default function AdminSecurityPage() {
   const [rejectingRequest, setRejectingRequest] = useState<PasswordChangeRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const loadRequests = () => {
+  const loadRequests = async () => {
     try {
+      const localData = getAllPasswordRequests();
+      if (localData && localData.length > 0) {
+        setRequests(localData);
+        setLoading(false);
+      }
+
+      // Sync with server API
+      const res = await fetch("/api/admin/password-requests");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.requests && Array.isArray(data.requests)) {
+          const merged = [...data.requests];
+          for (const l of localData) {
+            if (!merged.some((m) => m.id === l.id)) {
+              merged.push(l);
+            }
+          }
+          setRequests(merged);
+          saveAllPasswordRequests(merged, false);
+        }
+      }
+    } catch {
       const data = getAllPasswordRequests();
       setRequests(data);
-      setLoading(false);
-    } catch {
+    } finally {
       setLoading(false);
     }
   };

@@ -256,10 +256,18 @@ export default function AdminAnalyticsDashboard() {
   
   useEffect(() => {
     setMounted(true);
-    const updateCount = () => {
+    const updateCount = async () => {
       try {
         const reqs = getAllPasswordRequests();
         setPendingPasswordRequestsCount(reqs.filter((r) => r.status === "PENDING").length);
+
+        const res = await fetch("/api/admin/password-requests");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.metrics && typeof data.metrics.pending === "number") {
+            setPendingPasswordRequestsCount(data.metrics.pending);
+          }
+        }
       } catch {}
     };
     updateCount();
