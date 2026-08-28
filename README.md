@@ -13,8 +13,111 @@ Use these sample credentials to sign in and test features across different user 
 | Role | Name | Email | Default Password | Access Level |
 | :--- | :--- | :--- | :--- | :--- |
 | 🎓 **Student** | Juan Dela Cruz | `student@uc.edu.ph` | `Password123!` | View schedules, indoor navigation, saved paths |
-| 👨‍🏫 **Faculty** | Maria Santos | `faculty@uc.edu.ph` | `Password123!` | View room schedules, faculty navigation, OCR |
+| 👨‍🏫 **Faculty** | Maria Santos | `faculty@uc.edu.ph` | `Faculty@ChronoNav2026!` | View room schedules, faculty navigation, OCR |
 | 🛡️ **Admin** | System Administrator | `admin@uc.edu.ph` | `Admin@ChronoNav2026!` | Full admin dashboard, analytics, room & user management |
+
+Here is the complete directory of all pre-configured accounts in the **ChronoNav** system, categorized by role:
+
+---
+
+### 🛡️ 1. Administrator Account (Full System Control)
+
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Admin Superuser |
+| **Role** | `admin` |
+| **Department** | College of Computer Studies (CCS Administration) |
+| **UC ID Number** | `20194821` |
+| **Email** | `admin@uc.edu.ph` |
+| **Accepted Login Identifiers** | `admin@uc.edu.ph` **or** `admin` **or** `20194821` |
+| **Password** | `Admin@ChronoNav2026!` |
+| **Access & Privileges** | System Overview, User Directory Management, Room Catalog, Master Schedule, Campus Logs |
+
+---
+
+### 👨‍🏫 2. Faculty Accounts (Instructors & Professors)
+
+#### Account A: Dr. Maria Santos
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Dr. Maria Santos |
+| **Role** | `faculty` |
+| **Department** | Computer Science Dept. (CCS) |
+| **UC ID Number** | `21589412` |
+| **Email** | `maria.santos@uc.edu.ph` |
+| **Accepted Login Identifiers** | `maria.santos@uc.edu.ph` **or** `maria.santos` **or** `21589412` |
+| **Password** | `Faculty@ChronoNav2026!` |
+| **Teaching Load** | Data Structures, Algorithms, Software Engineering |
+
+#### Account B: Prof. Ana Reyes
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Prof. Ana Reyes |
+| **Role** | `faculty` |
+| **Department** | Information Technology Dept. (CCS) |
+| **UC ID Number** | `22490123` |
+| **Email** | `ana.reyes@uc.edu.ph` |
+| **Accepted Login Identifiers** | `ana.reyes@uc.edu.ph` **or** `ana.reyes` **or** `22490123` |
+| **Password** | `Faculty@ChronoNav2026!` |
+| **Teaching Load** | Enterprise Networking, Cisco & Cybersecurity |
+
+---
+
+### 🎓 3. Student Accounts
+
+#### Account A: Vince Andrew D. Santoya *(Official UC Study Load Account)*
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Vince Andrew D. Santoya |
+| **Role** | `student` |
+| **Program & Year** | BSIT, 4th Year |
+| **UC ID Number** | `22682702` |
+| **Email** | `22682702@uc.edu.ph` |
+| **Accepted Login Identifiers** | `22682702@uc.edu.ph` **or** `22682702` |
+| **Password** | `Student@ChronoNav2026!` |
+| **Enrolled Schedule** | **7 Classes / 15 Units** (LIT 101, IT-FRELEAN, IT-ELAI, MATH-MS102, HUM 2, SOCIO 101, IT-CPSTONE40) |
+
+#### Account B: Tristan Developer *(BSCS Student & Developer Profile)*
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Tristan Developer |
+| **Role** | `student` |
+| **Program & Year** | BSCS, 3rd Year |
+| **UC ID Number** | `22684955` |
+| **Email** | `22684955@uc.edu.ph` |
+| **Accepted Login Identifiers** | `22684955@uc.edu.ph` **or** `22684955` |
+| **Password** | `Student@ChronoNav2026!` |
+| **Enrolled Schedule** | **5 Classes / 18 Units** (CS 301, CS 302, CS 304, etc.) |
+
+#### Account C: Pedro Cruz
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Pedro Cruz |
+| **Role** | `student` |
+| **Program & Year** | BSIT, 3rd Year |
+| **UC ID Number** | `22784910` |
+| **Email** | `22784910@uc.edu.ph` |
+| **Accepted Login Identifiers** | `22784910@uc.edu.ph` **or** `22784910` |
+| **Password** | `Student@ChronoNav2026!` |
+| **Status** | Active |
+
+#### Account D: Carlos Tan *(Suspended Account for Security Testing)*
+| Field | Detail |
+| :--- | :--- |
+| **Full Name** | Carlos Tan |
+| **Role** | `student` |
+| **Program & Year** | ACT, 2nd Year |
+| **UC ID Number** | `21984712` |
+| **Email** | `21984712@uc.edu.ph` |
+| **Accepted Login Identifiers** | `21984712@uc.edu.ph` **or** `21984712` |
+| **Password** | `Student@ChronoNav2026!` |
+| **Status** | `Suspended` *(Login is blocked by security policy until un-suspended by Admin)* |
+
+---
+
+### 💡 Quick Evaluation Notes
+- **Flexible Login**: You can sign in using **either** the full institutional email (e.g. `22682702@uc.edu.ph`) or just the **Student/Employee ID number** (e.g. `22682702` or `admin`).
+- **Demo Fallback Passwords**: Standard developer passwords (e.g. `password123`, `admin123`, `student123`) are also recognized for seed accounts.
 
 > **Tip**: The [Login Page](file:///c:/Users/Admin/Documents/Tristan_Programming/Chrononav/ChronoNav_/src/app/%28auth%29/login/page.tsx) includes **1-Click Demo Buttons** for auto-filling these test credentials.
 
