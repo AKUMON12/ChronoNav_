@@ -49,12 +49,6 @@ const navigationConfig: NavigationItem[] = [
   // ── 1. Student Portal ──
   {
     label: "Dashboard",
-    href: "/student/dashboard",
-    icon: LayoutDashboard,
-    roles: ["student"],
-  },
-  {
-    label: "Student Hub",
     href: "/dashboard",
     icon: LayoutDashboard,
     roles: ["student"],
