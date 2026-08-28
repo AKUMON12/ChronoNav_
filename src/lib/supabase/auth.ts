@@ -18,60 +18,67 @@ const isPlaceholderEnv = () => {
  * Authenticates user credentials against the database / secure user repository.
  * Strictly verifies account existence and password hash.
  */
-export async function signIn(email: string, password: string) {
-  if (!email || !password || !email.trim() || !password.trim()) {
+export async function signIn(identifier: string, password: string) {
+  if (!identifier || !password || !identifier.trim() || !password.trim()) {
     return { user: null, error: "Please provide both university email and password." };
   }
 
-  // 1. If Supabase is connected to a live backend, authenticate with Supabase Auth
+  const cleanIdentifier = identifier.trim();
+
+  // 1. Verify against ChronoNav Verified University Accounts & Seed Registry
+  // (Provides instant, reliable authentication for Admin, Maria Santos, Ana Reyes, Vince Santoya, Tristan Developer, Pedro Cruz, etc.)
+  const authResult = authenticateUser(cleanIdentifier, password);
+
+  if (authResult.user && !authResult.error) {
+    const authenticatedUser = {
+      id: authResult.user.id,
+      email: authResult.user.email,
+      user_metadata: {
+        ...authResult.user.user_metadata,
+        role: authResult.user.role,
+      },
+      created_at: authResult.user.created_at,
+    };
+
+    if (typeof window !== "undefined") {
+      localStorage.setItem("chrononav_user_session", JSON.stringify(authenticatedUser));
+      document.cookie = `sb-mock-role=${authResult.user.role}; path=/; max-age=86400; SameSite=Lax`;
+    }
+
+    return { user: authenticatedUser, error: null };
+  }
+
+  // If user was explicitly suspended in repository
+  if (authResult.error && authResult.error.toLowerCase().includes("suspended")) {
+    return { user: null, error: authResult.error };
+  }
+
+  // 2. If Supabase is connected to a live backend, try authenticating with Supabase Auth
   if (!isPlaceholderEnv()) {
     try {
+      const emailToUse = cleanIdentifier.includes("@")
+        ? cleanIdentifier
+        : `${cleanIdentifier}@uc.edu.ph`;
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: emailToUse,
         password,
       });
 
-      if (error) {
-        return { user: null, error: error.message };
+      if (!error && data.user) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("chrononav_user_session", JSON.stringify(data.user));
+          const role = data.user.user_metadata?.role || "student";
+          document.cookie = `sb-mock-role=${role}; path=/; max-age=86400; SameSite=Lax`;
+        }
+        return { user: data.user, error: null };
       }
-
-      if (typeof window !== "undefined" && data.user) {
-        localStorage.setItem("chrononav_user_session", JSON.stringify(data.user));
-        const role = data.user.user_metadata?.role || "student";
-        document.cookie = `sb-mock-role=${role}; path=/; max-age=86400; SameSite=Lax`;
-      }
-
-      return { user: data.user, error: null };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Authentication failed. Please check your credentials.";
-      return { user: null, error: message };
+    } catch {
+      // Continue to default error
     }
   }
 
-  // 2. Verified Local / Edge Authentication Layer:
-  // Performs user lookup, cryptographic hash verification, and account status check.
-  const authResult = authenticateUser(email, password);
-
-  if (authResult.error || !authResult.user) {
-    return { user: null, error: authResult.error || "Invalid university email or password." };
-  }
-
-  const authenticatedUser = {
-    id: authResult.user.id,
-    email: authResult.user.email,
-    user_metadata: {
-      ...authResult.user.user_metadata,
-      role: authResult.user.role,
-    },
-    created_at: authResult.user.created_at,
-  };
-
-  if (typeof window !== "undefined") {
-    localStorage.setItem("chrononav_user_session", JSON.stringify(authenticatedUser));
-    document.cookie = `sb-mock-role=${authResult.user.role}; path=/; max-age=86400; SameSite=Lax`;
-  }
-
-  return { user: authenticatedUser, error: null };
+  return { user: null, error: "Invalid university email or password." };
 }
 
 /**
@@ -98,32 +105,7 @@ export async function signUp(
     return { user: null, error: "Email and password are required for registration." };
   }
 
-  // If Supabase live backend is enabled
-  if (!isPlaceholderEnv()) {
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            ...metadata,
-            role: "student", // Public registrations are strictly student role
-          },
-        },
-      });
-
-      if (error) {
-        return { user: null, error: error.message };
-      }
-
-      return { user: data.user, error: null };
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Registration failed";
-      return { user: null, error: message };
-    }
-  }
-
-  // Local / Edge Registration Repository
+  // 1. Local / Edge Registration Repository (enforces isolated schedules and hashing)
   const regResult = registerUser({
     email,
     password,
@@ -155,6 +137,24 @@ export async function signUp(
   if (typeof window !== "undefined") {
     localStorage.setItem("chrononav_user_session", JSON.stringify(authenticatedUser));
     document.cookie = `sb-mock-role=student; path=/; max-age=86400; SameSite=Lax`;
+  }
+
+  // 2. Also attempt cloud sync if Supabase is connected
+  if (!isPlaceholderEnv()) {
+    try {
+      await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          data: {
+            ...metadata,
+            role: "student",
+          },
+        },
+      });
+    } catch {
+      // Non-blocking
+    }
   }
 
   return { user: authenticatedUser, error: null };
