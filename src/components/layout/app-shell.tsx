@@ -44,6 +44,19 @@ interface NavigationItem {
   roles: UserRole[];
 }
 
+/** Helper to synchronously read cached user metadata to avoid initial render flashes */
+function getCachedUserSession() {
+  if (typeof window !== "undefined") {
+    try {
+      const stored = localStorage.getItem("chrononav_user_session");
+      if (stored) return JSON.parse(stored);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 /** Dynamic Role-Based Navigation Configuration following standard hierarchy */
 const navigationConfig: NavigationItem[] = [
   // ── 1. Student Portal ──
@@ -146,6 +159,13 @@ const navigationConfig: NavigationItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Campus Map",
+    href: "/map",
+    icon: MapPin,
+    badge: "8 Floors",
+    roles: ["admin"],
+  },
+  {
     label: "Announcements",
     href: "/admin/bulletin",
     icon: Bell,
@@ -179,9 +199,30 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
   const router = useRouter();
 
   const [mounted, setMounted] = useState(false);
-  const [userRole, setUserRole] = useState<UserRole>(forcedRole || "student");
-  const [userName, setUserName] = useState<string>("User");
-  const [userFullName, setUserFullName] = useState<string>("User Profile");
+  const [userRole, setUserRole] = useState<UserRole>(() => {
+    if (forcedRole) return forcedRole;
+    const cached = getCachedUserSession();
+    return (cached?.user_metadata?.role as UserRole) || "student";
+  });
+
+  const [userName, setUserName] = useState<string>(() => {
+    const cached = getCachedUserSession();
+    if (cached?.user_metadata?.first_name) return cached.user_metadata.first_name;
+    if (forcedRole === "faculty") return "Faculty";
+    if (forcedRole === "admin") return "Admin";
+    return "Tristan";
+  });
+
+  const [userFullName, setUserFullName] = useState<string>(() => {
+    const cached = getCachedUserSession();
+    if (cached?.user_metadata?.first_name) {
+      const last = cached.user_metadata.last_name ? ` ${cached.user_metadata.last_name}` : "";
+      return `${cached.user_metadata.first_name}${last}`;
+    }
+    if (forcedRole === "faculty") return "Faculty Member";
+    if (forcedRole === "admin") return "System Administrator";
+    return "Tristan Developer";
+  });
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [isSigningOut, setIsSigningOut] = useState<boolean>(false);
@@ -200,6 +241,28 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
       window.removeEventListener("chrononav:notifications_updated", handleSync);
     };
   }, []);
+
+  // Listen for immediate profile updates from /profile or /settings
+  useEffect(() => {
+    function handleUserUpdated() {
+      const cached = getCachedUserSession();
+      if (cached) {
+        if (cached.user_metadata?.role && !forcedRole) {
+          setUserRole(cached.user_metadata.role);
+        }
+        if (cached.user_metadata?.first_name) {
+          const first = cached.user_metadata.first_name;
+          const last = cached.user_metadata.last_name ? ` ${cached.user_metadata.last_name}` : "";
+          setUserName(first);
+          setUserFullName(`${first}${last}`);
+        }
+      }
+    }
+    window.addEventListener("chrononav:user_updated", handleUserUpdated);
+    return () => {
+      window.removeEventListener("chrononav:user_updated", handleUserUpdated);
+    };
+  }, [forcedRole]);
 
   const unreadNotificationsCount = useMemo(
     () => notifications.filter((n) => !n.read).length,
@@ -235,8 +298,8 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           setUserName("Admin");
           setUserFullName("System Administrator");
         } else {
-          setUserName("Student");
-          setUserFullName("Student Account");
+          setUserName("Tristan");
+          setUserFullName("Tristan Developer");
         }
       }
     }
@@ -374,10 +437,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
           {/* User Profile Card (Clickable link to /profile) */}
           <Link
             href="/profile"
-            className={`rounded-2xl border p-3 flex items-center gap-3 transition-all duration-200 group block focus:outline-none focus:ring-2 focus:ring-primary ${pathname === "/profile"
-              ? "bg-primary/10 border-primary/50 ring-1 ring-primary/30 shadow-md"
-              : "border-border bg-muted/40 hover:bg-muted/70 shadow-sm"
-              }`}
+            className={`rounded-2xl border p-3 flex items-center gap-3 transition-all duration-200 group block focus:outline-none focus:ring-2 focus:ring-primary ${
+              pathname === "/profile"
+                ? "border-primary/50 bg-primary/5 ring-1 ring-primary/25 shadow-sm"
+                : "border-border bg-muted/40 hover:bg-muted/70 shadow-sm"
+            }`}
             title="Manage My Profile"
           >
             <div
@@ -389,8 +453,9 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
             <div className="overflow-hidden flex-1">
               <div className="flex items-center justify-between">
                 <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userFullName}</p>
-                <ChevronRight className={`size-3 transition-colors ${pathname === "/profile" ? "text-primary" : "text-muted-foreground group-hover:text-primary"
-                  }`} />
+                <ChevronRight className={`size-3.5 transition-all group-hover:translate-x-0.5 ${
+                  pathname === "/profile" ? "text-primary font-bold" : "text-muted-foreground group-hover:text-primary"
+                }`} />
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span
@@ -572,7 +637,11 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
               <Link
                 href="/profile"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-2xl border border-border bg-muted/40 p-3 flex items-center gap-3 hover:bg-muted/70 transition-colors block"
+                className={`rounded-2xl border p-3 flex items-center gap-3 transition-colors block ${
+                  pathname === "/profile"
+                    ? "border-primary/50 bg-primary/5 ring-1 ring-primary/25"
+                    : "border-border bg-muted/40 hover:bg-muted/70"
+                }`}
               >
                 <div
                   suppressHydrationWarning
@@ -580,16 +649,19 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
                 >
                   {userName.charAt(0).toUpperCase()}
                 </div>
-                <div className="overflow-hidden">
-                  <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userName}</p>
-                  <span
-                    suppressHydrationWarning
-                    className={`inline-block rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase mt-0.5 ${getRoleBadgeStyle(
-                      userRole
-                    )}`}
-                  >
-                    {userRole}
-                  </span>
+                <div className="overflow-hidden flex-1">
+                  <p suppressHydrationWarning className="text-xs font-black text-foreground truncate">{userFullName}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span
+                      suppressHydrationWarning
+                      className={`inline-block rounded-md border px-1.5 py-0.2 text-[9px] font-black uppercase ${getRoleBadgeStyle(
+                        userRole
+                      )}`}
+                    >
+                      {userRole}
+                    </span>
+                    <span className="text-[9px] font-bold text-muted-foreground">Profile</span>
+                  </div>
                 </div>
               </Link>
 

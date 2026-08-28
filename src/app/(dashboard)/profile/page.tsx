@@ -156,6 +156,9 @@ export default function ProfilePage() {
       setErrorMessage(result.error);
     } else {
       setNotification("Profile information updated and synchronized successfully!");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("chrononav:user_updated"));
+      }
       setTimeout(() => setNotification(null), 4000);
     }
   };

@@ -94,6 +94,9 @@ export default function AccountSettingsPage() {
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
     setProfileNotification("Profile information updated successfully!");
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("chrononav:user_updated"));
+    }
     setTimeout(() => setProfileNotification(null), 4000);
   };
 

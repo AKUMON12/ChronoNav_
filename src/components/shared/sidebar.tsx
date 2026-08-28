@@ -31,21 +31,31 @@ interface NavItem {
 
 /** Student navigation items */
 const studentNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/student", icon: Home },
-  { label: "Schedule", href: "/student/schedule", icon: CalendarDays },
+  { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Schedule", href: "/schedule", icon: CalendarDays },
   { label: "Campus Map", href: "/map", icon: Map },
-  { label: "Notifications", href: "/student/notifications", icon: Bell },
-  { label: "Settings", href: "/student/settings", icon: Settings },
+  { label: "Notifications", href: "/notifications", icon: Bell },
+  { label: "Settings", href: "/settings", icon: Settings },
 ];
 
-/** Admin navigation items */
-const adminNavItems: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: Home },
-  { label: "Users", href: "/admin/users", icon: Users },
-  { label: "Rooms", href: "/admin/rooms", icon: Building2 },
-  { label: "Activity Logs & Reports", href: "/admin/logs", icon: BarChart3 },
-  { label: "Campus Bulletin", href: "/admin/bulletin", icon: FileText },
+/** Faculty navigation items */
+const facultyNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Faculty Workspace", href: "/faculty/dashboard", icon: GraduationCap },
+  { label: "Teaching Schedule", href: "/schedule", icon: CalendarDays },
   { label: "Campus Map", href: "/map", icon: Map },
+  { label: "Settings", href: "/settings", icon: Settings },
+];
+
+/** Admin navigation items following top Dashboard hierarchy */
+const adminNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/dashboard", icon: Home },
+  { label: "Faculty", href: "/faculty/dashboard", icon: GraduationCap },
+  { label: "Students", href: "/admin/users", icon: Users },
+  { label: "Campus Map", href: "/map", icon: Map },
+  { label: "Campus Rooms", href: "/admin/rooms", icon: Building2 },
+  { label: "Campus Bulletin", href: "/admin/bulletin", icon: FileText },
+  { label: "Activity Logs", href: "/admin/logs", icon: BarChart3 },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -67,7 +77,7 @@ interface SidebarProps {
  */
 export function Sidebar({ role = "student", isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const navItems = role === "admin" ? adminNavItems : studentNavItems;
+  const navItems = role === "admin" ? adminNavItems : role === "faculty" ? facultyNavItems : studentNavItems;
 
   return (
     <>
@@ -145,7 +155,9 @@ export function Sidebar({ role = "student", isOpen, onClose }: SidebarProps) {
 export function MobileBottomNav({ role = "student" }: { role?: "student" | "faculty" | "admin" }) {
   const pathname = usePathname();
   const items = role === "admin"
-    ? [adminNavItems[0], adminNavItems[1], adminNavItems[5], adminNavItems[6]]  // Dashboard, Users, Map, Settings
+    ? [adminNavItems[0], adminNavItems[2], adminNavItems[3], adminNavItems[7]]  // Dashboard, Students, Map, Settings
+    : role === "faculty"
+    ? [facultyNavItems[0], facultyNavItems[1], facultyNavItems[3], facultyNavItems[4]] // Dashboard, Workspace, Map, Settings
     : [studentNavItems[0], studentNavItems[1], studentNavItems[2], studentNavItems[4]]; // Dashboard, Schedule, Map, Settings
 
   return (
