@@ -13,6 +13,9 @@ import {
   AlertCircle,
   ShieldCheck,
   GraduationCap,
+  Sparkles,
+  KeyRound,
+  UserCheck,
 } from "lucide-react";
 import { signIn } from "@/lib/supabase/auth";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -21,9 +24,43 @@ import { Logo } from "@/components/shared/logo";
 import { AuthSkeleton } from "@/components/skeletons/auth-skeleton";
 
 /**
+ * Verified University Accounts for Quick Demo Testing
+ */
+const DEMO_PRESETS = [
+  {
+    label: "Admin Portal",
+    badge: "Admin",
+    email: "admin@uc.edu.ph",
+    password: "Admin@ChronoNav2026!",
+    role: "admin",
+  },
+  {
+    label: "Faculty Workload",
+    badge: "Faculty",
+    email: "maria.santos@uc.edu.ph",
+    password: "Faculty@ChronoNav2026!",
+    role: "faculty",
+  },
+  {
+    label: "Student (Vince • BSIT 4)",
+    badge: "Student",
+    email: "22682702@uc.edu.ph",
+    password: "Student@ChronoNav2026!",
+    role: "student",
+  },
+  {
+    label: "Student (Tristan • BSCS 3)",
+    badge: "Student",
+    email: "22684955@uc.edu.ph",
+    password: "Student@ChronoNav2026!",
+    role: "student",
+  },
+];
+
+/**
  * Production Secure Login Page
- * Zero credential leaks: Eliminates all mock account quick-fill toggles and hardcoded passwords.
- * Provides direct Supabase password authentication and a guest campus explorer entry point.
+ * Supports flexible identifier lookup (Email or Student/Faculty ID), verified password authentication,
+ * and quick-fill university testing presets.
  */
 export default function LoginPage() {
   const router = useRouter();
@@ -42,12 +79,18 @@ export default function LoginPage() {
     return <AuthSkeleton />;
   }
 
+  const handleQuickFill = (preset: (typeof DEMO_PRESETS)[0]) => {
+    setEmail(preset.email);
+    setPassword(preset.password);
+    setError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
     if (!email.trim() || !password.trim()) {
-      setError("Please enter your university email and password.");
+      setError("Please enter your university email / ID and password.");
       return;
     }
 
@@ -109,13 +152,15 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-1.5">
             <label className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider block">
-              University Email / ID
+              University Email / Student ID
             </label>
             <input
-              type="email"
+              type="text"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="e.g. 22684955@uc.edu.ph"
+              placeholder="e.g. 22682702@uc.edu.ph or 22682702"
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full rounded-xl border border-border bg-background px-4 py-3 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
               required
             />
@@ -165,6 +210,34 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* ── Quick Demo Accounts Quick-Fill Panel ── */}
+        {/* <div className="rounded-2xl border border-border/80 bg-muted/20 p-3 space-y-2">
+          <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-wider">
+            <KeyRound className="size-3 text-primary" />
+            <span>Pre-Configured University Accounts</span>
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            {DEMO_PRESETS.map((preset) => (
+              <button
+                key={preset.email}
+                type="button"
+                onClick={() => handleQuickFill(preset)}
+                className="flex items-center justify-between p-2 rounded-xl border border-border/60 bg-card hover:border-primary/50 hover:bg-accent/40 transition-all text-left group"
+              >
+                <div className="truncate">
+                  <p className="text-[11px] font-black text-foreground truncate leading-tight">
+                    {preset.label}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground truncate">{preset.email}</p>
+                </div>
+                <span className="text-[8px] font-black uppercase px-1.5 py-0.5 rounded bg-primary/10 text-primary shrink-0 ml-1">
+                  Fill
+                </span>
+              </button>
+            ))}
+          </div>
+        </div> */}
+
         {/* Divider */}
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -178,26 +251,22 @@ export default function LoginPage() {
         {/* Explore as Guest CTA Button */}
         <Link
           href="/explore"
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 hover:bg-accent px-4 py-3 text-xs sm:text-sm font-extrabold text-foreground transition-all shadow-sm group"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted/40 px-4 py-3 text-xs sm:text-sm font-extrabold text-foreground hover:bg-accent hover:border-primary/50 transition-all"
         >
-          <Map className="size-4 text-primary group-hover:scale-110 transition-transform" />
+          <Compass className="size-4 text-primary" />
           <span>Explore Campus Map as Guest</span>
-          <ArrowRight className="size-3.5 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
         </Link>
 
-        {/* Footer */}
-        <div className="pt-2 border-t border-border text-center space-y-2 text-xs">
-          <p className="text-muted-foreground">
-            Don&apos;t have an account?{" "}
-            <Link href="/register" className="font-bold text-primary hover:underline">
-              Create Student Account
-            </Link>
-          </p>
-          <div className="flex items-center justify-center gap-1 text-[11px] text-muted-foreground">
-            <ShieldCheck className="size-3.5 text-emerald-500" />
-            <span>Strict End-to-End Session RBAC & Supabase SSR Encryption</span>
-          </div>
-        </div>
+        {/* Register Account Link */}
+        <p className="text-center text-xs text-muted-foreground">
+          Don&apos;t have an account yet?{" "}
+          <Link
+            href="/register"
+            className="font-extrabold text-primary hover:underline underline-offset-4"
+          >
+            Register with Study Load
+          </Link>
+        </p>
       </div>
     </div>
   );

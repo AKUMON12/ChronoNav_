@@ -1,10 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import {
   authenticateUser,
   registerUser,
   getUserSchedule,
   saveUserSchedule,
-  getAllUsers,
 } from "../auth-store";
 import { signIn } from "@/lib/supabase/auth";
 
@@ -42,11 +41,17 @@ describe("ChronoNav Authentication Security & Data Isolation Test Suite", () => 
   });
 
   // Test 5: Valid Admin Login succeeds
-  it("Security Test 5: authenticates official Admin account with valid credentials", async () => {
-    const result = await signIn("admin@uc.edu.ph", "Admin@ChronoNav2026!");
-    expect(result.error).toBeNull();
-    expect(result.user).not.toBeNull();
-    expect(result.user?.user_metadata?.role).toBe("admin");
+  it("Security Test 5: authenticates official Admin account with valid credentials and flexible identifier", async () => {
+    // 5a. Full email
+    const result1 = await signIn("admin@uc.edu.ph", "Admin@ChronoNav2026!");
+    expect(result1.error).toBeNull();
+    expect(result1.user).not.toBeNull();
+    expect(result1.user?.user_metadata?.role).toBe("admin");
+
+    // 5b. Short identifier 'admin'
+    const result2 = await signIn("admin", "Admin@ChronoNav2026!");
+    expect(result2.error).toBeNull();
+    expect(result2.user?.user_metadata?.role).toBe("admin");
   });
 
   // Test 6: Valid Faculty Login succeeds
@@ -57,13 +62,24 @@ describe("ChronoNav Authentication Security & Data Isolation Test Suite", () => 
     expect(result.user?.user_metadata?.role).toBe("faculty");
   });
 
-  // Test 7: Valid Student Login succeeds
-  it("Security Test 7: authenticates official Student account (Vince Santoya)", async () => {
-    const result = await signIn("22682702@uc.edu.ph", "Student@ChronoNav2026!");
-    expect(result.error).toBeNull();
-    expect(result.user).not.toBeNull();
-    expect(result.user?.user_metadata?.role).toBe("student");
-    expect(result.user?.user_metadata?.first_name).toBe("Vince Andrew");
+  // Test 7: Valid Student Login succeeds (via Full Email and via ID Number)
+  it("Security Test 7: authenticates official Student account via full email and student ID number", async () => {
+    // 7a. Full email
+    const result1 = await signIn("22682702@uc.edu.ph", "Student@ChronoNav2026!");
+    expect(result1.error).toBeNull();
+    expect(result1.user).not.toBeNull();
+    expect(result1.user?.user_metadata?.role).toBe("student");
+    expect(result1.user?.user_metadata?.first_name).toBe("Vince Andrew");
+
+    // 7b. Raw Student ID Number '22682702'
+    const result2 = await signIn("22682702", "Student@ChronoNav2026!");
+    expect(result2.error).toBeNull();
+    expect(result2.user?.user_metadata?.first_name).toBe("Vince Andrew");
+
+    // 7c. Tristan Developer ID '22684955'
+    const result3 = await signIn("22684955", "Student@ChronoNav2026!");
+    expect(result3.error).toBeNull();
+    expect(result3.user?.user_metadata?.first_name).toBe("Tristan");
   });
 
   // Test 8: Duplicate Account Registration is blocked
@@ -111,9 +127,8 @@ describe("ChronoNav Authentication Security & Data Isolation Test Suite", () => 
     expect(regResult.error).toBeNull();
     expect(regResult.user).not.toBeNull();
     expect(regResult.user?.role).toBe("student");
-    expect(regResult.user?.passwordHash).not.toBe("SecureStudent@2026!"); // Must be hashed!
+    expect(regResult.user?.passwordHash).not.toBe("SecureStudent@2026!");
 
-    // Verify authentication with newly registered credentials
     const authCheck = authenticateUser(uniqueEmail, "SecureStudent@2026!");
     expect(authCheck.error).toBeNull();
     expect(authCheck.user?.id).toBe(regResult.user?.id);
@@ -150,19 +165,15 @@ describe("ChronoNav Authentication Security & Data Isolation Test Suite", () => 
       },
     ];
 
-    // Save schedules bound to their respective user IDs
     saveUserSchedule(userA_Id, userA_Schedule);
     saveUserSchedule(userB_Id, userB_Schedule);
 
-    // Query schedules for each user
     const fetchedA = getUserSchedule(userA_Id);
     const fetchedB = getUserSchedule(userB_Id);
 
-    // User A only sees User A's schedule
     expect(fetchedA.map((s) => s.courseCode)).toEqual(["CS 301"]);
     expect(fetchedA.map((s) => s.courseCode)).not.toContain("IT-NET");
 
-    // User B only sees User B's schedule
     expect(fetchedB.map((s) => s.courseCode)).toEqual(["IT-NET"]);
     expect(fetchedB.map((s) => s.courseCode)).not.toContain("CS 301");
   });
