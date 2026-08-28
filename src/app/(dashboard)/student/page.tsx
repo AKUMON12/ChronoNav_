@@ -171,11 +171,11 @@ export default function StudentDashboardPage() {
 
         <div className="flex items-center gap-2">
           <Link
-            href="/schedule?ocr=open"
+            href="/schedule"
             className="flex items-center gap-2 rounded-2xl bg-primary px-4 py-2.5 text-xs sm:text-sm font-extrabold text-white hover:bg-primary/90 shadow-lg shadow-primary/30 transition-all"
           >
-            <ScanLine className="size-4" />
-            <span>Scan Study Load</span>
+            <Calendar className="size-4" />
+            <span>Class Timetable</span>
           </Link>
         </div>
       </div>
@@ -257,18 +257,18 @@ export default function StudentDashboardPage() {
               <Compass className="size-6" />
             </div>
             <span className="text-xs font-extrabold text-foreground">Interactive Map</span>
-            <span className="text-[10px] text-muted-foreground">5 Floors Navigation</span>
+            <span className="text-[10px] text-muted-foreground">8 Floors Navigation</span>
           </Link>
 
           <Link
-            href="/schedule?ocr=open"
+            href="/schedule"
             className="flex flex-col items-center justify-center p-4 rounded-3xl border border-border bg-card hover:border-primary hover:scale-[1.02] transition-all shadow-sm group text-center space-y-2"
           >
             <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary group-hover:scale-110 transition-transform">
-              <ScanLine className="size-6" />
+              <Calendar className="size-6" />
             </div>
-            <span className="text-xs font-extrabold text-foreground">Scan Study Load</span>
-            <span className="text-[10px] text-muted-foreground">OCR Photo Import</span>
+            <span className="text-xs font-extrabold text-foreground">Academic Calendar</span>
+            <span className="text-[10px] text-muted-foreground">Events & Holidays</span>
           </Link>
 
           <Link

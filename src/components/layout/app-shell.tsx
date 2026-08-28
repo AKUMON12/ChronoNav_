@@ -73,13 +73,6 @@ const navigationConfig: NavigationItem[] = [
     roles: ["student"],
   },
   {
-    label: "Scan Study Load",
-    href: "/schedule?ocr=open",
-    icon: ScanLine,
-    badge: "Scan",
-    roles: ["student"],
-  },
-  {
     label: "Campus Map",
     href: "/map",
     icon: MapPin,
