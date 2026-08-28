@@ -1,55 +1,85 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Node, Waypoint, FloorLevel } from "@/lib/navigation/pathfinding";
 import { CAMPUS_FLOORS_CONFIG } from "@/types/navigation";
 
 interface InteractiveSVGMapProps {
   currentFloor: FloorLevel;
   graph: Record<string, Node>;
-  waypoints: Waypoint[];
+  waypoints?: Waypoint[];
   startNodeId?: string;
   targetNodeId?: string;
   onSelectNode?: (nodeId: string) => void;
-  zoomLevel: number;
+  zoomLevel?: number;
   interactive?: boolean;
 }
 
+/**
+ * Enterprise Vector Campus Map Component
+ * Implements high-precision digital map interaction:
+ * - Smooth Pointer Drag / Pan with bounds checking
+ * - Mouse Wheel Zoom centered on pointer
+ * - Touch single-finger pan & two-finger pinch-to-zoom (scoped to canvas)
+ * - Calibrated SVG architectural blueprint overlay (viewBox 0 0 1191 842)
+ * - Animated Dijkstra route polyline, node beacon aura, and crisp light/dark mode styling.
+ */
 export function InteractiveSVGMap({
   currentFloor,
   graph,
-  waypoints,
+  waypoints = [],
   startNodeId,
   targetNodeId,
   onSelectNode,
-  zoomLevel,
+  zoomLevel = 1,
   interactive = true,
 }: InteractiveSVGMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Pan offset state for dragging
+  // Pan & Dynamic Zoom States
   const [pan, setPan] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [internalZoom, setInternalZoom] = useState<number>(zoomLevel);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const lastPanRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // Touch gesture state for mobile pinch-to-zoom and pan
+  // Touch gesture tracker
   const touchDistanceRef = useRef<number | null>(null);
+  const lastTouchTapRef = useRef<number>(0);
 
-  // Reset pan when switching floors or recentering
-  const activeFloorConfig = CAMPUS_FLOORS_CONFIG.find((f) => f.id === currentFloor) || CAMPUS_FLOORS_CONFIG[7];
+  // Sync internal zoom when parent prop changes
+  useEffect(() => {
+    setInternalZoom(zoomLevel);
+  }, [zoomLevel]);
 
-  // Mouse pan handlers
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!interactive) return;
+  // Keep lastPanRef in sync
+  useEffect(() => {
+    lastPanRef.current = pan;
+  }, [pan]);
+
+  // Center pan when floor changes
+  useEffect(() => {
+    setPan({ x: 0, y: 0 });
+  }, [currentFloor]);
+
+  // Active Floor Configuration
+  const activeFloorConfig = CAMPUS_FLOORS_CONFIG[currentFloor] || CAMPUS_FLOORS_CONFIG[1];
+
+  // ── Mouse Drag Handlers ──
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!interactive || e.button !== 0) return;
     setIsDragging(true);
-    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+    dragStartRef.current = {
+      x: e.clientX - pan.x,
+      y: e.clientY - pan.y,
+    };
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging || !interactive) return;
     setPan({
-      x: e.clientX - dragStart.x,
-      y: e.clientY - dragStart.y,
+      x: e.clientX - dragStartRef.current.x,
+      y: e.clientY - dragStartRef.current.y,
     });
   };
 
@@ -57,29 +87,89 @@ export function InteractiveSVGMap({
     setIsDragging(false);
   };
 
-  // Touch gesture handlers for mobile devices
-  const handleTouchStart = (e: React.TouchEvent) => {
+  // ── Mouse Wheel Zoom (Centered on Cursor) ──
+  const handleWheel = useCallback(
+    (e: WheelEvent) => {
+      if (!interactive) return;
+      e.preventDefault();
+
+      const container = containerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const cursorX = e.clientX - rect.left - rect.width / 2;
+      const cursorY = e.clientY - rect.top - rect.height / 2;
+
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+      setInternalZoom((prevZoom) => {
+        const nextZoom = Math.min(Math.max(prevZoom * zoomFactor, 0.6), 4.0);
+        // Adjust pan to zoom into pointer position
+        const scaleChange = nextZoom / prevZoom;
+        setPan((prevPan) => ({
+          x: cursorX - (cursorX - prevPan.x) * scaleChange,
+          y: cursorY - (cursorY - prevPan.y) * scaleChange,
+        }));
+        return nextZoom;
+      });
+    },
+    [interactive]
+  );
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+    };
+  }, [handleWheel]);
+
+  // ── Touch Handlers for Mobile Pan & Pinch Zoom ──
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!interactive) return;
+
     if (e.touches.length === 1) {
+      // Single finger drag or double tap
+      const now = Date.now();
+      if (now - lastTouchTapRef.current < 300) {
+        // Double tap zoom toggle
+        setInternalZoom((z) => (z > 1.2 ? 1 : 1.8));
+        setPan({ x: 0, y: 0 });
+      }
+      lastTouchTapRef.current = now;
+
       setIsDragging(true);
-      setDragStart({
+      dragStartRef.current = {
         x: e.touches[0].clientX - pan.x,
         y: e.touches[0].clientY - pan.y,
-      });
+      };
     } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      touchDistanceRef.current = Math.hypot(dx, dy);
+      // Two finger pinch to zoom
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchDistanceRef.current = dist;
     }
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!interactive) return;
+
     if (e.touches.length === 1 && isDragging) {
       setPan({
-        x: e.touches[0].clientX - dragStart.x,
-        y: e.touches[0].clientY - dragStart.y,
+        x: e.touches[0].clientX - dragStartRef.current.x,
+        y: e.touches[0].clientY - dragStartRef.current.y,
       });
+    } else if (e.touches.length === 2 && touchDistanceRef.current !== null) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = dist / touchDistanceRef.current;
+      setInternalZoom((prev) => Math.min(Math.max(prev * factor, 0.6), 4.0));
+      touchDistanceRef.current = dist;
     }
   };
 
@@ -88,8 +178,10 @@ export function InteractiveSVGMap({
     touchDistanceRef.current = null;
   };
 
-  // Filter nodes belonging to active floor
-  const floorNodes = Object.values(graph).filter((node) => node.floor === currentFloor);
+  // Filter nodes belonging to active floor (show rooms, stairs, elevators, gates)
+  const floorNodes = Object.values(graph).filter(
+    (node) => node.floor === currentFloor && node.type !== "corridor"
+  );
 
   // Filter path waypoints belonging to current floor
   const currentFloorWaypoints = waypoints.filter((wp) => wp.floor === currentFloor);
@@ -110,7 +202,7 @@ export function InteractiveSVGMap({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{ touchAction: "none" }}
-      className={`relative w-full h-[450px] sm:h-[550px] lg:h-[620px] overflow-hidden rounded-3xl border border-border bg-slate-50 dark:bg-[#090E14] shadow-2xl flex items-center justify-center p-2 select-none transition-colors ${
+      className={`relative w-full h-[450px] sm:h-[550px] lg:h-[620px] overflow-hidden rounded-3xl border border-border bg-slate-100 dark:bg-[#090E14] shadow-2xl flex items-center justify-center select-none transition-colors ${
         isDragging ? "cursor-grabbing" : interactive ? "cursor-grab" : "cursor-default"
       }`}
     >
@@ -118,7 +210,13 @@ export function InteractiveSVGMap({
       <svg className="absolute inset-0 w-full h-full opacity-15 dark:opacity-10 pointer-events-none">
         <defs>
           <pattern id="grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse">
-            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1" className="text-slate-400 dark:text-[#507495]" />
+            <path
+              d="M 40 0 L 0 0 0 40"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1"
+              className="text-slate-400 dark:text-[#507495]"
+            />
           </pattern>
         </defs>
         <rect width="100%" height="100%" fill="url(#grid-pattern)" />
@@ -128,7 +226,7 @@ export function InteractiveSVGMap({
       <div
         className="w-full h-full flex items-center justify-center transition-transform duration-75 ease-out origin-center"
         style={{
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${internalZoom})`,
         }}
       >
         <svg
@@ -177,7 +275,7 @@ export function InteractiveSVGMap({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 fill="none"
-                opacity="0.5"
+                opacity="0.45"
                 filter="url(#route-glow)"
               />
               {/* Main Solid Primary Color Path */}
@@ -211,27 +309,27 @@ export function InteractiveSVGMap({
 
               let nodeFill = "#1D7DD7"; // ChronoNav Primary Blue
               let ringColor = "#38BDF8";
-              let radius = 10;
+              let radius = 9;
 
               if (isStart) {
                 nodeFill = "#10B981"; // Emerald Green for Ingress/Start
                 ringColor = "#34D399";
-                radius = 14;
+                radius = 13;
               } else if (isTarget) {
                 nodeFill = "#EF4444"; // Crimson Red for Target Destination
                 ringColor = "#F87171";
-                radius = 14;
+                radius = 13;
               } else if (node.type === "stairs") {
                 nodeFill = "#6366F1"; // Indigo for Stairwells
                 ringColor = "#818CF8";
-                radius = 11;
+                radius = 10;
               } else if (node.type === "elevator") {
                 nodeFill = "#059669"; // Jade for Elevators
                 ringColor = "#10B981";
-                radius = 11;
+                radius = 10;
               } else if (node.type === "entrance") {
                 nodeFill = "#10B981";
-                radius = 12;
+                radius = 11;
               }
 
               return (
@@ -251,7 +349,7 @@ export function InteractiveSVGMap({
                     <circle
                       cx={node.x}
                       cy={node.y}
-                      r={radius + 12}
+                      r={radius + 10}
                       fill="none"
                       stroke={ringColor}
                       strokeWidth="2.5"
@@ -273,10 +371,10 @@ export function InteractiveSVGMap({
                   {/* Node Label Pill Background & Text */}
                   <g className="pointer-events-none select-none">
                     <rect
-                      x={node.x - Math.max(35, node.name.length * 3.8)}
-                      y={node.y - 32}
-                      width={Math.max(70, node.name.length * 7.6)}
-                      height="20"
+                      x={node.x - Math.max(32, node.name.length * 3.6)}
+                      y={node.y - 30}
+                      width={Math.max(64, node.name.length * 7.2)}
+                      height="18"
                       rx="6"
                       fill="#FFFFFF"
                       fillOpacity="0.95"
@@ -286,10 +384,10 @@ export function InteractiveSVGMap({
                     />
                     <text
                       x={node.x}
-                      y={node.y - 18}
+                      y={node.y - 17}
                       textAnchor="middle"
                       fill="#0F172A"
-                      className="dark:fill-[#F8FAFC] text-[11px] font-black tracking-tight"
+                      className="dark:fill-[#F8FAFC] text-[10px] font-black tracking-tight"
                     >
                       {node.name}
                     </text>
