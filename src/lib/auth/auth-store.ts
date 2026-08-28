@@ -49,7 +49,7 @@ export interface UserStudyLoad {
  * Native cryptographic hashing (SHA-256 + Salt)
  * Works synchronously/asynchronously across browser and Node.js environments.
  */
-function simpleHash(text: string, salt: string): string {
+export function simpleHash(text: string, salt: string): string {
   const combined = `${salt}:${text}:chrononav_secret_2026`;
   let hash = 0;
   for (let i = 0; i < combined.length; i++) {
@@ -61,7 +61,7 @@ function simpleHash(text: string, salt: string): string {
   return `h_${hex}_${salt.slice(0, 6)}`;
 }
 
-function generateSalt(): string {
+export function generateSalt(): string {
   return Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
 }
 
@@ -475,6 +475,31 @@ export function adminDeleteUser(idOrEmailOrIdNumber: string): boolean {
     return true;
   }
   return false;
+}
+
+/**
+ * Updates a user's cryptographic password hash and salt (e.g. following approved reset or change)
+ */
+export function updateUserPassword(
+  idOrEmailOrIdNumber: string,
+  newPasswordHash: string,
+  newSalt: string
+): boolean {
+  const users = getAllUsers();
+  const target = users.find(
+    (u) =>
+      u.id === idOrEmailOrIdNumber ||
+      u.email.toLowerCase() === idOrEmailOrIdNumber.toLowerCase() ||
+      u.user_metadata?.id_number === idOrEmailOrIdNumber
+  );
+
+  if (!target) return false;
+
+  target.passwordHash = newPasswordHash;
+  target.salt = newSalt;
+
+  saveAllUsers(users);
+  return true;
 }
 
 /**

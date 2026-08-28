@@ -84,12 +84,23 @@ const initialLogs: SystemLogEntry[] = [
 
 export default function SystemLogsPage() {
   const [mounted, setMounted] = useState(false);
-  const [logs] = useState<SystemLogEntry[]>(initialLogs);
+  const [logs, setLogs] = useState<SystemLogEntry[]>(initialLogs);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
 
   React.useEffect(() => {
     setMounted(true);
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("chrononav_system_activity_logs");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLogs([...parsed, ...initialLogs]);
+          }
+        }
+      } catch {}
+    }
   }, []);
 
   const filteredLogs = useMemo(() => {

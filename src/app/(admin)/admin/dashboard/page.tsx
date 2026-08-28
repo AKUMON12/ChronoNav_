@@ -34,9 +34,11 @@ import {
   Filter,
   Check,
   GraduationCap,
+  KeyRound,
 } from "lucide-react";
 import { SampleCCSGraph, getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 import { AdminDashboardSkeleton } from "@/components/skeletons/admin-dashboard-skeleton";
+import { getAllPasswordRequests } from "@/lib/auth/password-manager";
 
 /**
  * Official Available Classes attached from the University of Cebu Official Study Load PDF
@@ -250,9 +252,19 @@ export default function AdminAnalyticsDashboard() {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [programFilter, setProgramFilter] = useState<string>("all");
   const [dayFilter, setDayFilter] = useState<string>("all");
+  const [pendingPasswordRequestsCount, setPendingPasswordRequestsCount] = useState<number>(0);
   
   useEffect(() => {
     setMounted(true);
+    const updateCount = () => {
+      try {
+        const reqs = getAllPasswordRequests();
+        setPendingPasswordRequestsCount(reqs.filter((r) => r.status === "PENDING").length);
+      } catch {}
+    };
+    updateCount();
+    window.addEventListener("chrononav:password_requests_updated", updateCount);
+    return () => window.removeEventListener("chrononav:password_requests_updated", updateCount);
   }, []);
   
   // Real dynamic metrics calculated from system state & graph data
@@ -329,6 +341,33 @@ export default function AdminAnalyticsDashboard() {
           </span>
         </div>
       </div>
+
+      {/* ── Pending Password Requests Security Alert Banner ── */}
+      {pendingPasswordRequestsCount > 0 && (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4 animate-in fade-in shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="size-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+              <KeyRound className="size-5" />
+            </div>
+            <div>
+              <h4 className="text-xs sm:text-sm font-black text-foreground">
+                {pendingPasswordRequestsCount} Pending Password Request{pendingPasswordRequestsCount > 1 ? "s" : ""}
+              </h4>
+              <p className="text-[11px] text-muted-foreground">
+                Student / faculty accounts have submitted credential recovery requests awaiting administrative authorization.
+              </p>
+            </div>
+          </div>
+
+          <Link
+            href="/admin/security"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-black shadow-md shadow-primary/20 transition-all shrink-0 self-end sm:self-auto"
+          >
+            <span>Review & Authorize</span>
+            <ArrowRight className="size-3.5" />
+          </Link>
+        </div>
+      )}
 
       {/* ── INTERACTIVE METRIC OVERVIEW CARDS (CLICKABLE) ── */}
       <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

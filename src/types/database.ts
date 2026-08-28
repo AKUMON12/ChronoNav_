@@ -85,6 +85,26 @@ export interface SavedPath {
   created_at?: string;
 }
 
+export type PasswordRequestType = 'change_password' | 'forgot_password';
+export type PasswordRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'EXPIRED' | 'COMPLETED';
+
+export interface PasswordChangeRequest {
+  id: string; // UUID PK
+  user_id: string; // FK -> User
+  account_identifier: string;
+  user_name: string;
+  role: UserRole;
+  type: PasswordRequestType;
+  status: PasswordRequestStatus;
+  reset_token?: string | null;
+  token_expires_at?: string | null;
+  requested_at: string;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  completed_at?: string | null;
+  reason?: string | null;
+}
+
 /**
  * Database Schema mapping for Supabase Client generics
  */
@@ -125,6 +145,11 @@ export interface Database {
         Row: SavedPath;
         Insert: Omit<SavedPath, 'id' | 'created_at'> & { id?: string; created_at?: string };
         Update: Partial<Omit<SavedPath, 'id'>>;
+      };
+      password_change_requests: {
+        Row: PasswordChangeRequest;
+        Insert: Omit<PasswordChangeRequest, 'id' | 'requested_at'> & { id?: string; requested_at?: string };
+        Update: Partial<Omit<PasswordChangeRequest, 'id'>>;
       };
     };
   };

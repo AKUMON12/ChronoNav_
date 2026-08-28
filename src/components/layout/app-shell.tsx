@@ -22,6 +22,7 @@ import {
   User,
   Map,
   FileText,
+  KeyRound,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -136,6 +137,12 @@ const navigationConfig: NavigationItem[] = [
     label: "User Accounts",
     href: "/admin/users",
     icon: Users,
+    roles: ["admin"],
+  },
+  {
+    label: "Password Requests",
+    href: "/admin/security",
+    icon: KeyRound,
     roles: ["admin"],
   },
   {
