@@ -96,10 +96,12 @@ const campusBulletins = [
 
 export default function StudentDashboardPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>("Tristan");
   const [countdownMinutes, setCountdownMinutes] = useState<number>(24);
 
   useEffect(() => {
+    setMounted(true);
     async function loadUser() {
       const user = await getCurrentUser();
       if (user?.user_metadata?.first_name) {

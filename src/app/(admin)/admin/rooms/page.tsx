@@ -13,6 +13,7 @@ import {
   CheckCircle2,
   Sliders,
   X,
+} from "lucide-react";
 import { FloorLevel } from "@/lib/navigation/pathfinding";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
