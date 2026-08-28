@@ -14,7 +14,7 @@ Use these sample credentials to sign in and test features across different user 
 | :--- | :--- | :--- | :--- | :--- |
 | 🎓 **Student** | Juan Dela Cruz | `student@uc.edu.ph` | `Password123!` | View schedules, indoor navigation, saved paths |
 | 👨‍🏫 **Faculty** | Maria Santos | `faculty@uc.edu.ph` | `Password123!` | View room schedules, faculty navigation, OCR |
-| 🛡️ **Admin** | System Administrator | `admin@uc.edu.ph` | `Password123!` | Full admin dashboard, analytics, room & user management |
+| 🛡️ **Admin** | System Administrator | `admin@uc.edu.ph` | `Admin@ChronoNav2026!` | Full admin dashboard, analytics, room & user management |
 
 > **Tip**: The [Login Page](file:///c:/Users/Admin/Documents/Tristan_Programming/Chrononav/ChronoNav_/src/app/%28auth%29/login/page.tsx) includes **1-Click Demo Buttons** for auto-filling these test credentials.
 
