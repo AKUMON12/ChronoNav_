@@ -39,6 +39,17 @@ export async function GET(request: NextRequest) {
   // Return verified user list for administrative management
   const initialUsers = [
     {
+      id: "usr_student_22682702",
+      id_number: "22682702",
+      first_name: "Vince Andrew",
+      last_name: "Santoya",
+      email: "22682702@uc.edu.ph",
+      role: "student",
+      program: "BSIT",
+      status: "Active",
+      created_at: "2026-08-01T08:00:00Z",
+    },
+    {
       id: "u-1",
       id_number: "22684955",
       first_name: "Tristan",

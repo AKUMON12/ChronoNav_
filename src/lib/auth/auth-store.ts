@@ -222,6 +222,7 @@ const SEED_SALT_FACULTY_2 = "s_fac_reyes_2026";
 const SEED_SALT_VINCE = "s_stu_vince_2026";
 const SEED_SALT_TRISTAN = "s_stu_tristan_2026";
 const SEED_SALT_PEDRO = "s_stu_pedro_2026";
+const SEED_SALT_CARLOS = "s_stu_carlos_2026";
 
 export const SEED_ACCOUNTS: UserAccount[] = [
   // 1. Official Admin Account: admin@uc.edu.ph (or admin / 20194821)
@@ -335,6 +336,26 @@ export const SEED_ACCOUNTS: UserAccount[] = [
     },
     created_at: "2026-08-05T09:15:00Z",
   },
+  // 7. Student Account: 21984712@uc.edu.ph (Carlos Tan)
+  {
+    id: "usr_student_21984712",
+    email: "21984712@uc.edu.ph",
+    salt: SEED_SALT_CARLOS,
+    passwordHash: simpleHash("Student@ChronoNav2026!", SEED_SALT_CARLOS),
+    role: "student",
+    status: "suspended",
+    user_metadata: {
+      first_name: "Carlos",
+      last_name: "Tan",
+      id_number: "21984712",
+      program: "ACT",
+      year_level: "2nd Year",
+      role: "student",
+      study_load_attached: true,
+      total_units: 12,
+    },
+    created_at: "2026-07-28T16:00:00Z",
+  },
 ];
 
 const STORAGE_USERS_KEY = "chrononav_database_users";
@@ -365,7 +386,8 @@ export function getAllUsers(): UserAccount[] {
       // Ensure all official seed accounts exist in user storage
       let updated = false;
       for (const seed of SEED_ACCOUNTS) {
-        if (!parsed.some((u) => u.email.toLowerCase() === seed.email.toLowerCase())) {
+        const existingIdx = parsed.findIndex((u) => u.email.toLowerCase() === seed.email.toLowerCase() || (u.user_metadata?.id_number && u.user_metadata.id_number === seed.user_metadata?.id_number));
+        if (existingIdx === -1) {
           parsed.push(seed);
           updated = true;
         }
@@ -384,7 +406,7 @@ export function getAllUsers(): UserAccount[] {
 /**
  * Saves users array to persistent store.
  */
-function saveAllUsers(users: UserAccount[]) {
+export function saveAllUsers(users: UserAccount[]) {
   if (typeof window !== "undefined") {
     try {
       localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(users));
@@ -392,6 +414,67 @@ function saveAllUsers(users: UserAccount[]) {
       console.error("Failed to save users database:", e);
     }
   }
+}
+
+/**
+ * Admin helper to update a user's details, role, or status across persistent storage
+ */
+export function adminUpdateUser(
+  idOrEmailOrIdNumber: string,
+  updates: {
+    first_name?: string;
+    last_name?: string;
+    id_number?: string;
+    email?: string;
+    role?: UserRole;
+    program?: string;
+    year_level?: string;
+    status?: "active" | "suspended" | "pending";
+  }
+): boolean {
+  const users = getAllUsers();
+  const target = users.find(
+    (u) =>
+      u.id === idOrEmailOrIdNumber ||
+      u.email.toLowerCase() === idOrEmailOrIdNumber.toLowerCase() ||
+      u.user_metadata?.id_number === idOrEmailOrIdNumber
+  );
+
+  if (!target) return false;
+
+  if (updates.email) target.email = updates.email.trim().toLowerCase();
+  if (updates.role) {
+    target.role = updates.role;
+    target.user_metadata.role = updates.role;
+  }
+  if (updates.status) target.status = updates.status;
+  if (updates.first_name) target.user_metadata.first_name = updates.first_name;
+  if (updates.last_name) target.user_metadata.last_name = updates.last_name;
+  if (updates.id_number) target.user_metadata.id_number = updates.id_number;
+  if (updates.program) target.user_metadata.program = updates.program;
+  if (updates.year_level) target.user_metadata.year_level = updates.year_level;
+
+  saveAllUsers(users);
+  return true;
+}
+
+/**
+ * Admin helper to delete a user account permanently
+ */
+export function adminDeleteUser(idOrEmailOrIdNumber: string): boolean {
+  const users = getAllUsers();
+  const filtered = users.filter(
+    (u) =>
+      u.id !== idOrEmailOrIdNumber &&
+      u.email.toLowerCase() !== idOrEmailOrIdNumber.toLowerCase() &&
+      u.user_metadata?.id_number !== idOrEmailOrIdNumber
+  );
+
+  if (filtered.length !== users.length) {
+    saveAllUsers(filtered);
+    return true;
+  }
+  return false;
 }
 
 /**

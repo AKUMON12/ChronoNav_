@@ -37,6 +37,15 @@ import { BackButton } from "@/components/shared/back-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
+import {
+  getAllUsers,
+  getUserSchedule,
+  adminUpdateUser,
+  adminDeleteUser,
+  saveAllUsers,
+  UserAccount,
+} from "@/lib/auth/auth-store";
+
 interface DetailedManagedUser extends ManagedUser {
   phone?: string;
   address?: string;
@@ -50,7 +59,26 @@ interface DetailedManagedUser extends ManagedUser {
 
 const initialUsers: DetailedManagedUser[] = [
   {
-    id: "u-1",
+    id: "usr_student_22682702",
+    id_number: "22682702",
+    first_name: "Vince Andrew",
+    last_name: "Santoya",
+    email: "22682702@uc.edu.ph",
+    role: "student",
+    program: "BSIT",
+    year_level: "4th Year",
+    status: "Active",
+    phone: "+63 917 234 5678",
+    address: "155A Sanciangko St, Sambag I, Cebu City",
+    emergency_contact: "Dionisio Santoya (Parent)",
+    emergency_phone: "+63 918 234 5678",
+    enrolled_or_teaching_count: 7,
+    last_login: "2026-08-28 15:30",
+    bio: "BSIT 4th year student with official UC Study Load uploaded. Specializing in Artificial Intelligence and Web Technologies.",
+    created_at: "2026-08-01",
+  },
+  {
+    id: "usr_student_22684955",
     id_number: "22684955",
     first_name: "Tristan",
     last_name: "Developer",
@@ -69,7 +97,7 @@ const initialUsers: DetailedManagedUser[] = [
     created_at: "2026-08-01",
   },
   {
-    id: "u-2",
+    id: "usr_faculty_santos",
     id_number: "21589412",
     first_name: "Maria",
     last_name: "Santos",
@@ -88,7 +116,7 @@ const initialUsers: DetailedManagedUser[] = [
     created_at: "2026-07-15",
   },
   {
-    id: "u-3",
+    id: "usr_admin_master",
     id_number: "20194821",
     first_name: "Admin",
     last_name: "Superuser",
@@ -107,7 +135,7 @@ const initialUsers: DetailedManagedUser[] = [
     created_at: "2026-06-10",
   },
   {
-    id: "u-4",
+    id: "usr_student_22784910",
     id_number: "22784910",
     first_name: "Pedro",
     last_name: "Cruz",
@@ -126,7 +154,7 @@ const initialUsers: DetailedManagedUser[] = [
     created_at: "2026-08-05",
   },
   {
-    id: "u-5",
+    id: "usr_faculty_reyes",
     id_number: "22490123",
     first_name: "Ana",
     last_name: "Reyes",
@@ -145,7 +173,7 @@ const initialUsers: DetailedManagedUser[] = [
     created_at: "2026-07-20",
   },
   {
-    id: "u-6",
+    id: "usr_student_21984712",
     id_number: "21984712",
     first_name: "Carlos",
     last_name: "Tan",
@@ -191,6 +219,68 @@ export default function AdminUsersPage() {
   const [mounted, setMounted] = useState<boolean>(false);
   React.useEffect(() => {
     setMounted(true);
+    try {
+      const storedUsers = getAllUsers();
+      if (storedUsers && storedUsers.length > 0) {
+        // Map storedUsers to DetailedManagedUser format, combining with initialUsers details
+        const merged: DetailedManagedUser[] = storedUsers.map((su) => {
+          const matchingPreset = initialUsers.find(
+            (iu) =>
+              iu.email.toLowerCase() === su.email.toLowerCase() ||
+              (iu.id_number && iu.id_number === su.user_metadata?.id_number)
+          );
+
+          const schedCount = getUserSchedule(su.id)?.length || 0;
+
+          if (matchingPreset) {
+            return {
+              ...matchingPreset,
+              id: su.id,
+              role: su.role,
+              status: (su.status === "suspended" ? "Suspended" : "Active") as "Active" | "Suspended",
+              first_name: su.user_metadata?.first_name || matchingPreset.first_name,
+              last_name: su.user_metadata?.last_name || matchingPreset.last_name,
+              id_number: su.user_metadata?.id_number || matchingPreset.id_number,
+              email: su.email,
+              program: su.user_metadata?.program || matchingPreset.program,
+              year_level: su.user_metadata?.year_level || matchingPreset.year_level,
+              enrolled_or_teaching_count: matchingPreset.enrolled_or_teaching_count || (schedCount > 0 ? schedCount : undefined) || (su.role === "student" ? 5 : 3),
+            };
+          }
+
+          return {
+            id: su.id,
+            id_number: su.user_metadata?.id_number || "—",
+            first_name: su.user_metadata?.first_name || su.email.split("@")[0],
+            last_name: su.user_metadata?.last_name || "User",
+            email: su.email,
+            role: su.role,
+            program: su.user_metadata?.program || "CCS",
+            year_level: su.user_metadata?.year_level || (su.role === "student" ? "1st Year" : "Faculty"),
+            status: (su.status === "suspended" ? "Suspended" : "Active") as "Active" | "Suspended",
+            phone: "+63 900 000 0000",
+            address: "Cebu City, Philippines",
+            emergency_contact: "University Registrar File",
+            emergency_phone: "+63 (032) 255-7777",
+            enrolled_or_teaching_count: schedCount || (su.role === "student" ? 5 : 3),
+            last_login: "Today",
+            bio: `${su.user_metadata?.program || "CCS"} academic user account.`,
+            created_at: su.created_at ? su.created_at.split("T")[0] : new Date().toISOString().split("T")[0],
+          };
+        });
+
+        // Ensure any presets that might not yet be in storedUsers are retained
+        for (const preset of initialUsers) {
+          if (!merged.some((m) => m.email.toLowerCase() === preset.email.toLowerCase())) {
+            merged.push(preset);
+          }
+        }
+
+        setUsers(merged);
+      }
+    } catch (e) {
+      console.error("Error syncing users with auth-store:", e);
+    }
   }, []);
 
   // Filtered Users
@@ -225,8 +315,9 @@ export default function AdminUsersPage() {
 
   // Create User Handler
   const handleCreateUser = (data: CreateUserData) => {
+    const newUserId = `u-${Date.now()}`;
     const newUser: DetailedManagedUser = {
-      id: `u-${Date.now()}`,
+      id: newUserId,
       id_number: data.id_number,
       first_name: data.first_name,
       last_name: data.last_name,
@@ -237,12 +328,42 @@ export default function AdminUsersPage() {
       status: data.status,
       phone: "+63 900 000 0000",
       address: "Cebu City, Philippines",
+      emergency_contact: "University Registrar File",
+      emergency_phone: "+63 (032) 255-7777",
       enrolled_or_teaching_count: 0,
       last_login: "Never",
+      bio: `${data.program || "CCS"} academic user account.`,
       created_at: new Date().toISOString().split("T")[0],
     };
 
     setUsers((prev) => [newUser, ...prev]);
+
+    // Also persist into auth-store
+    try {
+      const stored = getAllUsers();
+      const newAuthAccount: UserAccount = {
+        id: newUserId,
+        email: data.email.trim().toLowerCase(),
+        passwordHash: "h_dev_admin_created",
+        salt: "s_admin_created",
+        role: data.role,
+        status: data.status.toLowerCase() as any,
+        user_metadata: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          id_number: data.id_number,
+          program: data.program,
+          year_level: data.role === "student" ? "1st Year" : "Faculty",
+          role: data.role,
+        },
+        created_at: new Date().toISOString(),
+      };
+      stored.push(newAuthAccount);
+      saveAllUsers(stored);
+    } catch (e) {
+      console.error("Failed to sync new user to auth store:", e);
+    }
+
     showNotification(`Account created for ${newUser.first_name} ${newUser.last_name}!`);
   };
 
@@ -251,6 +372,18 @@ export default function AdminUsersPage() {
     setUsers((prev) =>
       prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
     );
+
+    // Persist to auth-store
+    adminUpdateUser(updatedUser.id, {
+      first_name: updatedUser.first_name,
+      last_name: updatedUser.last_name,
+      id_number: updatedUser.id_number,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      program: updatedUser.program,
+      status: updatedUser.status.toLowerCase() as any,
+    });
+
     showNotification(`Updated profile for ${updatedUser.first_name} ${updatedUser.last_name}.`);
     setEditingUser(null);
   };
@@ -264,6 +397,10 @@ export default function AdminUsersPage() {
     if (inspectingUser?.id === user.id) {
       setInspectingUser({ ...inspectingUser, status: newStatus });
     }
+
+    // Persist status change to auth-store to immediately enforce auth blocks
+    adminUpdateUser(user.id, { status: newStatus.toLowerCase() as any });
+
     showNotification(`Status for ${user.first_name} set to ${newStatus}.`);
   };
 
@@ -275,6 +412,10 @@ export default function AdminUsersPage() {
     if (inspectingUser?.id === user.id) {
       setInspectingUser({ ...inspectingUser, role: newRole });
     }
+
+    // Persist role change to auth-store
+    adminUpdateUser(user.id, { role: newRole });
+
     showNotification(`Role for ${user.first_name} changed to ${newRole.toUpperCase()}.`);
   };
 
@@ -283,6 +424,10 @@ export default function AdminUsersPage() {
     if (!deletingUser || deleteConfirmationText !== "DELETE") return;
 
     setUsers((prev) => prev.filter((u) => u.id !== deletingUser.id));
+
+    // Persist deletion to auth-store
+    adminDeleteUser(deletingUser.id);
+
     showNotification(`Account ${deletingUser.email} has been permanently deleted.`);
     setDeletingUser(null);
     setDeleteConfirmationText("");
@@ -355,38 +500,50 @@ export default function AdminUsersPage() {
       {/* ── Role Count Summary Cards ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
-            TOTAL ACCOUNTS
-          </span>
-          <span className="text-2xl font-black text-foreground">{users.length}</span>
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+              TOTAL ACCOUNTS
+            </span>
+            <Users className="size-4 text-muted-foreground" />
+          </div>
+          <span className="text-2xl font-black text-foreground block">{users.length}</span>
           <span className="text-[11px] font-bold text-primary block">Active Registered</span>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-            STUDENTS
-          </span>
-          <span className="text-2xl font-black text-foreground">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+              STUDENTS
+            </span>
+            <User className="size-4 text-emerald-500" />
+          </div>
+          <span className="text-2xl font-black text-foreground block">
             {users.filter((u) => u.role === "student").length}
           </span>
           <span className="text-[11px] font-bold text-emerald-500 block">Enrolled Portal</span>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-            FACULTY MEMBERS
-          </span>
-          <span className="text-2xl font-black text-foreground">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+              FACULTY MEMBERS
+            </span>
+            <GraduationCap className="size-4 text-indigo-500" />
+          </div>
+          <span className="text-2xl font-black text-foreground block">
             {users.filter((u) => u.role === "faculty").length}
           </span>
           <span className="text-[11px] font-bold text-indigo-500 block">Teaching Instructors</span>
         </div>
 
         <div className="rounded-2xl border border-border bg-card p-4 space-y-1 shadow-sm">
-          <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">
-            ADMINISTRATORS
-          </span>
-          <span className="text-2xl font-black text-rose-500">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
+              ADMINISTRATORS
+            </span>
+            <Shield className="size-4 text-rose-500" />
+          </div>
+          <span className="text-2xl font-black text-rose-500 block">
             {users.filter((u) => u.role === "admin").length}
           </span>
           <span className="text-[11px] font-bold text-muted-foreground block">Full System Control</span>
