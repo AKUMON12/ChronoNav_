@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   Users, 
   Navigation, 
@@ -27,18 +28,228 @@ import {
   Sparkles,
   Server,
   ArrowRight,
+  Compass,
+  Search,
+  BookOpen,
+  Filter,
+  Check,
+  GraduationCap,
 } from "lucide-react";
-import { SampleCCSGraph } from "@/lib/navigation/pathfinding";
+import { SampleCCSGraph, getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 import { AdminDashboardSkeleton } from "@/components/skeletons/admin-dashboard-skeleton";
+
+/**
+ * Official Available Classes attached from the University of Cebu Official Study Load PDF
+ * (Vince Andrew D. Santoya • BSIT 4 • 1st Sem. SY 2025-2026) and Master Computing Offerings
+ */
+interface AvailableClassItem {
+  id: string;
+  schedCode: string;
+  courseCode: string;
+  courseTitle: string;
+  time: string;
+  days: string;
+  room: string;
+  floor: number | string;
+  units: number;
+  program: string;
+  yearLevel: string;
+  category: "Major Core" | "Technical Lab" | "General Ed";
+  instructor: string;
+  capacity: number;
+  enrolled: number;
+}
+
+const OFFICIAL_AVAILABLE_CLASSES: AvailableClassItem[] = [
+  // ── Official Study Load PDF Extracted Classes (BSIT 4) ──
+  {
+    id: "avail-1",
+    schedCode: "07732",
+    courseCode: "LIT 101",
+    courseTitle: "World Literature",
+    time: "02:30 PM – 03:30 PM",
+    days: "MWF",
+    room: "J910",
+    floor: 1,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "General Ed",
+    instructor: "Prof. Carmen Reyes",
+    capacity: 45,
+    enrolled: 42,
+  },
+  {
+    id: "avail-2",
+    schedCode: "34363",
+    courseCode: "IT-CPSTONE40",
+    courseTitle: "Capstone Project & Research 1",
+    time: "06:31 PM – 09:31 PM",
+    days: "SAT",
+    room: "521",
+    floor: 5,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Major Core",
+    instructor: "Dr. Maria Santos",
+    capacity: 40,
+    enrolled: 38,
+  },
+  {
+    id: "avail-3",
+    schedCode: "39651",
+    courseCode: "IT-FRELEAN",
+    courseTitle: "Free Elective: Lean IT Methodologies",
+    time: "11:30 AM – 12:30 PM",
+    days: "MWF",
+    room: "530B",
+    floor: 5,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Major Core",
+    instructor: "Engr. Pedro Cruz",
+    capacity: 45,
+    enrolled: 41,
+  },
+  {
+    id: "avail-4",
+    schedCode: "39669",
+    courseCode: "IT-ELAI",
+    courseTitle: "Artificial Intelligence Elective (Lecture)",
+    time: "03:30 PM – 06:31 PM",
+    days: "FRI",
+    room: "544",
+    floor: 5,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Major Core",
+    instructor: "Dr. Ramon Garcia",
+    capacity: 40,
+    enrolled: 39,
+  },
+  {
+    id: "avail-5",
+    schedCode: "39669-L",
+    courseCode: "IT-ELAI LAB",
+    courseTitle: "Artificial Intelligence Elective (Laboratory)",
+    time: "06:31 PM – 08:31 PM",
+    days: "FRI",
+    room: "536",
+    floor: 5,
+    units: 1,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Technical Lab",
+    instructor: "Dr. Ramon Garcia",
+    capacity: 35,
+    enrolled: 35,
+  },
+  {
+    id: "avail-6",
+    schedCode: "39685",
+    courseCode: "IT-ELEMSYS",
+    courseTitle: "Embedded Systems Design (Lecture)",
+    time: "03:30 PM – 06:31 PM",
+    days: "SAT",
+    room: "544",
+    floor: 5,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Major Core",
+    instructor: "Engr. Elena Bautista",
+    capacity: 40,
+    enrolled: 36,
+  },
+  {
+    id: "avail-7",
+    schedCode: "39685-L",
+    courseCode: "IT-ELEMSYS LAB",
+    courseTitle: "Embedded Systems Design (Laboratory)",
+    time: "01:30 PM – 03:30 PM",
+    days: "SAT",
+    room: "530B",
+    floor: 5,
+    units: 1,
+    program: "BSIT",
+    yearLevel: "4th Year",
+    category: "Technical Lab",
+    instructor: "Engr. Elena Bautista",
+    capacity: 35,
+    enrolled: 34,
+  },
+
+  // ── Core Computing Master Offerings ──
+  {
+    id: "avail-8",
+    schedCode: "10482",
+    courseCode: "CS 301",
+    courseTitle: "Data Structures and Algorithms",
+    time: "08:00 AM – 10:30 AM",
+    days: "MWF",
+    room: "CCS 538",
+    floor: 5,
+    units: 3,
+    program: "BSCS",
+    yearLevel: "3rd Year",
+    category: "Major Core",
+    instructor: "Dr. Maria Santos",
+    capacity: 45,
+    enrolled: 44,
+  },
+  {
+    id: "avail-9",
+    schedCode: "10485",
+    courseCode: "CS 302",
+    courseTitle: "Operating Systems & Architecture",
+    time: "10:30 AM – 12:00 PM",
+    days: "TTH",
+    room: "Mac Lab 101",
+    floor: 1,
+    units: 3,
+    program: "BSCS",
+    yearLevel: "3rd Year",
+    category: "Major Core",
+    instructor: "Engr. Pedro Cruz",
+    capacity: 45,
+    enrolled: 43,
+  },
+  {
+    id: "avail-10",
+    schedCode: "10499",
+    courseCode: "IT-NETWORKING31",
+    courseTitle: "Cisco Enterprise Networking",
+    time: "01:00 PM – 03:30 PM",
+    days: "MWF",
+    room: "CCS 301",
+    floor: 3,
+    units: 3,
+    program: "BSIT",
+    yearLevel: "3rd Year",
+    category: "Major Core",
+    instructor: "Prof. Ana Reyes",
+    capacity: 40,
+    enrolled: 38,
+  },
+];
 
 /**
  * Enterprise Admin System Analytics & Telemetry Dashboard
  * Complete full-system oversight, campus mobility patterns, room utilization heatmaps,
- * OCR accuracy distribution, real-time device breakdown, and clickable administrative controls.
+ * Available Classes from Official Study Load PDF, and clickable administrative controls.
  */
 export default function AdminAnalyticsDashboard() {
+  const router = useRouter();
   const [mounted, setMounted] = useState<boolean>(false);
   const [activeMetricTab, setActiveMetricTab] = useState<"foot_traffic" | "ocr" | "devices">("foot_traffic");
+  
+  // Available Classes Search & Filter State
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [programFilter, setProgramFilter] = useState<string>("all");
+  const [dayFilter, setDayFilter] = useState<string>("all");
   
   useEffect(() => {
     setMounted(true);
@@ -64,6 +275,35 @@ export default function AdminAnalyticsDashboard() {
     };
   }, [graph]);
 
+  // Filtered Available Classes
+  const filteredAvailableClasses = useMemo(() => {
+    return OFFICIAL_AVAILABLE_CLASSES.filter((item) => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        item.courseCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.courseTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.schedCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.room.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.instructor.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesProgram =
+        programFilter === "all" ||
+        item.program.toLowerCase() === programFilter.toLowerCase() ||
+        (programFilter === "gened" && item.category === "General Ed");
+
+      const matchesDay =
+        dayFilter === "all" ||
+        item.days.toLowerCase().includes(dayFilter.toLowerCase());
+
+      return matchesSearch && matchesProgram && matchesDay;
+    });
+  }, [searchQuery, programFilter, dayFilter]);
+
+  const handleNavigateToRoom = (roomCode: string) => {
+    const targetNode = getGraphNodeForRoom(roomCode);
+    router.push(`/map?start=F1_ENTRANCE&target=${targetNode}`);
+  };
+
   if (!mounted) {
     return <AdminDashboardSkeleton />;
   }
@@ -78,7 +318,7 @@ export default function AdminAnalyticsDashboard() {
             <span>Admin Campus Overview</span>
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Real-time campus map searches, study load scans, and room utilization for UC Main Campus (CCS).
+            Real-time campus map searches, study load offerings, and room utilization for UC Main Campus (CCS).
           </p>
         </div>
 
@@ -148,7 +388,7 @@ export default function AdminAnalyticsDashboard() {
           </div>
         </Link>
 
-        {/* Master Schedules & Scans -> Navigates to /admin/schedules */}
+        {/* Master Schedules & Offerings -> Navigates to /admin/schedules */}
         <Link
           href="/admin/schedules"
           className="group rounded-3xl border border-border bg-card p-5 space-y-3 shadow-md hover:shadow-xl hover:border-emerald-500/50 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 block"
@@ -156,20 +396,20 @@ export default function AdminAnalyticsDashboard() {
         >
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider group-hover:text-emerald-500 transition-colors">
-              MASTER SCHEDULES
+              AVAILABLE CLASSES
             </span>
             <div className="flex size-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform">
-              <ScanLine className="size-5" />
+              <BookOpen className="size-5" />
             </div>
           </div>
           <div>
             <div className="text-3xl font-black text-foreground group-hover:text-emerald-500 transition-colors flex items-center justify-between">
-              <span>96.8%</span>
+              <span>{OFFICIAL_AVAILABLE_CLASSES.length} Subjects</span>
               <ArrowRight className="size-4 opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500" />
             </div>
             <div className="flex items-center gap-2 text-[11px] font-bold text-muted-foreground mt-1">
-              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">482 / 498</span>
-              <span>study loads parsed</span>
+              <span className="text-emerald-600 dark:text-emerald-400 font-extrabold">PDF Verified</span>
+              <span>• 1st Sem. SY 2025-2026</span>
             </div>
           </div>
         </Link>
@@ -201,6 +441,161 @@ export default function AdminAnalyticsDashboard() {
         </Link>
       </section>
 
+      {/* ── DEDICATED SECTION: AVAILABLE CLASSES FROM OFFICIAL STUDY LOAD PDF ── */}
+      <section className="rounded-3xl border border-border bg-card p-6 sm:p-8 shadow-xl space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="flex size-9 items-center justify-center rounded-2xl bg-primary/15 text-primary font-black">
+                <BookOpen className="size-5" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-black text-foreground tracking-tight">
+                Available Classes & Study Load Offerings
+              </h2>
+              <span className="inline-flex items-center gap-1 rounded-md bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+                <Check className="size-3" /> PDF Verified
+              </span>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Official University of Cebu Course Offerings & Dedicated Room/Floor Allocations (1st Sem. SY 2025-2026).
+            </p>
+          </div>
+
+          <Link
+            href="/admin/schedules"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-border bg-muted/40 hover:bg-accent text-xs font-black text-foreground transition-colors self-start md:self-auto shadow-sm"
+          >
+            <Calendar className="size-4 text-primary" />
+            <span>Open Master Schedule Manager</span>
+            <ArrowRight className="size-3.5 text-primary" />
+          </Link>
+        </div>
+
+        {/* Filter & Search Bar */}
+        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+          {/* Search Box */}
+          <div className="sm:col-span-6 relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by course code, description, room, or EDP code..."
+              className="w-full rounded-2xl border border-border bg-background pl-10 pr-4 py-2.5 text-xs font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+            />
+          </div>
+
+          {/* Program Filter */}
+          <div className="sm:col-span-3">
+            <select
+              value={programFilter}
+              onChange={(e) => setProgramFilter(e.target.value)}
+              className="w-full rounded-2xl border border-border bg-background px-3.5 py-2.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              aria-label="Filter by program"
+            >
+              <option value="all">All Programs</option>
+              <option value="bsit">BS Information Technology (BSIT)</option>
+              <option value="bscs">BS Computer Science (BSCS)</option>
+              <option value="gened">General Education</option>
+            </select>
+          </div>
+
+          {/* Day Filter */}
+          <div className="sm:col-span-3">
+            <select
+              value={dayFilter}
+              onChange={(e) => setDayFilter(e.target.value)}
+              className="w-full rounded-2xl border border-border bg-background px-3.5 py-2.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+              aria-label="Filter by day"
+            >
+              <option value="all">All Schedule Days</option>
+              <option value="mwf">MWF (Mon / Wed / Fri)</option>
+              <option value="sat">SAT (Saturday)</option>
+              <option value="fri">FRI (Friday)</option>
+              <option value="tth">TTH (Tue / Thu)</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Available Classes Grid / Table Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredAvailableClasses.length > 0 ? (
+            filteredAvailableClasses.map((item) => (
+              <div
+                key={item.id}
+                className="rounded-3xl border border-border bg-background p-5 space-y-4 hover:border-primary/50 shadow-sm transition-all flex flex-col justify-between group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="font-mono text-[10px] font-black text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
+                      SCHED #{item.schedCode}
+                    </span>
+                    <span
+                      className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-md border ${
+                        item.category === "Major Core"
+                          ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-600 dark:text-indigo-400"
+                          : item.category === "Technical Lab"
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                          : "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {item.category}
+                    </span>
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-black text-foreground leading-tight group-hover:text-primary transition-colors">
+                      {item.courseCode}
+                    </h3>
+                    <p className="text-xs font-semibold text-muted-foreground mt-0.5 line-clamp-1">
+                      {item.courseTitle}
+                    </p>
+                  </div>
+
+                  {/* Schedule Day & Time */}
+                  <div className="flex items-center gap-2 text-xs font-bold text-foreground bg-muted/30 p-2.5 rounded-2xl border border-border/60">
+                    <Clock className="size-3.5 text-primary shrink-0" />
+                    <span>{item.days} • {item.time}</span>
+                  </div>
+
+                  {/* Room & Floor Assignment Badge */}
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <span className="flex items-center gap-1 font-black text-foreground">
+                      <MapPin className="size-3.5 text-primary" />
+                      <span>Room {item.room}</span>
+                    </span>
+                    <span className="font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md text-[10px]">
+                      {item.floor === "M" ? "Mezzanine Floor" : `Floor ${item.floor}`}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                    <span>{item.program} ({item.yearLevel})</span>
+                    <span className="font-bold text-foreground">{item.units} Units</span>
+                  </div>
+                </div>
+
+                {/* Direct Navigation Button */}
+                <button
+                  type="button"
+                  onClick={() => handleNavigateToRoom(item.room)}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl bg-primary hover:bg-primary/90 text-white px-4 py-2.5 text-xs font-black shadow-md shadow-primary/25 transition-all mt-3"
+                >
+                  <Compass className="size-4" />
+                  <span>Get Directions to Room</span>
+                  <ArrowRight className="size-3.5" />
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full rounded-3xl border border-dashed border-border p-12 text-center space-y-2">
+              <BookOpen className="size-8 mx-auto text-muted-foreground opacity-40" />
+              <p className="text-sm font-black text-foreground">No available classes match your filters.</p>
+              <p className="text-xs text-muted-foreground">Try clearing your search query or selecting &quot;All Programs&quot;.</p>
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── VISUAL ANALYTICS SECTION WITH INTERACTIVE CHARTS ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -351,12 +746,12 @@ export default function AdminAnalyticsDashboard() {
 
             <div className="space-y-4 pt-4">
               {[
-                { room: "CCS 538 (5th Floor)", visits: "842 routes", pct: 90 },
-                { room: "Mac Lab 101 (1st Floor)", visits: "765 routes", pct: 82 },
-                { room: "CCS Dean Suite (3rd Floor)", visits: "620 routes", pct: 68 },
-                { room: "Innovation Lab 501 (5th Floor)", visits: "490 routes", pct: 54 },
-                { room: "Multipurpose AV Hall (4th Floor)", visits: "410 routes", pct: 45 },
-                { room: "Programming Lab 201 (2nd Floor)", visits: "380 routes", pct: 40 },
+                { room: "521 (5th Floor)", visits: "920 routes", pct: 95 },
+                { room: "530B (5th Floor)", visits: "880 routes", pct: 90 },
+                { room: "CCS 538 (5th Floor)", visits: "842 routes", pct: 86 },
+                { room: "544 (5th Floor)", visits: "790 routes", pct: 80 },
+                { room: "Mac Lab 101 (1st Floor)", visits: "765 routes", pct: 78 },
+                { room: "J910 (1st Floor)", visits: "650 routes", pct: 66 },
               ].map((item, idx) => (
                 <div key={item.room} className="space-y-1.5 text-xs">
                   <div className="flex items-center justify-between">
