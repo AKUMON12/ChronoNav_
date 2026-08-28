@@ -70,11 +70,20 @@ export async function signIn(email: string, password: string) {
   }
 }
 
-/** Register a new user with email, password, and metadata */
 export async function signUp(
   email: string,
   password: string,
-  metadata: { first_name: string; last_name: string; role: UserRole }
+  metadata: {
+    first_name: string;
+    last_name: string;
+    role: UserRole;
+    id_number?: string;
+    program?: string;
+    year_level?: string;
+    study_load_attached?: boolean;
+    total_units?: number;
+    [key: string]: unknown;
+  }
 ) {
   if (isPlaceholderEnv()) {
     const demoUser = {

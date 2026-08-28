@@ -1513,6 +1513,10 @@ export const ROOM_NODE_MAPPING: Record<string, string> = {
   "521": "F5_ROOM_519_520",
   "522": "F5_ROOM_519_520",
   "523": "F5_ROOM_519_520",
+  "530": "F5_LECTURE_538",
+  "530B": "F5_LECTURE_538",
+  "544": "F5_LECTURE_538",
+  "J910": "F1_STUDY_HALL",
   "BOTANICAL GARDEN": "F5_BOTANICAL_GARDEN",
 
   // Floor 4

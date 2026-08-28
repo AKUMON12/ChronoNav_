@@ -1,81 +1,197 @@
-import { ParsedScheduleItem, OCRScheduleResult } from "@/types/schedule";
+import { ParsedScheduleItem, OCRScheduleResult, ExtractedStudentInfo, DayOfWeek } from "@/types/schedule";
 
 /**
- * University of Cebu Study Load OCR Regex Parser
- * Extracts Course Codes, Titles, Day Schedules, Time Ranges, and Room Codes.
+ * University of Cebu Official Study Load OCR Regex Parser
+ * Extracts Student Identity (ID, Name, Program, Year), Course Codes, Titles,
+ * Day Schedules, Time Ranges, Units, and Dedicated Room/Floor Numbers.
  */
 
-// UC Day Code Mapping
-const DAY_MAPPING: Record<string, "Mon" | "Tue" | "Wed" | "Thu" | "Fri" | "Sat" | "Sun"> = {
-  "M": "Mon",
-  "MON": "Mon",
-  "MWF": "Mon",
-  "T": "Tue",
-  "TUE": "Tue",
-  "TTH": "Tue",
-  "W": "Wed",
-  "WED": "Wed",
-  "TH": "Thu",
-  "THU": "Thu",
-  "F": "Fri",
-  "FRI": "Fri",
-  "S": "Sat",
-  "SAT": "Sat",
-  "SUN": "Sun",
+// UC Day Code Mapping & Expansion
+const DAY_CODE_MAP: Record<string, DayOfWeek[]> = {
+  "MWF": ["Mon", "Wed", "Fri"],
+  "TTH": ["Tue", "Thu"],
+  "MON": ["Mon"],
+  "TUE": ["Tue"],
+  "WED": ["Wed"],
+  "THU": ["Thu"],
+  "FRI": ["Fri"],
+  "SAT": ["Sat"],
+  "SUN": ["Sun"],
+  "M": ["Mon"],
+  "T": ["Tue"],
+  "W": ["Wed"],
+  "TH": ["Thu"],
+  "F": ["Fri"],
+  "S": ["Sat"],
 };
 
 /**
- * Parses raw text extracted from University of Cebu Study Load documents.
+ * Helper to determine campus building and floor level from room code.
+ */
+export function resolveRoomFloor(roomCode: string): { building: string; floor: number | string } {
+  const clean = roomCode.toUpperCase().replace(/\s+/g, "");
+
+  // Match 3-digit room patterns like 521, 530B, 544, 536 -> Floor 5
+  if (/^5\d{2}/.test(clean) || clean.includes("538") || clean.includes("501")) {
+    return { building: "CCS Building", floor: 5 };
+  }
+  if (/^4\d{2}/.test(clean) || clean.includes("401")) {
+    return { building: "CCS Building", floor: 4 };
+  }
+  if (/^3\d{2}/.test(clean) || clean.includes("301")) {
+    return { building: "CCS Building", floor: 3 };
+  }
+  if (/^2\d{2}/.test(clean) || clean.includes("201")) {
+    return { building: "CCS Building", floor: 2 };
+  }
+  if (/^M\d{2}/.test(clean) || clean.startsWith("M")) {
+    return { building: "Main Building", floor: "M" };
+  }
+  if (/^1\d{2}/.test(clean) || clean.includes("101") || clean.includes("MACLAB")) {
+    return { building: "CCS Building", floor: 1 };
+  }
+  if (clean.startsWith("J9") || clean.startsWith("J")) {
+    return { building: "Main Academic Wing", floor: 1 };
+  }
+
+  return { building: "Main Campus", floor: 5 };
+}
+
+/**
+ * Standardize time string e.g. "2:30" with "PM" to "02:30 PM"
+ */
+function normalizeTimeString(timeStr: string, defaultPeriod: "AM" | "PM" = "PM"): string {
+  const cleaned = timeStr.trim().toUpperCase();
+  const hasPeriod = cleaned.includes("AM") || cleaned.includes("PM");
+  const period = hasPeriod ? (cleaned.includes("AM") ? "AM" : "PM") : defaultPeriod;
+  const numPart = cleaned.replace(/[^0-9:]/g, "");
+  const [h, m = "00"] = numPart.split(":");
+  const hourNum = parseInt(h, 10);
+  const formattedHour = hourNum < 10 && !numPart.startsWith("0") ? `0${hourNum}` : `${hourNum}`;
+  return `${formattedHour}:${m.padStart(2, "0")} ${period}`;
+}
+
+/**
+ * Parses raw text extracted from University of Cebu Official Study Load documents.
  */
 export function parseScheduleText(rawText: string): OCRScheduleResult {
   const lines = rawText.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   const parsedItems: ParsedScheduleItem[] = [];
+  const extractedStudent: ExtractedStudentInfo = {};
 
-  // Regex rules for UC Study Load pattern matching
-  const courseRegex = /\b([A-Z]{2,4}(?:\s*[-–]\s*|\s+)[A-Z0-9]{3,12})\s+([A-Za-z0-9 &.,\-/]+)/i;
-  const timeRegex = /(\d{1,2}:\d{2}\s*(?:AM|PM)?)\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i;
-  const dayRegex = /\b(MWF|TTH|MON|TUE|WED|THU|FRI|SAT|M|T|W|TH|F|S)\b/i;
-  const roomRegex = /\b(CCS\s*\d{3}|CL\d|LH\d|MAC\s*LAB\s*\d{3}|ROOM\s*\d{3}|DON\s*MANUEL\s*\d{3}|MAIN\s*\d{3})\b/i;
+  // 1. Extract Student Information Header:
+  // e.g. "22682702 VINCE ANDREW D. SANTOYA BSIT 4"
+  // e.g. "22684955 TRISTAN DEVELOPER BSCS 3"
+  const studentHeaderRegex = /(\d{7,9})\s+([A-Z\s.]+?)\s+(BSIT|BSCS|BSIS|ACT|CPE|CTE|COE|BSN)\s*(\d)?/i;
+  
+  // 2. Extract Official Study Load metadata:
+  // e.g. "OFFICIAL STUDY LOAD 1ST SEM. SY 2025-2026"
+  const semMatch = rawText.match(/(\d(?:ST|ND|RD)?\s*SEM\.?)\s*(?:SY\s*)?(\d{4}[-–]\d{4})/i);
+  if (semMatch) {
+    extractedStudent.semester = semMatch[1].trim();
+    extractedStudent.schoolYear = semMatch[2].trim();
+  }
 
-  lines.forEach((line, index) => {
-    // Ignore header / metadata lines
-    if (/UNIVERSITY|COLLEGE|STUDY LOAD|EDP CODE|SUBJECT CODE|MAIN CAMPUS/i.test(line)) {
+  // 3. Extract Total Units & Date Enrolled:
+  const totalMatch = rawText.match(/TOTAL:\s*(\d+)/i);
+  if (totalMatch) {
+    extractedStudent.totalUnits = parseInt(totalMatch[1], 10);
+  }
+  const dateMatch = rawText.match(/DATE ENROLLED:\s*([\d/]+)/i);
+  if (dateMatch) {
+    extractedStudent.dateEnrolled = dateMatch[1];
+  }
+
+  // 4. Line-by-line parsing
+  lines.forEach((line) => {
+    // Check student identity line
+    const studMatch = line.match(studentHeaderRegex);
+    if (studMatch) {
+      extractedStudent.idNumber = studMatch[1];
+      const rawFullName = studMatch[2].trim();
+      extractedStudent.fullName = rawFullName;
+      extractedStudent.program = studMatch[3].toUpperCase();
+      extractedStudent.yearLevel = studMatch[4] ? `${studMatch[4]}th Year` : "3rd Year";
+
+      // Split name into first and last name
+      const nameParts = rawFullName.split(/\s+/).filter(Boolean);
+      if (nameParts.length > 1) {
+        extractedStudent.lastName = nameParts[nameParts.length - 1];
+        extractedStudent.firstName = nameParts.slice(0, nameParts.length - 1).join(" ");
+      } else {
+        extractedStudent.firstName = rawFullName;
+        extractedStudent.lastName = "";
+      }
       return;
     }
 
-    // Match Time range
-    const timeMatch = line.match(timeRegex);
-    const dayMatch = line.match(dayRegex);
-    const roomMatch = line.match(roomRegex);
-    const courseMatch = line.match(courseRegex);
+    // Skip table column headers
+    if (/SCHED\.?\s*NO|COURSE\s*NO|UNITS\s*REMARKS|DOWNLOADED\s*ON|UNIVERSITY|LEGEND|VERIFICATION/i.test(line)) {
+      return;
+    }
 
-    if ((courseMatch && (timeMatch || dayMatch || roomMatch)) || timeMatch) {
-      const id = `ocr-${Date.now()}-${index}`;
-      const courseCode = courseMatch ? courseMatch[1].trim() : `CS-${100 + index}`;
-      const courseTitle = courseMatch ? courseMatch[2].trim() : "Computer Studies Course";
-      const dayRaw = dayMatch ? dayMatch[1].toUpperCase() : "MON";
-      const dayOfWeek = DAY_MAPPING[dayRaw] || "Mon";
-      const startTime = timeMatch ? timeMatch[1].trim() : "08:00 AM";
-      const endTime = timeMatch ? timeMatch[2].trim() : "10:30 AM";
-      const room = roomMatch ? roomMatch[1].toUpperCase() : "CCS 301";
-      const building = room.startsWith("CCS") ? "CCS Building" : "Main Campus";
+    // Match UC Schedule line patterns:
+    // Pattern A: "07732 LIT 101 2:30 - 3:30 PM MWF J910 3"
+    // Pattern B: "34363 IT-CPSTONE40 6:31 - 9:31 PM SAT 521 3"
+    // Pattern C: "IT-ELAI LAB 6:31 - 8:31 PM FRI 536"
+    // Pattern D: "39685 IT-ELEMSYS 3:30 - 6:31 PM SAT 544 3"
 
-      parsedItems.push({
-        id,
-        courseCode,
-        courseTitle,
-        instructor: "TBA / Faculty",
-        dayOfWeek,
-        startTime,
-        endTime,
-        building,
-        room,
-        confidence: 0.92 + (index % 5) * 0.01,
+    // Time pattern e.g. "2:30 - 3:30 PM" or "11:30 - 12:30 PM"
+    const timeMatch = line.match(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2}\s*(?:AM|PM)?)/i);
+    const dayMatch = line.match(/\b(MWF|TTH|MON|TUE|WED|THU|FRI|SAT|SUN|M|T|W|TH|F|S)\b/i);
+
+    if (timeMatch && dayMatch) {
+      const timeIndex = line.indexOf(timeMatch[0]);
+      const dayIndex = line.indexOf(dayMatch[0], timeIndex + timeMatch[0].length);
+
+      // Extract Course Title / Code from portion before time
+      let beforeTime = line.slice(0, timeIndex).trim();
+      // Remove leading EDP code (e.g. 07732, 34363)
+      beforeTime = beforeTime.replace(/^\d{4,6}\s+/, "").trim();
+
+      let courseCode = beforeTime || "CCS Specialized Course";
+      let courseTitle = beforeTime || "CCS Specialized Course";
+
+      // Extract Room from portion after day
+      const afterDay = dayIndex !== -1 ? line.slice(dayIndex + dayMatch[0].length).trim() : "";
+      
+      const roomMatch = afterDay.match(/\b([A-Z]?\d{3}[A-Z]?|CCS\s*\d{3}|CL\d|LH\d|MAC\s*LAB\s*\d{3}|ROOM\s*\d{3})\b/i);
+      const roomCode = roomMatch ? roomMatch[1].trim() : "530B";
+      const { building, floor } = resolveRoomFloor(roomCode);
+
+      // Extract units if at the end of line
+      const unitsMatch = afterDay.match(/\b(\d)\s*$/);
+      const units = unitsMatch ? parseInt(unitsMatch[1], 10) : 3;
+
+      // Expand multi-day schedules (e.g. MWF creates Mon, Wed, Fri)
+      const days = DAY_CODE_MAP[dayMatch[1].toUpperCase()] || ["Mon"];
+      
+      // Standardize times
+      const fullEnd = timeMatch[2].trim();
+      const period = fullEnd.includes("AM") ? "AM" : "PM";
+      const startFormatted = normalizeTimeString(timeMatch[1], period);
+      const endFormatted = normalizeTimeString(timeMatch[2], period);
+
+      days.forEach((day, dIdx) => {
+        parsedItems.push({
+          id: `ocr-${Date.now()}-${parsedItems.length}-${dIdx}`,
+          courseCode: courseCode.toUpperCase(),
+          courseTitle: courseTitle.toUpperCase(),
+          instructor: "Assigned Faculty",
+          dayOfWeek: day,
+          startTime: startFormatted,
+          endTime: endFormatted,
+          building,
+          room: roomCode.toUpperCase(),
+          confidence: 0.96,
+          units,
+          floor,
+        });
       });
     }
   });
 
-  // If no items parsed from plain text, fall back to sample UC Study Load template
+  // If no items were parsed, fallback to Vince Andrew Santoya's sample study load
   if (parsedItems.length === 0) {
     return generateSampleUCStudyLoadResult(rawText);
   }
@@ -83,7 +199,8 @@ export function parseScheduleText(rawText: string): OCRScheduleResult {
   return {
     parsedItems,
     rawText,
-    confidence: 0.94,
+    confidence: 0.96,
+    extractedStudent,
   };
 }
 
@@ -91,97 +208,55 @@ export function parseScheduleText(rawText: string): OCRScheduleResult {
  * Simulates OCR scanning and extraction from an uploaded file (Image/PDF).
  */
 export async function processOCRFile(file: File): Promise<OCRScheduleResult> {
-  // Simulate OCR scan delay for smooth UI progress
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  // Simulate rapid client-side OCR scan delay for smooth UI progress
+  await new Promise((resolve) => setTimeout(resolve, 1200));
 
+  // If user uploaded a file, we simulate OCR extraction of the Official UC Study Load
   const sampleRawText = `
-UNIVERSITY OF CEBU — MAIN CAMPUS
-COLLEGE OF COMPUTER STUDIES (CCS)
-STUDY LOAD & CLASS SCHEDULE — 1ST SEMESTER 2026-2027
-
-EDP CODE   SUBJECT CODE     DESCRIPTION                          DAYS   TIME               ROOM
---------------------------------------------------------------------------------------------------
-10482      IT-CPSTONE41     Capstone Project and Research 1      MWF    08:00 AM - 10:30 AM CCS 401
-10485      CS 301           Data Structures & Algorithms         TTH    10:30 AM - 12:00 PM Mac Lab 101
-10490      CS 302           Operating Systems & Architecture     MWF    01:00 PM - 02:30 PM CCS 201
-10494      GE 104           Science, Technology, and Society     SAT    08:00 AM - 11:00 AM Room 202
-10499      IT-NETWORKING31  Cisco Enterprise Networking         TTH    02:30 PM - 04:30 PM CCS 301
+UNIVERSITY OF CEBU - MAIN
+155A Sanciangko St. Cebu City
+OFFICIAL STUDY LOAD 1ST SEM. SY 2025-2026
+22682702 VINCE ANDREW D. SANTOYA BSIT 4
+SCHED. NO. COURSE NO. TIME DAYS ROOM UNITS REMARKS
+07732 LIT 101 2:30 - 3:30 PM MWF J910 3
+34363 IT-CPSTONE40 6:31 - 9:31 PM SAT 521 3
+39651 IT-FRELEAN 11:30 - 12:30 PM MWF 530B 3
+39669 IT-ELAI 3:30 - 6:31 PM FRI 544 3
+IT-ELAI LAB 6:31 - 8:31 PM FRI 536
+39685 IT-ELEMSYS 3:30 - 6:31 PM SAT 544 3
+IT-ELEMSYS LAB 1:30 - 3:30 PM SAT 530B
+DATE ENROLLED: 08/09/25 TOTAL: 15
 `;
 
-  return generateSampleUCStudyLoadResult(sampleRawText);
+  return parseScheduleText(sampleRawText);
 }
 
 /**
- * Generates sample UC study load result for demo verification.
+ * Returns the exact University of Cebu study load sample from the provided official PDF.
  */
-function generateSampleUCStudyLoadResult(rawText: string): OCRScheduleResult {
-  const items: ParsedScheduleItem[] = [
-    {
-      id: "ocr-1",
-      courseCode: "IT-CPSTONE41",
-      courseTitle: "Capstone Project and Research 1",
-      instructor: "Dr. Maria Santos",
-      dayOfWeek: "Mon",
-      startTime: "08:00 AM",
-      endTime: "10:30 AM",
-      building: "CCS Building",
-      room: "CCS 401",
-      confidence: 0.98,
-    },
-    {
-      id: "ocr-2",
-      courseCode: "CS 301",
-      courseTitle: "Data Structures & Algorithms",
-      instructor: "Engr. Pedro Cruz",
-      dayOfWeek: "Tue",
-      startTime: "10:30 AM",
-      endTime: "12:00 PM",
-      building: "CCS Building",
-      room: "Mac Lab 101",
-      confidence: 0.95,
-    },
-    {
-      id: "ocr-3",
-      courseCode: "CS 302",
-      courseTitle: "Operating Systems & Architecture",
-      instructor: "Prof. Ana Reyes",
-      dayOfWeek: "Wed",
-      startTime: "01:00 PM",
-      endTime: "02:30 PM",
-      building: "CCS Building",
-      room: "CCS 201",
-      confidence: 0.94,
-    },
-    {
-      id: "ocr-4",
-      courseCode: "GE 104",
-      courseTitle: "Science, Technology, and Society",
-      instructor: "Dr. Ramon Garcia",
-      dayOfWeek: "Sat",
-      startTime: "08:00 AM",
-      endTime: "11:00 AM",
-      building: "Main Building",
-      room: "Room 202",
-      confidence: 0.91,
-    },
-    {
-      id: "ocr-5",
-      courseCode: "IT-NETWORKING31",
-      courseTitle: "Cisco Enterprise Networking",
-      instructor: "Engr. Juan Dela Cruz",
-      dayOfWeek: "Thu",
-      startTime: "02:30 PM",
-      endTime: "04:30 PM",
-      building: "CCS Building",
-      room: "CCS 301",
-      confidence: 0.96,
-    },
-  ];
+export function getSampleUCStudyLoadVince(): OCRScheduleResult {
+  const sampleRawText = `
+UNIVERSITY OF CEBU - MAIN
+155A Sanciangko St. Cebu City
+OFFICIAL STUDY LOAD 1ST SEM. SY 2025-2026
+22682702 VINCE ANDREW D. SANTOYA BSIT 4
+SCHED. NO. COURSE NO. TIME DAYS ROOM UNITS REMARKS
+07732 LIT 101 2:30 - 3:30 PM MWF J910 3
+34363 IT-CPSTONE40 6:31 - 9:31 PM SAT 521 3
+39651 IT-FRELEAN 11:30 - 12:30 PM MWF 530B 3
+39669 IT-ELAI 3:30 - 6:31 PM FRI 544 3
+IT-ELAI LAB 6:31 - 8:31 PM FRI 536
+39685 IT-ELEMSYS 3:30 - 6:31 PM SAT 544 3
+IT-ELEMSYS LAB 1:30 - 3:30 PM SAT 530B
+DATE ENROLLED: 08/09/25 TOTAL: 15
+`;
 
-  return {
-    parsedItems: items,
-    rawText,
-    confidence: 0.95,
-  };
+  return parseScheduleText(sampleRawText);
 }
 
+/**
+ * Default fallback sample generator.
+ */
+function generateSampleUCStudyLoadResult(rawText: string): OCRScheduleResult {
+  return getSampleUCStudyLoadVince();
+}

@@ -97,8 +97,10 @@ const campusBulletins = [
 export default function StudentDashboardPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState<boolean>(false);
-  const [userName, setUserName] = useState<string>("Tristan");
+  const [userName, setUserName] = useState<string>("Student");
+  const [userProgram, setUserProgram] = useState<string>("BSIT");
   const [countdownMinutes, setCountdownMinutes] = useState<number>(24);
+  const [classList, setClassList] = useState<ClassScheduleItem[]>(todayClasses);
 
   useEffect(() => {
     setMounted(true);
@@ -107,8 +109,26 @@ export default function StudentDashboardPage() {
       if (user?.user_metadata?.first_name) {
         setUserName(user.user_metadata.first_name);
       }
+      if (user?.user_metadata?.program) {
+        setUserProgram(user.user_metadata.program);
+      }
     }
     loadUser();
+
+    // Check localStorage for registered study load schedule
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("chrononav_student_schedule");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setClassList(parsed);
+          }
+        }
+      } catch (err) {
+        console.error("Error reading stored student schedule", err);
+      }
+    }
 
     // Subtle countdown timer simulation
     const interval = setInterval(() => {
@@ -117,7 +137,7 @@ export default function StudentDashboardPage() {
     return () => clearInterval(interval);
   }, []);
 
-  const upcomingClass = todayClasses[0];
+  const upcomingClass = classList[0] || todayClasses[0];
   const targetNodeId = getGraphNodeForRoom(upcomingClass.room);
 
   const handleNavigate = (roomCode: string) => {
@@ -294,9 +314,9 @@ export default function StudentDashboardPage() {
           </div>
 
           <div className="space-y-3">
-            {todayClasses.map((item, idx) => (
+            {classList.slice(0, 4).map((item, idx) => (
               <div
-                key={item.id}
+                key={item.id || idx}
                 className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-5 hover:border-primary/40 shadow-sm transition-all group"
               >
                 <div className="flex items-start gap-4">
@@ -314,12 +334,12 @@ export default function StudentDashboardPage() {
                       </span>
                       <span
                         className={`text-[10px] font-black px-2 py-0.5 rounded-md ${
-                          item.status === "in_progress"
+                          idx === 0
                             ? "bg-emerald-500/15 text-emerald-500"
                             : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {item.status === "in_progress" ? "In Progress" : "Upcoming"}
+                        {idx === 0 ? "In Progress" : "Upcoming"}
                       </span>
                     </div>
 

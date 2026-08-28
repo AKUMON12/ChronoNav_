@@ -125,13 +125,40 @@ function ScheduleContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [schedules, setSchedules] = useState<ClassScheduleItem[]>(initialSchedules);
+  const [schedules, setSchedules] = useState<ClassScheduleItem[]>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("chrononav_student_schedule");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            return parsed;
+          }
+        }
+      } catch (e) {
+        console.error("Error reading stored schedule:", e);
+      }
+    }
+    return initialSchedules;
+  });
+
   const [selectedDay, setSelectedDay] = useState<string>("All");
   const [viewMode, setViewMode] = useState<"daily" | "weekly">("daily");
   const [isOCRModalOpen, setIsOCRModalOpen] = useState<boolean>(false);
   const [isCRUDModalOpen, setIsCRUDModalOpen] = useState<boolean>(false);
   const [editingItem, setEditingItem] = useState<ClassScheduleItem | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Sync state to localStorage whenever schedules change
+  useEffect(() => {
+    if (typeof window !== "undefined" && schedules.length > 0) {
+      try {
+        localStorage.setItem("chrononav_student_schedule", JSON.stringify(schedules));
+      } catch (err) {
+        console.error("Error persisting schedule:", err);
+      }
+    }
+  }, [schedules]);
 
   // Automatically trigger OCR modal if `?ocr=open` is in search params
   useEffect(() => {
