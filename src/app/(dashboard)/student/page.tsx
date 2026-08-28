@@ -24,6 +24,7 @@ import {
 import { ClassScheduleItem } from "@/types/schedule";
 import { getGraphNodeForRoom } from "@/lib/navigation/pathfinding";
 import { getCurrentUser } from "@/lib/supabase/auth";
+import { getUserSchedule } from "@/lib/auth/auth-store";
 import { DashboardSkeleton } from "@/components/skeletons/dashboard-skeleton";
 
 /** Enrolled Today's Classes for Student Dashboard */
@@ -69,28 +70,28 @@ const todayClasses: (ClassScheduleItem & { status: "completed" | "in_progress" |
 /** Campus Bulletin Announcements */
 const campusBulletins = [
   {
-    id: "bul-1",
-    title: "1st Semester Midterm Exam Room Assignments",
+    id: "b-1",
     type: "info",
+    title: "1st Semester Final Examination Schedules",
     message: "Room assignments for all CCS computing departments are now posted on bulletin boards.",
     time: "2 hours ago",
     badge: "Official Notice",
   },
   {
-    id: "bul-2",
-    title: "5th Floor Elevator Scheduled Maintenance",
+    id: "b-2",
     type: "warning",
-    message: "Elevator 2 servicing floors 4-5 will be offline today from 4:00 PM to 6:00 PM.",
+    title: "Main Stairwell Maintenance (Floors 3-4)",
+    message: "Use West corridor fire-exit concrete stairs between 1:00 PM - 4:00 PM.",
     time: "4 hours ago",
     badge: "Facility Notice",
   },
   {
-    id: "bul-3",
-    title: "Mac Lab 101 Workstation Upgrade",
+    id: "b-3",
     type: "success",
-    message: "New Xcode 16 developer environments are now available on all 45 Mac workstations.",
+    title: "UC Innovation Hub Hackathon 2026",
+    message: "Registration is open for all BSIT/BSCS students at CCS Innovation Lab 501.",
     time: "Yesterday",
-    badge: "Lab Update",
+    badge: "Campus Event",
   },
 ];
 
@@ -106,29 +107,24 @@ export default function StudentDashboardPage() {
     setMounted(true);
     async function loadUser() {
       const user = await getCurrentUser();
-      if (user?.user_metadata?.first_name) {
-        setUserName(user.user_metadata.first_name);
-      }
-      if (user?.user_metadata?.program) {
-        setUserProgram(user.user_metadata.program);
+      if (user) {
+        if (user.user_metadata?.first_name) {
+          setUserName(user.user_metadata.first_name);
+        }
+        if (user.user_metadata?.program) {
+          setUserProgram(user.user_metadata.program);
+        }
+
+        // Load isolated schedule strictly owned by authenticated user
+        if (user.id) {
+          const userSchedules = getUserSchedule(user.id);
+          if (userSchedules && userSchedules.length > 0) {
+            setClassList(userSchedules);
+          }
+        }
       }
     }
     loadUser();
-
-    // Check localStorage for registered study load schedule
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("chrononav_student_schedule");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setClassList(parsed);
-          }
-        }
-      } catch (err) {
-        console.error("Error reading stored student schedule", err);
-      }
-    }
 
     // Subtle countdown timer simulation
     const interval = setInterval(() => {

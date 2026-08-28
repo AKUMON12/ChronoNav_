@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 
 /**
  * GET /api/admin/users
- * Returns list of system users (requires Admin or returns simulated mock users in dev)
+ * Returns list of system users (strictly requires Admin authorization)
  */
 export async function GET(request: NextRequest) {
   const cookieStore = cookies();
@@ -25,7 +25,18 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Return full mock user list for local development / testing
+  // Authorize request: Check if user is authenticated and has admin role
+  const mockRole = request.cookies.get("sb-mock-role")?.value;
+  const userRole = user?.user_metadata?.role || mockRole;
+
+  if (userRole !== "admin") {
+    return NextResponse.json(
+      { error: "Forbidden. Administrative privileges required." },
+      { status: 403 }
+    );
+  }
+
+  // Return verified user list for administrative management
   const initialUsers = [
     {
       id: "u-1",
@@ -100,10 +111,38 @@ export async function GET(request: NextRequest) {
 
 /**
  * POST /api/admin/users
- * Provisions a new user account
+ * Provisions a new user account (Admin role required)
  */
 export async function POST(request: NextRequest) {
   try {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co",
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key",
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll() {},
+        },
+      }
+    );
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    const mockRole = request.cookies.get("sb-mock-role")?.value;
+    const userRole = user?.user_metadata?.role || mockRole;
+
+    if (userRole !== "admin") {
+      return NextResponse.json(
+        { error: "Forbidden. Administrative privileges required." },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { id_number, first_name, last_name, email, role, program, status } = body;
 

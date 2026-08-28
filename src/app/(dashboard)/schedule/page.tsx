@@ -38,6 +38,8 @@ import {
   isMajorSubject,
 } from "@/lib/schedule/time";
 import { getEventsForDate, getHolidayForDate, getDayNameShort } from "@/lib/schedule/academic-calendar";
+import { getCurrentUser } from "@/lib/supabase/auth";
+import { getUserSchedule, saveUserSchedule } from "@/lib/auth/auth-store";
 
 /** Initial Student Schedule fallback with real university classes */
 const initialSchedules: ClassScheduleItem[] = [
@@ -131,24 +133,29 @@ const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function ScheduleContent() {
   const router = useRouter();
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   // Schedule list initialized from persistent student study load store or default
-  const [schedules, setSchedules] = useState<ClassScheduleItem[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem("chrononav_student_schedule");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            return parsed;
-          }
+  const [schedules, setSchedules] = useState<ClassScheduleItem[]>([]);
+
+  // Load authenticated user and their isolated schedule
+  useEffect(() => {
+    async function initUserSchedule() {
+      const user = await getCurrentUser();
+      if (user && user.id) {
+        setCurrentUserId(user.id);
+        const userSchedules = getUserSchedule(user.id);
+        if (userSchedules && userSchedules.length > 0) {
+          setSchedules(userSchedules);
+        } else {
+          setSchedules(initialSchedules);
         }
-      } catch (e) {
-        console.error("Error reading stored schedule:", e);
+      } else {
+        setSchedules(initialSchedules);
       }
     }
-    return initialSchedules;
-  });
+    initUserSchedule();
+  }, []);
 
   // Calendar Date State & Filter Modes
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -162,16 +169,12 @@ function ScheduleContent() {
   const [editingItem, setEditingItem] = useState<ClassScheduleItem | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
-  // Sync state to localStorage whenever schedules change
+  // Sync state strictly to authenticated user's isolated storage
   useEffect(() => {
-    if (typeof window !== "undefined" && schedules.length > 0) {
-      try {
-        localStorage.setItem("chrononav_student_schedule", JSON.stringify(schedules));
-      } catch (err) {
-        console.error("Error persisting schedule:", err);
-      }
+    if (currentUserId && schedules.length > 0) {
+      saveUserSchedule(currentUserId, schedules);
     }
-  }, [schedules]);
+  }, [schedules, currentUserId]);
 
   // Handle date selection from academic calendar
   const handleSelectCalendarDate = (date: Date) => {

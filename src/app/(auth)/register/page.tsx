@@ -226,17 +226,7 @@ export default function RegisterPage() {
 
     setLoading(true);
 
-    // Save study load schedule to client persistence so dashboard immediately shows student's dedicated rooms
-    if (ocrResult?.parsedItems && typeof window !== "undefined") {
-      try {
-        localStorage.setItem(
-          "chrononav_student_schedule",
-          JSON.stringify(ocrResult.parsedItems)
-        );
-      } catch (err) {
-        console.error("Failed to store schedule", err);
-      }
-    }
+    const parsedScheduleItems = ocrResult?.parsedItems || [];
 
     const result = await signUp(email, password, {
       first_name: firstName.trim(),
@@ -246,12 +236,13 @@ export default function RegisterPage() {
       year_level: yearLevel,
       role: "student",
       study_load_attached: true,
-      total_units: ocrResult?.extractedStudent?.totalUnits || ocrResult?.parsedItems.length ? ocrResult.parsedItems.length * 3 : 15,
+      total_units: ocrResult?.extractedStudent?.totalUnits || (parsedScheduleItems.length ? parsedScheduleItems.length * 3 : 15),
+      initialSchedules: parsedScheduleItems,
     });
     setLoading(false);
 
-    if (result.error) {
-      setError(result.error);
+    if (result.error || !result.user) {
+      setError(result.error || "Registration failed. Please check your credentials.");
     } else {
       router.push("/dashboard");
     }
