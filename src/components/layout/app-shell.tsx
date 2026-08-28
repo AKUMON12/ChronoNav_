@@ -48,6 +48,12 @@ interface NavigationItem {
 const navigationConfig: NavigationItem[] = [
   // ── 1. Student Portal ──
   {
+    label: "Dashboard",
+    href: "/student/dashboard",
+    icon: LayoutDashboard,
+    roles: ["student"],
+  },
+  {
     label: "Student Hub",
     href: "/dashboard",
     icon: LayoutDashboard,
@@ -114,6 +120,12 @@ const navigationConfig: NavigationItem[] = [
   },
 
   // ── 3. Administrator Suite ──
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutDashboard,
+    roles: ["admin"],
+  },
   {
     label: "System Overview",
     href: "/admin/dashboard",
@@ -207,10 +219,10 @@ export function AppShell({ children, forcedRole }: AppShellProps) {
       if (user) {
         const metadataRole = (user.user_metadata?.role as UserRole) || forcedRole;
         if (metadataRole) setUserRole(metadataRole);
-        
+
         const firstName = user.user_metadata?.first_name;
         const lastName = user.user_metadata?.last_name;
-        
+
         if (firstName) {
           const last = lastName ? ` ${lastName}` : "";
           setUserName(firstName);
