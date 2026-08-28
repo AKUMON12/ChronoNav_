@@ -17,12 +17,13 @@ import {
   Filter,
 } from "lucide-react";
 import { AnnouncementModal, AnnouncementItem } from "@/components/bulletin/announcement-modal";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 const initialBulletins: AnnouncementItem[] = [
   {
     id: "ann-1",
     title: "1st Semester Midterm Examination Rooms Announced",
-    content: "Please check your student schedule for midterm examination room assignments across Floors 1 to 5 in the CCS Building.",
+    content: "Please check your student schedule for midterm examination room assignments across all 8 campus floors.",
     priority: "urgent",
     target: "students",
     date: "2026-08-16",
@@ -49,12 +50,17 @@ const initialBulletins: AnnouncementItem[] = [
 ];
 
 export default function CampusBulletinPage() {
+  const [mounted, setMounted] = useState(false);
   const [bulletins, setBulletins] = useState<AnnouncementItem[]>(initialBulletins);
   const [targetFilter, setTargetFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBulletin, setEditingBulletin] = useState<AnnouncementItem | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const showToast = (msg: string) => {
     setNotification(msg);
@@ -96,8 +102,12 @@ export default function CampusBulletinPage() {
     }
   };
 
+  if (!mounted) {
+    return <TableSkeleton rows={6} />;
+  }
+
   return (
-    <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
+    <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-5">
         <div>

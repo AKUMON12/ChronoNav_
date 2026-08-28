@@ -1,7 +1,7 @@
 "use client";
 
+import React, { useState } from "react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import {
   Compass,
   Map,
@@ -9,61 +9,85 @@ import {
   ScanLine,
   Bell,
   Shield,
-  Sun,
-  Moon,
   ArrowRight,
   Menu,
   X,
+  Sparkles,
+  Layers,
+  GraduationCap,
+  Building2,
+  CheckCircle2,
+  Smartphone,
+  Flame,
 } from "lucide-react";
-import React, { useState } from "react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Logo } from "@/components/shared/logo";
 
+const CAMPUS_DEPARTMENTS = [
+  "College of Computer Studies",
+  "Allied Engineering",
+  "Teacher Education (CTE)",
+  "Commerce & Accountancy",
+  "College of Criminology",
+  "Hotel & Restaurant Management",
+  "Arts & Sciences",
+  "Junior & Senior High School",
+  "Main Campus Library",
+  "University Clinic",
+];
+
 /**
  * ChronoNav Public Landing Page
- * Serves as the entry point for unauthenticated users.
- * Provides hero CTA, feature overview, and footer with privacy link.
- * Fully responsive: mobile-first with tablet/desktop breakpoints.
+ * Features subtle GPU-accelerated entrance animations, infinite department marquee,
+ * interactive feature cards, and instant route to Explore/Register.
  */
 export default function LandingPage() {
-  const { theme, setTheme } = useTheme();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white">
       {/* ── Sticky Navigation Bar ── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur">
+      <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md transition-colors duration-200">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 group">
             <Logo size="sm" showText={true} subtitle="" priority={true} />
           </Link>
 
-          {/* Desktop nav links */}
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium" aria-label="Main Navigation">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-            <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</Link>
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold" aria-label="Main Navigation">
+            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+              Features
+            </a>
+            <a href="#departments" className="text-muted-foreground hover:text-foreground transition-colors">
+              Departments
+            </a>
+            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+              How It Works
+            </a>
+            <Link href="/privacy" className="text-muted-foreground hover:text-foreground transition-colors">
+              Privacy
+            </Link>
           </nav>
 
-          {/* Desktop CTA + theme toggle */}
+          {/* Desktop CTA + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
             <ThemeToggle />
             <Link
               href="/login"
-              className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-black text-foreground hover:bg-accent transition-colors"
+              className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-black text-foreground hover:bg-accent hover:text-primary transition-all duration-200 shadow-sm"
             >
-              Log In
+              Sign In
             </Link>
             <Link
               href="/register"
-              className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-white hover:bg-primary/90 transition-colors shadow-sm shadow-primary/25"
+              className="rounded-xl bg-primary px-4 py-2 text-xs font-black text-white hover:bg-primary/90 transition-all duration-200 shadow-md shadow-primary/25 hover:shadow-lg hover:shadow-primary/35 hover:scale-[1.02] active:scale-[0.98]"
             >
               Register Study Load
             </Link>
           </div>
 
-          {/* Mobile top action buttons */}
+          {/* Mobile Top Action Buttons */}
           <div className="flex items-center gap-2 md:hidden">
             <ThemeToggle compact={true} />
             <button
@@ -76,161 +100,266 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Mobile dropdown menu */}
+        {/* Mobile Dropdown Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-card px-4 py-4 space-y-3 animate-in fade-in">
-            <a href="#features" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Features</a>
-            <a href="#how-it-works" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-            <Link href="/privacy" className="block text-sm font-medium text-muted-foreground hover:text-foreground" onClick={() => setMobileMenuOpen(false)}>Privacy</Link>
-            
-            {/* Theme switcher option for mobile menu */}
-            <div className="flex items-center justify-between py-2 border-t border-border">
-              <span className="text-xs font-bold text-muted-foreground">Theme Preference</span>
-              <ThemeToggle />
-            </div>
+          <div className="md:hidden border-t border-border bg-card px-4 py-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+            <a
+              href="#features"
+              className="block text-sm font-semibold text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </a>
+            <a
+              href="#departments"
+              className="block text-sm font-semibold text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Departments
+            </a>
+            <a
+              href="#how-it-works"
+              className="block text-sm font-semibold text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              How It Works
+            </a>
+            <Link
+              href="/privacy"
+              className="block text-sm font-semibold text-muted-foreground hover:text-foreground"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Privacy & Security
+            </Link>
 
             <div className="flex gap-2 pt-2 border-t border-border">
-              <Link href="/login" className="flex-1 text-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-black text-foreground">Log In</Link>
-              <Link href="/register" className="flex-1 text-center rounded-xl bg-primary px-3 py-2 text-xs font-black text-white">Register Load</Link>
+              <Link
+                href="/login"
+                className="flex-1 text-center rounded-xl border border-border bg-card px-3 py-2 text-xs font-black text-foreground"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/register"
+                className="flex-1 text-center rounded-xl bg-primary px-3 py-2 text-xs font-black text-white"
+              >
+                Register Load
+              </Link>
             </div>
           </div>
         )}
       </header>
 
-      {/* ── Hero Section ── */}
-      <section className="flex-1 flex items-center">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 py-16 sm:py-24 lg:py-32 text-center">
+      {/* ── Ambient Background Glow Mesh ── */}
+      <div className="relative flex-1 flex flex-col justify-between">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[850px] h-[350px] bg-gradient-to-tr from-primary/20 to-sky-400/15 dark:from-primary/10 dark:to-cyan-400/10 blur-[120px] rounded-full pointer-events-none animate-glow" />
+
+        {/* ── Hero Section ── */}
+        <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-16 sm:pt-24 lg:pt-28 pb-12 text-center animate-fade-in-up">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary mb-6">
-            <Compass className="size-3.5" />
-            <span>University of Cebu Main Campus</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black text-primary mb-6 shadow-sm animate-float">
+            <Compass className="size-3.5 text-primary" />
+            <span>University of Cebu Main Campus • 8 Floors</span>
+            <Sparkles className="size-3 text-primary animate-pulse" />
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground max-w-3xl mx-auto leading-[1.1]">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1]">
             Navigate Your Campus.{" "}
-            <span className="text-primary">Never Miss a Class.</span>
+            <span className="bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent">
+              Never Miss a Class.
+            </span>
           </h1>
 
-          <p className="mt-6 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            ChronoNav is an indoor navigation and schedule management system that guides you
-            to every classroom, lab, and office on campus — with automatic routing from your uploaded study load.
+          <p className="mt-6 text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
+            ChronoNav is an indoor navigation and schedule management web system that guides you through every
+            corridor, staircase, and elevator across all 8 campus floors with automatic study-load routing.
           </p>
 
           {/* Hero CTA buttons */}
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-primary-foreground hover:bg-primary/90 transition-colors shadow-lg shadow-primary/25"
+              className="group inline-flex items-center gap-2.5 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black text-white hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-primary/45 hover:scale-[1.02] active:scale-[0.98]"
             >
               <span>Register Study Load</span>
-              <ArrowRight className="size-4" />
+              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <Link
               href="/explore"
-              className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-sm font-bold text-foreground hover:bg-accent transition-colors"
+              className="group inline-flex items-center gap-2.5 rounded-2xl border border-border bg-card px-7 py-3.5 text-sm font-black text-foreground hover:bg-accent hover:text-primary transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98]"
             >
-              <Map className="size-4" />
-              <span>Explore Campus Map</span>
+              <Map className="size-4 text-primary" />
+              <span>Explore 8-Floor Map</span>
             </Link>
           </div>
-        </div>
-      </section>
 
-      {/* ── Features Section ── */}
-      <section id="features" className="border-t border-border bg-card/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 py-16 sm:py-24">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              Everything You Need on Campus
-            </h2>
-            <p className="mt-3 text-muted-foreground max-w-xl mx-auto">
-              Built for students, faculty, and administrators at the University of Cebu.
-            </p>
+          {/* Key Metrics Strip */}
+          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3.5 max-w-4xl mx-auto">
+            {[
+              { label: "Campus Floors", val: "8 Levels", icon: Layers },
+              { label: "Navigable Rooms", val: "60+ Rooms", icon: Building2 },
+              { label: "Shortest Paths", val: "Dijkstra Engine", icon: Compass },
+              { label: "Guest Explorer", val: "Zero-Login", icon: Smartphone },
+            ].map((stat, idx) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={idx}
+                  className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-1 text-center shadow-sm hover:border-primary/40 transition-colors"
+                >
+                  <Icon className="size-5 text-primary mx-auto mb-1" />
+                  <p className="text-base font-black text-foreground">{stat.val}</p>
+                  <p className="text-[11px] font-semibold text-muted-foreground">{stat.label}</p>
+                </div>
+              );
+            })}
           </div>
+        </section>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <FeatureCard
-              icon={Map}
-              title="Indoor Campus Map"
-              description="Interactive SVG floor plans with room markers, corridors, and staircase transitions across all buildings."
-            />
-            <FeatureCard
-              icon={CalendarDays}
-              title="Smart Schedule"
-              description="Upload your study load and get a personalized timetable with automatic navigation to each classroom."
-            />
-            <FeatureCard
-              icon={ScanLine}
-              title="OCR Schedule Import"
-              description="Snap a photo of your printed class schedule — ChronoNav extracts courses, times, and rooms automatically."
-            />
-            <FeatureCard
-              icon={Bell}
-              title="Class Reminders"
-              description="Receive notifications before each class starts, with one-tap navigation to the correct room."
-            />
+        {/* ── Infinite Horizontal Department Marquee ── */}
+        <section id="departments" className="relative z-10 border-y border-border bg-card/60 backdrop-blur py-4 overflow-hidden">
+          <div className="animate-marquee gap-8 items-center select-none">
+            {[...CAMPUS_DEPARTMENTS, ...CAMPUS_DEPARTMENTS].map((dept, i) => (
+              <div key={i} className="flex items-center gap-3 shrink-0 px-4">
+                <span className="size-2 rounded-full bg-primary inline-block" />
+                <span className="text-xs font-black tracking-wide text-muted-foreground hover:text-foreground transition-colors uppercase">
+                  {dept}
+                </span>
+              </div>
+            ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── How It Works Section ── */}
-      <section id="how-it-works" className="border-t border-border">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 py-16 sm:py-24">
-          <div className="text-center mb-12">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-              How ChronoNav Works
-            </h2>
-          </div>
+        {/* ── Features Section ── */}
+        <section id="features" className="relative z-10 border-b border-border bg-card/30 py-16 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8">
+            <div className="text-center mb-12 space-y-2">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black text-foreground tracking-tight">
+                Everything You Need on Campus
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+                Engineered specifically for students, faculty, and administrators at the University of Cebu.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <StepCard step={1} title="Create Your Account" description="Register with your university email. Choose your role — student, faculty, or admin." />
-            <StepCard step={2} title="Upload Your Schedule" description="Import your class schedule via OCR photo upload or manual entry. ChronoNav maps every course to a room." />
-            <StepCard step={3} title="Navigate Instantly" description="Get turn-by-turn indoor directions to your next class. Never wander the hallways again." />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <FeatureCard
+                icon={Map}
+                title="8-Floor Indoor Map"
+                description="Interactive architectural floorplans with corridor spines, stairs, and elevators across all 8 campus levels."
+              />
+              <FeatureCard
+                icon={CalendarDays}
+                title="Smart Schedule"
+                description="Upload your study load to generate a personal timetable with instant one-click routes to your classrooms."
+              />
+              <FeatureCard
+                icon={ScanLine}
+                title="AI Study Load OCR"
+                description="Automatic client-side study load parser extracts courses, time slots, and room numbers in seconds."
+              />
+              <FeatureCard
+                icon={Bell}
+                title="Live Alerts & Bulletins"
+                description="Stay updated with official department announcements, room transfers, and campus notifications."
+              />
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* ── Footer ── */}
-      <footer className="border-t border-border bg-card">
-        <div className="mx-auto max-w-7xl px-4 sm:px-8 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Logo size="xs" priority={false} />
-            <span>© 2026 ChronoNav — University of Cebu Main Campus</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="/privacy" className="hover:text-foreground transition-colors flex items-center gap-1">
-              <Shield className="size-3.5" />
-              <span>Privacy Policy</span>
-            </Link>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-}
+        {/* ── How It Works Step-by-Step ── */}
+        <section id="how-it-works" className="relative z-10 py-16 sm:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8 text-center space-y-12">
+            <div className="space-y-2">
+              <h2 className="text-2xl sm:text-3xl font-black text-foreground tracking-tight">
+                Get Started in 3 Simple Steps
+              </h2>
+              <p className="text-sm text-muted-foreground">Turn your enrollment document into live turn-by-turn guidance.</p>
+            </div>
 
-/** Feature card used in the features grid */
-function FeatureCard({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
-  return (
-    <div className="rounded-xl border border-border bg-card p-6 space-y-3 hover:shadow-md transition-shadow">
-      <div className="flex size-10 items-center justify-center rounded-lg bg-primary/10 text-primary">
-        <Icon className="size-5" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto text-left">
+              <StepCard
+                step="1"
+                title="Upload Study Load"
+                description="Take a photo or upload your registration PDF. Our secure client-side OCR extracts all subjects instantly."
+              />
+              <StepCard
+                step="2"
+                title="View Daily Timetable"
+                description="See your classes sorted by day, time, instructor, and specific classroom across all campus buildings."
+              />
+              <StepCard
+                step="3"
+                title="Navigate Step-by-Step"
+                description="Click 'Navigate' on any class to see the fastest walking route from campus gates right to your desk."
+              />
+            </div>
+          </div>
+        </section>
+
+        {/* ── Footer ── */}
+        <footer className="border-t border-border bg-card py-8 transition-colors duration-200">
+          <div className="mx-auto max-w-7xl px-4 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-foreground">CHRONONAV</span>
+              <span>•</span>
+              <span>University of Cebu Main Campus</span>
+            </div>
+
+            <div className="flex items-center gap-6">
+              <Link href="/explore" className="hover:text-foreground transition-colors">
+                Public Map
+              </Link>
+              <Link href="/privacy" className="hover:text-foreground transition-colors">
+                Privacy Policy
+              </Link>
+              <Link href="/login" className="hover:text-foreground transition-colors font-bold text-primary">
+                Portal Sign In
+              </Link>
+            </div>
+          </div>
+        </footer>
       </div>
-      <h3 className="text-base font-bold text-foreground">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }
 
-/** Step card used in the "How It Works" section */
-function StepCard({ step, title, description }: { step: number; title: string; description: string }) {
+function FeatureCard({
+  icon: Icon,
+  title,
+  description,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+}) {
   return (
-    <div className="text-center space-y-3">
-      <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary text-primary-foreground text-lg font-bold shadow-md">
+    <div className="group rounded-3xl border border-border bg-card p-6 space-y-3.5 shadow-sm hover:shadow-xl hover:border-primary/40 hover:-translate-y-1.5 transition-all duration-300">
+      <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 border border-primary/30 text-primary group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all duration-300">
+        <Icon className="size-6" />
+      </div>
+      <h3 className="text-base font-black text-foreground">{title}</h3>
+      <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+function StepCard({
+  step,
+  title,
+  description,
+}: {
+  step: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-card p-6 space-y-3 shadow-sm hover:border-primary/40 transition-colors">
+      <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-white font-black text-sm shadow-md shadow-primary/30">
         {step}
       </div>
-      <h3 className="text-base font-bold text-foreground">{title}</h3>
-      <p className="text-sm text-muted-foreground leading-relaxed max-w-xs mx-auto">{description}</p>
+      <h3 className="text-base font-black text-foreground">{title}</h3>
+      <p className="text-xs text-muted-foreground leading-relaxed">{description}</p>
     </div>
   );
 }

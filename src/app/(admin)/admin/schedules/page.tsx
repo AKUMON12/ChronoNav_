@@ -28,6 +28,7 @@ import {
 import { ClassScheduleItem, DayOfWeek } from "@/types/schedule";
 import { BackButton } from "@/components/shared/back-button";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 const INITIAL_MASTER_SCHEDULES: (ClassScheduleItem & { program: string; yearLevel: string })[] = [
   {
@@ -163,6 +164,15 @@ export default function AdminMasterSchedulePage() {
   const [deletingItem, setDeletingItem] = useState<(typeof INITIAL_MASTER_SCHEDULES)[0] | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
 
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // Form Fields for Create / Edit
   const [formData, setFormData] = useState({
     courseCode: "",
@@ -272,6 +282,10 @@ export default function AdminMasterSchedulePage() {
     showToast(`Deleted ${deletingItem.courseCode} from university master schedules.`);
     setDeletingItem(null);
   };
+
+  if (!mounted) {
+    return <TableSkeleton rows={6} />;
+  }
 
   return (
     <div className="space-y-6 sm:space-y-8 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">

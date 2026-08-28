@@ -13,6 +13,7 @@ import {
   FileSpreadsheet, 
   Printer 
 } from "lucide-react";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 interface SystemLogEntry {
   id: string;
@@ -82,9 +83,14 @@ const initialLogs: SystemLogEntry[] = [
 ];
 
 export default function SystemLogsPage() {
+  const [mounted, setMounted] = useState(false);
   const [logs] = useState<SystemLogEntry[]>(initialLogs);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredLogs = useMemo(() => {
     return logs.filter((log) => {
@@ -96,6 +102,10 @@ export default function SystemLogsPage() {
       return matchesSearch && matchesCategory;
     });
   }, [logs, search, categoryFilter]);
+
+  if (!mounted) {
+    return <TableSkeleton rows={6} />;
+  }
 
   // Export logs to CSV
   const handleExportCSV = () => {

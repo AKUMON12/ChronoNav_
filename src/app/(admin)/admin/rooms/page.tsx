@@ -13,15 +13,15 @@ import {
   CheckCircle2,
   Sliders,
   X,
-  Sparkles,
-} from "lucide-react";
+import { FloorLevel } from "@/lib/navigation/pathfinding";
+import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 interface ManagedRoom {
   id: string;
   code: string;
   name: string;
   building: string;
-  floor: number;
+  floor: FloorLevel;
   type: "room" | "corridor" | "stairs" | "elevator" | "facility" | "restroom";
   capacity?: number;
   x: number;
@@ -33,30 +33,41 @@ const initialRooms: ManagedRoom[] = [
   { id: "F1_MAC_LAB_101", code: "MAC LAB 101", name: "CCS Mac Laboratory 101", building: "CCS Building", floor: 1, type: "room", capacity: 45, x: 220, y: 260 },
   { id: "F1_CANTEEN", code: "CANTEEN", name: "CCS Canteen & Lounge", building: "CCS Building", floor: 1, type: "facility", capacity: 80, x: 100, y: 200 },
   { id: "F1_ENTRANCE", code: "GATE 1", name: "Main Campus Entrance", building: "CCS Building", floor: 1, type: "facility", capacity: 100, x: 280, y: 480 },
+  // Mezzanine
+  { id: "FM_CTE_DEAN", code: "CTE DEAN", name: "Dean's Office (Teacher Education)", building: "Main", floor: "M", type: "facility", capacity: 15, x: 390, y: 612 },
+  { id: "FM_COMP_LAB_3", code: "COMP LAB 3", name: "Computer Lab 3", building: "Don Manuel", floor: "M", type: "room", capacity: 40, x: 487, y: 240 },
   // Floor 2
   { id: "F2_PROG_LAB_201", code: "CCS 201", name: "Programming Lab 201", building: "CCS Building", floor: 2, type: "room", capacity: 40, x: 350, y: 260 },
   { id: "F2_LECTURE_202", code: "ROOM 202", name: "Lecture Room 202", building: "CCS Building", floor: 2, type: "room", capacity: 50, x: 180, y: 300 },
-  { id: "F2_FACULTY", code: "FACULTY 205", name: "CCS Faculty Office Suite", building: "CCS Building", floor: 2, type: "facility", capacity: 25, x: 350, y: 150 },
+  { id: "F2_MAIN_LIB", code: "MAIN LIB", name: "University Main Library", building: "Don Manuel", floor: 2, type: "facility", capacity: 150, x: 750, y: 420 },
   // Floor 3
-  { id: "F3_DEAN_OFFICE", code: "DEAN SUITE", name: "CCS Dean's Office Suite", building: "CCS Building", floor: 3, type: "facility", capacity: 15, x: 350, y: 200 },
+  { id: "F3_COLLEGE_LIB", code: "COLLEGE LIB", name: "College Library & Commons", building: "Don Manuel", floor: 3, type: "facility", capacity: 80, x: 536, y: 200 },
   { id: "F3_NETWORK_LAB_301", code: "CCS 301", name: "Cisco Networking Lab 301", building: "CCS Building", floor: 3, type: "room", capacity: 40, x: 180, y: 280 },
-  { id: "F3_LECTURE_302", code: "CCS 302", name: "Lecture Room 302", building: "CCS Building", floor: 3, type: "room", capacity: 45, x: 180, y: 160 },
   // Floor 4
   { id: "F4_AV_HALL_401", code: "AV 401", name: "Multipurpose AV Hall 401", building: "CCS Building", floor: 4, type: "facility", capacity: 120, x: 350, y: 220 },
-  { id: "F4_AI_LAB_402", code: "AI LAB 402", name: "AI & Machine Learning Lab", building: "CCS Building", floor: 4, type: "room", capacity: 40, x: 180, y: 280 },
+  { id: "F4_MICROPROCESSOR_LAB", code: "MICRO LAB", name: "Microprocessor Lab", building: "Main", floor: 4, type: "room", capacity: 40, x: 756, y: 596 },
   // Floor 5
   { id: "F5_LECTURE_538", code: "CCS 538", name: "Software Engineering Lecture 538", building: "CCS Building", floor: 5, type: "room", capacity: 55, x: 360, y: 160 },
-  { id: "F5_INNOVATION_LAB_501", code: "INNOV 501", name: "CCS Innovation & Startup Lab", building: "CCS Building", floor: 5, type: "room", capacity: 35, x: 180, y: 160 },
-  { id: "F5_NETWORKS_502", code: "NET 502", name: "Advanced Networking Center", building: "CCS Building", floor: 5, type: "room", capacity: 35, x: 180, y: 280 },
-  { id: "F5_CONFERENCE_ROOM", code: "CONF 503", name: "Executive Conference Room", building: "CCS Building", floor: 5, type: "facility", capacity: 20, x: 360, y: 280 },
+  { id: "F5_DEAN_OFFICE", code: "CCS DEAN", name: "Dean's Office (CCS)", building: "Main", floor: 5, type: "facility", capacity: 20, x: 360, y: 420 },
+  // Floor 6
+  { id: "F6_KITCHEN_LAB_1", code: "KITCHEN 1", name: "Commercial Kitchen Lab 1", building: "Main", floor: 6, type: "room", capacity: 35, x: 340, y: 440 },
+  { id: "F6_UC_BAR", code: "UC BAR", name: "UC Bartending & Mixology", building: "Don Manuel", floor: 6, type: "room", capacity: 30, x: 720, y: 440 },
+  // Floor 7
+  { id: "F7_ROOF_DECK_GYM", code: "ROOF DECK", name: "High School Roof Deck Gym", building: "Highschool", floor: 7, type: "facility", capacity: 200, x: 656, y: 467 },
+  { id: "F7_HRM_MINI_HOTEL", code: "MINI HOTEL", name: "HRM Mini Hotel Suite", building: "Main", floor: 7, type: "room", capacity: 25, x: 320, y: 440 },
 ];
 
 export default function BuildingRoomManagerPage() {
+  const [mounted, setMounted] = useState(false);
   const [rooms, setRooms] = useState<ManagedRoom[]>(initialRooms);
-  const [activeFloor, setActiveFloor] = useState<number>(1);
+  const [activeFloor, setActiveFloor] = useState<FloorLevel>(1);
   const [editingRoom, setEditingRoom] = useState<ManagedRoom | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [notification, setNotification] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // New Room Form States
   const [newCode, setNewCode] = useState("");
@@ -113,6 +124,12 @@ export default function BuildingRoomManagerPage() {
     showToast(`Deleted ${roomCode} from floor plan.`);
   };
 
+  if (!mounted) {
+    return <TableSkeleton rows={6} />;
+  }
+
+  const allFloorLevels: FloorLevel[] = [1, "M", 2, 3, 4, 5, 6, 7];
+
   return (
     <div className="space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full transition-colors duration-200">
       {/* Header */}
@@ -123,7 +140,7 @@ export default function BuildingRoomManagerPage() {
             <span>Campus Rooms & POI Calibrator</span>
           </h1>
           <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-            Create, calibrate, and edit rooms and coordinate waypoints for Floors 1 to 5 in the CCS Building.
+            Create, calibrate, and edit rooms and coordinate waypoints across all 8 floors of UC Main Campus.
           </p>
         </div>
 
@@ -146,9 +163,9 @@ export default function BuildingRoomManagerPage() {
 
       {/* Floor Selection Tabs */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1">
-        {[1, 2, 3, 4, 5].map((fl) => (
+        {allFloorLevels.map((fl) => (
           <button
-            key={fl}
+            key={String(fl)}
             onClick={() => setActiveFloor(fl)}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-xs font-black transition-all shrink-0 ${
               activeFloor === fl
