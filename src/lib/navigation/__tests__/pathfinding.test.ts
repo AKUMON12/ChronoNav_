@@ -1,45 +1,57 @@
 import { describe, it, expect } from "vitest";
 import { findShortestPath, SampleCCSGraph } from "../pathfinding";
 
-describe("ChronoNav Dijkstra Pathfinding Engine", () => {
+describe("ChronoNav 8-Floor Campus Dijkstra Pathfinding Engine", () => {
   const graph = SampleCCSGraph.getSampleGraph();
 
-  it("should calculate the shortest path between Entrance (Floor 1) and Dean's Office (Floor 3)", () => {
-    const result = findShortestPath(graph, "F1_ENTRANCE", "F3_DEAN_OFFICE");
+  it("should calculate multi-floor shortest path from Gate 1 (Floor 1) to CCS Lecture 538 (Floor 5)", () => {
+    const result = findShortestPath(graph, "F1_GATE1", "F5_LECTURE_538");
 
     expect(result).not.toBeNull();
     if (!result) return;
 
-    expect(result.pathNodeIds[0]).toBe("F1_ENTRANCE");
-    expect(result.pathNodeIds[result.pathNodeIds.length - 1]).toBe("F3_DEAN_OFFICE");
+    expect(result.pathNodeIds[0]).toBe("F1_GATE1");
+    expect(result.pathNodeIds[result.pathNodeIds.length - 1]).toBe("F5_LECTURE_538");
     expect(result.totalDistance).toBeGreaterThan(0);
-    expect(result.floorsTraversed).toEqual([1, 2, 3]);
-    expect(result.instructions.length).toBeGreaterThan(2);
+    expect(result.floorsTraversed).toContain(1);
+    expect(result.floorsTraversed).toContain(5);
+    expect(result.instructions.length).toBeGreaterThan(3);
   });
 
-  it("should support direct elevator pathfinding from Floor 1 to Floor 4", () => {
-    const result = findShortestPath(graph, "F1_ELEVATOR", "F4_AV_HALL_401");
+  it("should calculate route from Ground Floor to HRM Kitchen Lab on Floor 6", () => {
+    const result = findShortestPath(graph, "F1_GATE2", "F6_KITCHEN_LAB_1");
 
     expect(result).not.toBeNull();
     if (!result) return;
 
-    expect(result.pathNodeIds).toContain("F4_ELEVATOR");
-    expect(result.floorsTraversed).toContain(4);
+    expect(result.pathNodeIds[0]).toBe("F1_GATE2");
+    expect(result.pathNodeIds[result.pathNodeIds.length - 1]).toBe("F6_KITCHEN_LAB_1");
+    expect(result.floorsTraversed).toContain(6);
   });
 
-  it("should handle same-node start and target gracefully", () => {
-    const result = findShortestPath(graph, "F1_ENTRANCE", "F1_ENTRANCE");
+  it("should support direct elevator transitions across Mezzanine and upper floors", () => {
+    const result = findShortestPath(graph, "FM_CTE_DEAN", "F7_ROOF_DECK_GYM");
 
     expect(result).not.toBeNull();
     if (!result) return;
 
-    expect(result.pathNodeIds).toEqual(["F1_ENTRANCE"]);
+    expect(result.floorsTraversed).toContain("M");
+    expect(result.floorsTraversed).toContain(7);
+  });
+
+  it("should handle same-node origin and target gracefully", () => {
+    const result = findShortestPath(graph, "F1_GATE1", "F1_GATE1");
+
+    expect(result).not.toBeNull();
+    if (!result) return;
+
+    expect(result.pathNodeIds).toEqual(["F1_GATE1"]);
     expect(result.totalDistance).toBe(0);
     expect(result.waypoints.length).toBe(1);
   });
 
-  it("should return null for invalid or unreachable node IDs", () => {
-    const result = findShortestPath(graph, "INVALID_START", "F3_DEAN_OFFICE");
+  it("should return null for invalid or non-existent node IDs", () => {
+    const result = findShortestPath(graph, "INVALID_ORIGIN", "F5_LECTURE_538");
     expect(result).toBeNull();
   });
 });

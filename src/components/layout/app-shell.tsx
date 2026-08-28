@@ -70,7 +70,7 @@ const navigationConfig: NavigationItem[] = [
     label: "Campus Map",
     href: "/map",
     icon: MapPin,
-    badge: "5 Floors",
+    badge: "8 Floors",
     roles: ["student"],
   },
   {
@@ -103,7 +103,7 @@ const navigationConfig: NavigationItem[] = [
     label: "Campus Map",
     href: "/map",
     icon: MapPin,
-    badge: "5 Floors",
+    badge: "8 Floors",
     roles: ["faculty"],
   },
   {
@@ -142,7 +142,7 @@ const navigationConfig: NavigationItem[] = [
     label: "Campus Rooms",
     href: "/admin/rooms",
     icon: Map,
-    badge: "5 Floors",
+    badge: "8 Floors",
     roles: ["admin"],
   },
   {

@@ -8,6 +8,7 @@ import {
   findShortestPath,
   PathfindingResult,
   getGraphNodeForRoom,
+  FloorLevel,
 } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
@@ -21,15 +22,9 @@ import {
   RotateCcw,
   ZoomIn,
   ZoomOut,
-  ArrowRight,
   Compass,
   ArrowUpDown,
-  Search,
-  CheckCircle2,
-  AlertCircle,
   Footprints,
-  Layers,
-  ChevronRight,
   Sparkles,
 } from "lucide-react";
 
@@ -39,15 +34,15 @@ function InteractiveMapContent() {
   const searchParams = useSearchParams();
 
   // Origin & Destination states (Defaults to Gate 1 Entrance -> CCS 538 5th Floor)
-  const [startNodeId, setStartNodeId] = useState<string>("F1_ENTRANCE");
+  const [startNodeId, setStartNodeId] = useState<string>("F1_GATE1");
   const [targetNodeId, setTargetNodeId] = useState<string>("F5_LECTURE_538");
 
   // Search filters for select menus
   const [startSearch, setStartSearch] = useState<string>("");
   const [targetSearch, setTargetSearch] = useState<string>("");
 
-  // Map floor view & zoom state
-  const [currentFloor, setCurrentFloor] = useState<number>(5);
+  // Map floor view & zoom state (All 8 campus levels)
+  const [currentFloor, setCurrentFloor] = useState<FloorLevel>(5);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Settings: Voice Guidance toggle initialized from localStorage (defaults to true)
@@ -83,7 +78,7 @@ function InteractiveMapContent() {
     }
   };
 
-  // Synchronize search params if passed (e.g. /map?start=F1_ENTRANCE&target=F5_LECTURE_538)
+  // Synchronize search params if passed (e.g. /map?start=F1_GATE1&target=F5_LECTURE_538)
   useEffect(() => {
     if (!searchParams) return;
     const startParam = searchParams.get("start") || searchParams.get("origin");
@@ -189,7 +184,7 @@ function InteractiveMapContent() {
             <div>
               <h1 className="text-sm sm:text-base font-extrabold text-foreground leading-none">ChronoNav Map</h1>
               <span className="text-[10px] font-semibold text-muted-foreground">
-                UC Main Campus • CCS Building (Floors 1-5)
+                University of Cebu Main Campus • 8 Floors
               </span>
             </div>
           </Link>
@@ -257,7 +252,7 @@ function InteractiveMapContent() {
                 <option value="">-- Choose Starting Point --</option>
                 {filteredStartNodes.map((node) => (
                   <option key={node.id} value={node.id}>
-                    Floor {node.floor} — {node.name}
+                    {node.floor === "M" ? "Mezzanine" : `Floor ${node.floor}`} — {node.name}
                   </option>
                 ))}
               </select>
@@ -282,7 +277,7 @@ function InteractiveMapContent() {
                 <option value="">-- Choose Destination --</option>
                 {filteredTargetNodes.map((node) => (
                   <option key={node.id} value={node.id}>
-                    Floor {node.floor} — {node.name}
+                    {node.floor === "M" ? "Mezzanine" : `Floor ${node.floor}`} — {node.name}
                   </option>
                 ))}
               </select>
@@ -331,7 +326,7 @@ function InteractiveMapContent() {
                   <div className="p-3 rounded-2xl bg-muted/40 border border-border space-y-0.5">
                     <span className="text-[10px] font-black text-muted-foreground uppercase">Floors Traversed</span>
                     <p className="font-extrabold text-foreground text-sm">
-                      {pathResult.floorsTraversed.join("F → ")}F
+                      {pathResult.floorsTraversed.map(f => f === "M" ? "MF" : `${f}F`).join(" → ")}
                     </p>
                   </div>
                 </div>
@@ -365,7 +360,7 @@ function InteractiveMapContent() {
                 <div className="flex items-center gap-2 rounded-2xl bg-primary/10 border border-primary/30 p-3 text-[11px] text-muted-foreground">
                   <Sparkles className="size-4 text-primary shrink-0" />
                   <span>
-                    Path utilizes central concrete staircases and elevator banks for smooth transition between floors.
+                    Path utilizes central concrete staircases and high-capacity elevators for smooth transition between campus levels.
                   </span>
                 </div>
               </div>
@@ -373,7 +368,7 @@ function InteractiveMapContent() {
               <div className="py-12 text-center space-y-2">
                 <Compass className="size-10 text-muted-foreground mx-auto opacity-40" />
                 <p className="text-xs text-muted-foreground font-medium">
-                  Select an origin and destination to generate turn-by-turn indoor routing.
+                  Select an origin and destination to generate turn-by-turn indoor routing across campus.
                 </p>
               </div>
             )}
@@ -389,13 +384,13 @@ function InteractiveMapContent() {
                 CURRENT FLOOR:
               </span>
               <span className="text-xs font-black text-primary bg-primary/10 border border-primary/30 px-3 py-1 rounded-xl">
-                CCS Building • Floor {currentFloor}
+                UC Main Campus • {currentFloor === "M" ? "Mezzanine Floor" : `Floor ${currentFloor}`}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
+                onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 3.0))}
                 className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom in"
                 title="Zoom In"
@@ -403,7 +398,7 @@ function InteractiveMapContent() {
                 <ZoomIn className="size-4" />
               </button>
               <button
-                onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.75))}
+                onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.6))}
                 className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom out"
                 title="Zoom Out"
@@ -427,17 +422,19 @@ function InteractiveMapContent() {
               currentFloor={currentFloor}
               graph={graph}
               waypoints={pathResult?.waypoints || []}
+              startNodeId={startNodeId}
               targetNodeId={targetNodeId}
               onSelectNode={handleSelectNode}
               zoomLevel={zoomLevel}
             />
 
-            {/* Vertical Multi-Floor Selector Component */}
+            {/* Vertical Multi-Floor Selector Component (All 8 Floors) */}
             <div className="absolute top-4 right-4 z-20">
               <FloorSelector
-                floors={[1, 2, 3, 4, 5]}
+                floors={[7, 6, 5, 4, 3, 2, "M", 1]}
                 activeFloor={currentFloor}
                 onSelectFloor={(fl) => setCurrentFloor(fl)}
+                floorsInRoute={pathResult?.floorsTraversed || []}
               />
             </div>
           </div>

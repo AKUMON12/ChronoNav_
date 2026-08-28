@@ -8,7 +8,6 @@ import {
   Search,
   Building2,
   MapPin,
-  Layers,
   Sparkles,
   ArrowRight,
   ZoomIn,
@@ -22,7 +21,7 @@ import {
   X,
   Footprints,
 } from "lucide-react";
-import { SampleCCSGraph, Node } from "@/lib/navigation/pathfinding";
+import { SampleCCSGraph, Node, FloorLevel } from "@/lib/navigation/pathfinding";
 import { InteractiveSVGMap } from "@/components/map/interactive-svg-map";
 import { FloorSelector } from "@/components/map/floor-selector";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
@@ -30,14 +29,14 @@ import { BackButton } from "@/components/shared/back-button";
 
 /**
  * Public Campus Explorer for Unauthenticated Guests
- * Zero-login interactive campus map and facility directory for UC Main Campus.
+ * Zero-login interactive campus map and facility directory across all 8 floors of UC Main Campus.
  */
 export default function PublicExplorePage() {
   const graph = useMemo(() => SampleCCSGraph.getSampleGraph(), []);
   const allNodes = useMemo(() => Object.values(graph), [graph]);
 
   // Active Floor & Map Control States
-  const [currentFloor, setCurrentFloor] = useState<number>(1);
+  const [currentFloor, setCurrentFloor] = useState<FloorLevel>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Search & Category Filters
@@ -50,7 +49,7 @@ export default function PublicExplorePage() {
   // Filter rooms based on search and category
   const filteredNodes = useMemo(() => {
     return allNodes.filter((node) => {
-      // Exclude generic hallways, elevators, and stairs from room list directory
+      // Exclude generic hallways from room list directory
       if (node.type === "corridor") return false;
 
       const matchesFloor = node.floor === currentFloor;
@@ -96,6 +95,8 @@ export default function PublicExplorePage() {
     }
   };
 
+  const allFloorLevels: FloorLevel[] = [1, "M", 2, 3, 4, 5, 6, 7];
+
   return (
     <div className="flex min-h-screen w-full flex-col bg-background text-foreground transition-colors duration-200">
       {/* ── Top Header with Back Button (Left) & Theme Toggle (Right) ── */}
@@ -115,7 +116,7 @@ export default function PublicExplorePage() {
                 </span>
               </div>
               <p className="hidden sm:block text-[11px] font-semibold text-muted-foreground">
-                University of Cebu • Main Campus (CCS Building)
+                University of Cebu • Main Campus Map (8 Floors)
               </p>
             </div>
           </Link>
@@ -145,7 +146,7 @@ export default function PublicExplorePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search classrooms, labs, offices (e.g. 538, Mac Lab)..."
+              placeholder="Search classrooms, labs, offices (e.g. 538, Canteen)..."
               className="w-full rounded-2xl border border-border bg-card py-3 pl-10 pr-4 text-xs sm:text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-all shadow-sm"
             />
             {searchQuery && (
@@ -159,26 +160,26 @@ export default function PublicExplorePage() {
             )}
           </div>
 
-          {/* Quick Floor Switcher Tabs */}
+          {/* Quick Floor Switcher Tabs (8 Floors) */}
           <div className="space-y-1.5">
             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">
               QUICK FLOOR SWITCHER
             </span>
-            <div className="grid grid-cols-5 gap-1.5">
-              {[1, 2, 3, 4, 5].map((fl) => (
+            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
+              {allFloorLevels.map((fl) => (
                 <button
-                  key={fl}
+                  key={String(fl)}
                   onClick={() => {
                     setCurrentFloor(fl);
                     setSearchQuery("");
                   }}
-                  className={`py-2 rounded-xl text-xs font-black transition-all ${
+                  className={`py-1.5 rounded-xl text-xs font-black transition-all ${
                     currentFloor === fl && !searchQuery
                       ? "bg-primary text-white shadow-md shadow-primary/30 scale-[1.02]"
                       : "bg-card border border-border text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >
-                  {fl}F
+                  {fl === "M" ? "MF" : `${fl}F`}
                 </button>
               ))}
             </div>
@@ -188,8 +189,8 @@ export default function PublicExplorePage() {
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             {[
               { id: "all", label: "All Facilities" },
-              { id: "lab", label: "Computer Labs" },
-              { id: "classroom", label: "Lecture Halls" },
+              { id: "lab", label: "Labs" },
+              { id: "classroom", label: "Classrooms" },
               { id: "office", label: "Offices" },
               { id: "amenity", label: "Amenities" },
             ].map((cat) => (
@@ -211,7 +212,7 @@ export default function PublicExplorePage() {
           <div className="rounded-3xl border border-border bg-card p-4 flex-1 flex flex-col space-y-3 min-h-[350px] shadow-sm">
             <div className="flex items-center justify-between pb-2 border-b border-border">
               <span className="text-xs font-extrabold text-foreground uppercase tracking-wide">
-                {searchQuery ? "Search Results" : `Floor ${currentFloor} Directory`}
+                {searchQuery ? "Search Results" : `${currentFloor === "M" ? "Mezzanine" : `Floor ${currentFloor}`} Directory`}
               </span>
               <span className="text-[11px] font-black text-primary bg-primary/10 px-2 py-0.5 rounded-md">
                 {filteredNodes.length} Locations
@@ -247,7 +248,7 @@ export default function PublicExplorePage() {
                           )}
                         </div>
                         <span className="text-[10px] font-black bg-card border border-border px-2 py-0.5 rounded-lg text-primary shrink-0">
-                          {node.floor}F
+                          {node.floor === "M" ? "MF" : `${node.floor}F`}
                         </span>
                       </div>
                     </div>
@@ -274,13 +275,13 @@ export default function PublicExplorePage() {
                 ACTIVE VIEWPORT:
               </span>
               <span className="text-xs font-black text-primary bg-primary/10 border border-primary/30 px-3 py-1 rounded-xl">
-                CCS Building • Floor {currentFloor} (Floorplan)
+                UC Main Campus • {currentFloor === "M" ? "Mezzanine Floor" : `Floor ${currentFloor}`}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 2.5))}
+                onClick={() => setZoomLevel((z) => Math.min(z + 0.25, 3.0))}
                 className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom in"
                 title="Zoom In"
@@ -288,7 +289,7 @@ export default function PublicExplorePage() {
                 <ZoomIn className="size-4" />
               </button>
               <button
-                onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.75))}
+                onClick={() => setZoomLevel((z) => Math.max(z - 0.25, 0.6))}
                 className="p-2 rounded-xl border border-border bg-card hover:bg-accent text-foreground shadow-sm transition-colors"
                 aria-label="Zoom out"
                 title="Zoom Out"
@@ -317,10 +318,10 @@ export default function PublicExplorePage() {
               zoomLevel={zoomLevel}
             />
 
-            {/* Vertical Multi-Floor Selector Component */}
+            {/* Vertical Multi-Floor Selector Component (All 8 Floors) */}
             <div className="absolute top-4 right-4 z-20">
               <FloorSelector
-                floors={[1, 2, 3, 4, 5]}
+                floors={[7, 6, 5, 4, 3, 2, "M", 1]}
                 activeFloor={currentFloor}
                 onSelectFloor={(fl) => setCurrentFloor(fl)}
               />
@@ -341,11 +342,11 @@ export default function PublicExplorePage() {
                         {selectedNode.name}
                       </h3>
                       <span className="rounded-md bg-primary px-2 py-0.5 text-[10px] font-black text-white">
-                        Floor {selectedNode.floor}
+                        {selectedNode.floor === "M" ? "Mezzanine" : `Floor ${selectedNode.floor}`}
                       </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {selectedNode.description || "College of Computer Studies • University of Cebu Main Campus"}
+                      {selectedNode.description || "University of Cebu Main Campus"}
                     </p>
                   </div>
                 </div>
@@ -366,7 +367,7 @@ export default function PublicExplorePage() {
               <div className="flex items-center gap-2 rounded-xl bg-muted/40 border border-border p-3 text-[11px] text-muted-foreground">
                 <Sparkles className="size-4 text-primary shrink-0" />
                 <span>
-                  ChronoNav automatically syncs your enrolled study load and calculates shortest walking paths from gate entrance to classrooms.
+                  ChronoNav automatically syncs your enrolled study load and calculates shortest walking paths from campus gates to classrooms.
                 </span>
               </div>
             </div>
