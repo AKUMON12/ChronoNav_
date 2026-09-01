@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -9,28 +9,37 @@ import {
   XCircle,
   Clock,
   Search,
-  Filter,
   RefreshCw,
   AlertCircle,
-  Lock,
   User,
-  Shield,
   GraduationCap,
-  ExternalLink,
   Copy,
   Check,
   FileText,
   AlertTriangle,
+  Trash2,
+  CheckCheck,
 } from "lucide-react";
-import { PasswordChangeRequest, PasswordRequestStatus } from "@/types/database";
-import { getAllPasswordRequests, saveAllPasswordRequests } from "@/lib/auth/password-manager";
+import { PasswordChangeRequest } from "@/types/database";
+import {
+  getAllPasswordRequests,
+  saveAllPasswordRequests,
+  approvePasswordRequest,
+  rejectPasswordRequest,
+  closePasswordRequest,
+  deletePasswordRequest,
+} from "@/lib/auth/password-manager";
 import { TableSkeleton } from "@/components/skeletons/table-skeleton";
 
 /**
  * Enterprise Admin Password Management & Security Authorization Center
  *
  * Provides institutional review for student and faculty password requests.
- * STRICT SECURITY: Administrators approve or reject requests; passwords and hashes are never exposed.
+ * Features:
+ * - Persistent approval/rejection/close/delete states across page refreshes
+ * - Processed request views displaying only "Copy URL", "Close", and "Delete"
+ * - Permanent Delete / Remove capability with confirmation dialog
+ * - Zero password/hash exposure adhering to institutional security policy
  */
 export default function AdminSecurityPage() {
   const [mounted, setMounted] = useState(false);
@@ -47,45 +56,47 @@ export default function AdminSecurityPage() {
   const [rejectingRequest, setRejectingRequest] = useState<PasswordChangeRequest | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
-  const loadRequests = async () => {
-    try {
-      const localData = getAllPasswordRequests();
-      if (localData && localData.length > 0) {
-        setRequests(localData);
-        setLoading(false);
-      }
+  // Delete Modal State
+  const [deletingRequest, setDeletingRequest] = useState<PasswordChangeRequest | null>(null);
 
-      // Sync with server API
-      const res = await fetch("/api/admin/password-requests");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.requests && Array.isArray(data.requests)) {
-          const merged = [...data.requests];
-          for (const l of localData) {
-            if (!merged.some((m) => m.id === l.id)) {
-              merged.push(l);
-            }
-          }
-          setRequests(merged);
-          saveAllPasswordRequests(merged, false);
-        }
+  const loadRequests = useCallback(async () => {
+    try {
+      // 1. Authoritative local state from localStorage
+      const localData = getAllPasswordRequests();
+      setRequests(localData);
+      setLoading(false);
+
+      // 2. Sync local state to server runtime
+      try {
+        await fetch("/api/admin/password-requests", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requests: localData }),
+        });
+      } catch {
+        // Fallback gracefully if API is temporarily unavailable
       }
-    } catch {
+    } catch (err) {
+      console.error("Error loading password requests:", err);
       const data = getAllPasswordRequests();
       setRequests(data);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     setMounted(true);
     loadRequests();
 
-    const handleUpdate = () => loadRequests();
+    const handleUpdate = () => {
+      const updated = getAllPasswordRequests();
+      setRequests(updated);
+    };
+
     window.addEventListener("chrononav:password_requests_updated", handleUpdate);
     return () => window.removeEventListener("chrononav:password_requests_updated", handleUpdate);
-  }, []);
+  }, [loadRequests]);
 
   const metrics = useMemo(() => {
     return {
@@ -111,35 +122,45 @@ export default function AdminSecurityPage() {
     });
   }, [requests, statusFilter, searchQuery]);
 
+  // ── Handle Approve ──
   const handleApprove = async (id: string) => {
     setActionLoadingId(id);
     setActionMessage(null);
 
     try {
-      const res = await fetch(`/api/admin/password-requests/${id}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "approve" }),
-      });
-
-      const data = await res.json();
-      setActionLoadingId(null);
-
-      if (!res.ok) {
-        setActionMessage({ type: "error", text: data.error || "Failed to approve request." });
-      } else {
-        setActionMessage({
-          type: "success",
-          text: `Request approved. Single-use reset authorization issued.`,
-        });
-        loadRequests();
+      // 1. Update local storage immediately
+      const localRes = approvePasswordRequest(id, "System Administrator");
+      if (!localRes.success) {
+        setActionMessage({ type: "error", text: localRes.error || "Failed to approve request." });
+        setActionLoadingId(null);
+        return;
       }
+
+      // Update in-memory state and persist
+      const updated = getAllPasswordRequests();
+      setRequests(updated);
+
+      // 2. Notify server API in background
+      try {
+        await fetch(`/api/admin/password-requests/${id}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "approve" }),
+        });
+      } catch {}
+
+      setActionLoadingId(null);
+      setActionMessage({
+        type: "success",
+        text: `Request approved. Single-use reset authorization token issued.`,
+      });
     } catch {
       setActionLoadingId(null);
       setActionMessage({ type: "error", text: "Network error approving request." });
     }
   };
 
+  // ── Handle Reject Confirmation ──
   const handleRejectConfirm = async () => {
     if (!rejectingRequest) return;
     const id = rejectingRequest.id;
@@ -148,32 +169,117 @@ export default function AdminSecurityPage() {
     setActionMessage(null);
 
     try {
-      const res = await fetch(`/api/admin/password-requests/${id}/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "reject",
-          reason: rejectReason.trim() || "Administrative security discretion.",
-        }),
-      });
+      // 1. Update local storage immediately
+      const localRes = rejectPasswordRequest(
+        id,
+        "System Administrator",
+        rejectReason.trim() || "Administrative security discretion."
+      );
 
-      const data = await res.json();
-      setActionLoadingId(null);
+      if (!localRes.success) {
+        setActionMessage({ type: "error", text: localRes.error || "Failed to reject request." });
+        setActionLoadingId(null);
+        return;
+      }
+
+      const updated = getAllPasswordRequests();
+      setRequests(updated);
       setRejectingRequest(null);
       setRejectReason("");
 
-      if (!res.ok) {
-        setActionMessage({ type: "error", text: data.error || "Failed to reject request." });
-      } else {
-        setActionMessage({ type: "success", text: `Request ${id} rejected.` });
-        loadRequests();
-      }
+      // 2. Notify server API
+      try {
+        await fetch(`/api/admin/password-requests/${id}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "reject",
+            reason: rejectReason.trim() || "Administrative security discretion.",
+          }),
+        });
+      } catch {}
+
+      setActionLoadingId(null);
+      setActionMessage({ type: "success", text: `Request ${id} rejected.` });
     } catch {
       setActionLoadingId(null);
       setActionMessage({ type: "error", text: "Network error rejecting request." });
     }
   };
 
+  // ── Handle Close / Archive Processed Request ──
+  const handleClose = async (id: string) => {
+    setActionLoadingId(id);
+    setActionMessage(null);
+
+    try {
+      const localRes = closePasswordRequest(id, "System Administrator");
+      if (!localRes.success) {
+        setActionMessage({ type: "error", text: localRes.error || "Failed to close request." });
+        setActionLoadingId(null);
+        return;
+      }
+
+      const updated = getAllPasswordRequests();
+      setRequests(updated);
+
+      try {
+        await fetch(`/api/admin/password-requests/${id}/review`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "close" }),
+        });
+      } catch {}
+
+      setActionLoadingId(null);
+      setActionMessage({
+        type: "success",
+        text: `Request ${id} marked as completed & closed.`,
+      });
+    } catch {
+      setActionLoadingId(null);
+      setActionMessage({ type: "error", text: "Error closing request." });
+    }
+  };
+
+  // ── Handle Delete Confirmation ──
+  const handleDeleteConfirm = async () => {
+    if (!deletingRequest) return;
+    const id = deletingRequest.id;
+
+    setActionLoadingId(id);
+    setActionMessage(null);
+
+    try {
+      const localRes = deletePasswordRequest(id, "System Administrator");
+      if (!localRes.success) {
+        setActionMessage({ type: "error", text: localRes.error || "Failed to delete request." });
+        setActionLoadingId(null);
+        return;
+      }
+
+      const updated = getAllPasswordRequests();
+      setRequests(updated);
+      setDeletingRequest(null);
+
+      try {
+        await fetch(`/api/admin/password-requests/${id}`, {
+          method: "DELETE",
+        });
+      } catch {}
+
+      setActionLoadingId(null);
+      setActionMessage({
+        type: "success",
+        text: `Request ${id} permanently removed.`,
+      });
+    } catch {
+      setActionLoadingId(null);
+      setActionMessage({ type: "error", text: "Error deleting request." });
+    }
+  };
+
+  // ── Copy Reset Link ──
   const copyResetLink = (token: string, reqId: string) => {
     const url = `${window.location.origin}/reset-password?token=${token}`;
     navigator.clipboard.writeText(url);
@@ -332,172 +438,240 @@ export default function AdminSecurityPage() {
             </p>
           </div>
         ) : (
-          filteredRequests.map((req) => (
-            <div
-              key={req.id}
-              className={`rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-all space-y-3 ${
-                req.status === "PENDING"
-                  ? "border-amber-500/40 bg-amber-500/[0.02]"
-                  : "border-border"
-              }`}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
-                      req.role === "faculty"
-                        ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                        : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                    }`}
-                  >
-                    {req.role === "faculty" ? (
-                      <GraduationCap className="size-5" />
-                    ) : (
-                      <User className="size-5" />
-                    )}
-                  </div>
+          filteredRequests.map((req) => {
+            const isPending = req.status === "PENDING";
+            const isApproved = req.status === "APPROVED";
+            const isProcessed = req.status !== "PENDING";
 
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h4 className="text-sm font-black text-foreground">{req.user_name}</h4>
-                      <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                          req.role === "faculty"
-                            ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
-                            : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                        }`}
-                      >
-                        {req.role}
-                      </span>
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        {req.type === "change_password" ? "Change Password" : "Forgot Password"}
-                      </span>
+            return (
+              <div
+                key={req.id}
+                className={`rounded-2xl border bg-card p-4 sm:p-5 shadow-sm transition-all space-y-3 ${
+                  isPending
+                    ? "border-amber-500/40 bg-amber-500/[0.02]"
+                    : isApproved
+                    ? "border-emerald-500/30 bg-emerald-500/[0.01]"
+                    : "border-border"
+                }`}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div
+                      className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        req.role === "faculty"
+                          ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                      }`}
+                    >
+                      {req.role === "faculty" ? (
+                        <GraduationCap className="size-5" />
+                      ) : (
+                        <User className="size-5" />
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground font-mono">{req.account_identifier}</p>
+
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="text-sm font-black text-foreground">{req.user_name}</h4>
+                        <span
+                          className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                            req.role === "faculty"
+                              ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                              : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                          }`}
+                        >
+                          {req.role}
+                        </span>
+                        <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {req.type === "change_password" ? "Change Password" : "Forgot Password"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono">{req.account_identifier}</p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Status Badge */}
-                <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <span
-                    className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide uppercase ${
-                      req.status === "PENDING"
-                        ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                        : req.status === "APPROVED"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
-                        : req.status === "COMPLETED"
-                        ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
-                        : req.status === "EXPIRED"
-                        ? "bg-muted text-muted-foreground border border-border"
-                        : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
-                    }`}
-                  >
-                    {req.status === "PENDING" && <Clock className="size-3" />}
-                    {req.status === "APPROVED" && <CheckCircle2 className="size-3" />}
-                    {req.status === "COMPLETED" && <ShieldCheck className="size-3" />}
-                    {req.status === "REJECTED" && <XCircle className="size-3" />}
-                    <span>{req.status}</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Request Details & Reason */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-muted/20 p-3 rounded-xl border border-border/60">
-                <div>
-                  <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
-                    Requested Date
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {new Date(req.requested_at).toLocaleString()}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
-                    Reason / Remarks
-                  </span>
-                  <span className="text-foreground italic">
-                    {req.reason || "No explicit reason specified"}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
-                    Reviewed Status
-                  </span>
-                  <span className="text-foreground">
-                    {req.reviewed_by ? `By ${req.reviewed_by}` : "Awaiting review"}
-                  </span>
-                </div>
-              </div>
-
-              {/* Reset Link Display if Approved */}
-              {req.status === "APPROVED" && req.reset_token && (
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
-                  <div className="flex items-center gap-2 truncate">
-                    <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
-                    <span className="font-bold text-foreground">Active Reset Token Link:</span>
-                    <span className="text-muted-foreground font-mono truncate text-[11px]">
-                      /reset-password?token={req.reset_token.substring(0, 20)}...
+                  {/* Status Badge */}
+                  <div className="flex items-center gap-2 self-start sm:self-auto">
+                    <span
+                      className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black tracking-wide uppercase ${
+                        req.status === "PENDING"
+                          ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30"
+                          : req.status === "APPROVED"
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30"
+                          : req.status === "COMPLETED"
+                          ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30"
+                          : req.status === "EXPIRED"
+                          ? "bg-muted text-muted-foreground border border-border"
+                          : "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30"
+                      }`}
+                    >
+                      {req.status === "PENDING" && <Clock className="size-3" />}
+                      {req.status === "APPROVED" && <CheckCircle2 className="size-3" />}
+                      {req.status === "COMPLETED" && <ShieldCheck className="size-3" />}
+                      {req.status === "REJECTED" && <XCircle className="size-3" />}
+                      <span>{req.status}</span>
                     </span>
                   </div>
-                  <button
-                    onClick={() => copyResetLink(req.reset_token!, req.id)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-card border border-border hover:bg-accent text-xs font-bold text-foreground transition-all shrink-0"
-                  >
-                    {copiedTokenId === req.id ? (
-                      <>
-                        <Check className="size-3.5 text-emerald-500" />
-                        <span>Link Copied</span>
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="size-3.5" />
-                        <span>Copy Reset URL</span>
-                      </>
-                    )}
-                  </button>
                 </div>
-              )}
 
-              {/* Action Buttons for Pending Requests */}
-              {req.status === "PENDING" && (
-                <div className="flex items-center justify-end gap-2.5 pt-1">
-                  <button
-                    onClick={() => {
-                      setRejectingRequest(req);
-                      setRejectReason("");
-                    }}
-                    disabled={actionLoadingId === req.id}
-                    className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-destructive/30 bg-destructive/10 text-rose-600 dark:text-rose-400 hover:bg-destructive/20 text-xs font-black transition-all disabled:opacity-50"
-                  >
-                    <XCircle className="size-3.5" />
-                    <span>Reject</span>
-                  </button>
-
-                  <button
-                    onClick={() => handleApprove(req.id)}
-                    disabled={actionLoadingId === req.id}
-                    className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-black shadow-md shadow-primary/20 transition-all disabled:opacity-50"
-                  >
-                    {actionLoadingId === req.id ? (
-                      <>
-                        <RefreshCw className="size-3.5 animate-spin" />
-                        <span>Issuing Authorization...</span>
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle2 className="size-3.5" />
-                        <span>Approve Reset</span>
-                      </>
-                    )}
-                  </button>
+                {/* Request Details & Reason */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-muted/20 p-3 rounded-xl border border-border/60">
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
+                      Requested Date
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {new Date(req.requested_at).toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
+                      Reason / Remarks
+                    </span>
+                    <span className="text-foreground italic">
+                      {req.reason || "No explicit reason specified"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-extrabold text-muted-foreground uppercase block">
+                      Reviewed Status
+                    </span>
+                    <span className="text-foreground">
+                      {req.reviewed_by ? `By ${req.reviewed_by}` : "Awaiting review"}
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
-          ))
+
+                {/* ── Action Section: APPROVED (PROCESSED) REQUESTS ── */}
+                {isApproved && (
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs">
+                    <div className="flex items-center gap-2 truncate">
+                      <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                      <span className="font-bold text-foreground">Reset URL:</span>
+                      <span className="text-muted-foreground font-mono truncate text-[11px]">
+                        {req.reset_token
+                          ? `/reset-password?token=${req.reset_token.substring(0, 20)}...`
+                          : "Authorization Issued"}
+                      </span>
+                    </div>
+
+                    {/* Processed Actions: Copy URL, Close, Delete */}
+                    <div className="flex items-center gap-2 justify-end shrink-0">
+                      {req.reset_token && (
+                        <button
+                          onClick={() => copyResetLink(req.reset_token!, req.id)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-card border border-border hover:bg-accent text-xs font-bold text-foreground transition-all shadow-sm"
+                          title="Copy secure reset URL to clipboard"
+                        >
+                          {copiedTokenId === req.id ? (
+                            <>
+                              <Check className="size-3.5 text-emerald-500" />
+                              <span>Link Copied</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="size-3.5 text-primary" />
+                              <span>Copy URL</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+
+                      {/* Close / Archive Button */}
+                      <button
+                        onClick={() => handleClose(req.id)}
+                        disabled={actionLoadingId === req.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border bg-card hover:bg-accent text-xs font-bold text-foreground transition-all shadow-sm disabled:opacity-50"
+                        title="Mark request completed and close"
+                      >
+                        <CheckCheck className="size-3.5 text-emerald-500" />
+                        <span>Close</span>
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => setDeletingRequest(req)}
+                        disabled={actionLoadingId === req.id}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-destructive/30 bg-destructive/10 text-rose-600 dark:text-rose-400 hover:bg-destructive/20 text-xs font-bold transition-all disabled:opacity-50"
+                        title="Delete request from queue"
+                      >
+                        <Trash2 className="size-3.5" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Action Section: PENDING REQUESTS ── */}
+                {isPending && (
+                  <div className="flex items-center justify-between gap-2.5 pt-1">
+                    {/* Delete Option for Pending */}
+                    <button
+                      onClick={() => setDeletingRequest(req)}
+                      disabled={actionLoadingId === req.id}
+                      className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-destructive/20 text-muted-foreground hover:text-rose-500 hover:bg-destructive/10 text-xs font-bold transition-all disabled:opacity-50"
+                      title="Remove/Delete request"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete</span>
+                    </button>
+
+                    {/* Reject & Approve Buttons */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          setRejectingRequest(req);
+                          setRejectReason("");
+                        }}
+                        disabled={actionLoadingId === req.id}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-destructive/30 bg-destructive/10 text-rose-600 dark:text-rose-400 hover:bg-destructive/20 text-xs font-black transition-all disabled:opacity-50"
+                      >
+                        <XCircle className="size-3.5" />
+                        <span>Reject</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleApprove(req.id)}
+                        disabled={actionLoadingId === req.id}
+                        className="flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 text-xs font-black shadow-md shadow-primary/20 transition-all disabled:opacity-50"
+                      >
+                        {actionLoadingId === req.id ? (
+                          <>
+                            <RefreshCw className="size-3.5 animate-spin" />
+                            <span>Issuing Authorization...</span>
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="size-3.5" />
+                            <span>Approve Reset</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ── Action Section: REJECTED / COMPLETED / EXPIRED (PROCESSED) REQUESTS ── */}
+                {!isPending && !isApproved && (
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <button
+                      onClick={() => setDeletingRequest(req)}
+                      disabled={actionLoadingId === req.id}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl border border-border text-muted-foreground hover:text-rose-500 hover:bg-destructive/10 text-xs font-bold transition-all disabled:opacity-50"
+                      title="Permanently remove from records"
+                    >
+                      <Trash2 className="size-3.5" />
+                      <span>Delete Record</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
       </div>
 
-      {/* Reject Reason Modal Dialog */}
+      {/* ── Reject Reason Modal Dialog ── */}
       {rejectingRequest && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
           <div className="w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-4">
@@ -536,6 +710,39 @@ export default function AdminSecurityPage() {
                 className="px-5 py-2.5 rounded-xl bg-destructive text-white hover:bg-destructive/90 text-xs font-black shadow-md shadow-destructive/20"
               >
                 Confirm Rejection
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Delete Confirmation Modal Dialog ── */}
+      {deletingRequest && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="w-full max-w-md bg-card border border-border rounded-3xl p-6 shadow-2xl space-y-4">
+            <div className="flex items-center gap-3 text-rose-500">
+              <Trash2 className="size-6" />
+              <h3 className="text-base font-black text-foreground">Delete Password Request</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Are you sure you want to permanently delete the request for{" "}
+              <strong className="text-foreground">{deletingRequest.user_name}</strong> (
+              {deletingRequest.account_identifier})? This action cannot be undone.
+            </p>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeletingRequest(null)}
+                className="px-4 py-2.5 rounded-xl border border-border bg-muted/40 hover:bg-muted text-xs font-bold text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteConfirm}
+                className="px-5 py-2.5 rounded-xl bg-destructive text-white hover:bg-destructive/90 text-xs font-black shadow-md shadow-destructive/20"
+              >
+                Delete Request
               </button>
             </div>
           </div>

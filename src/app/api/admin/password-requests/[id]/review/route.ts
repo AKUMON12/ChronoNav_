@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { approvePasswordRequest, rejectPasswordRequest } from "@/lib/auth/password-manager";
+import { approvePasswordRequest, rejectPasswordRequest, closePasswordRequest } from "@/lib/auth/password-manager";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
@@ -75,9 +75,20 @@ export async function POST(
         message: `Password request ${id} rejected.`,
         request: result.request,
       });
+    } else if (action === "close") {
+      const result = closePasswordRequest(id, adminIdentifier);
+      if (!result.success) {
+        return NextResponse.json({ error: result.error }, { status: 400 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: `Password request ${id} closed/archived.`,
+        request: result.request,
+      });
     } else {
       return NextResponse.json(
-        { error: "Invalid action. Supported actions are 'approve' or 'reject'." },
+        { error: "Invalid action. Supported actions are 'approve', 'reject', or 'close'." },
         { status: 400 }
       );
     }

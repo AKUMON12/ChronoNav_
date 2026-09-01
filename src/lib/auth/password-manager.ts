@@ -468,6 +468,65 @@ export function rejectPasswordRequest(
 }
 
 /**
+ * Administrator: Close / Archive a Processed Password Request
+ */
+export function closePasswordRequest(
+  requestId: string,
+  adminIdentifier: string = "Admin Superuser"
+): { success: boolean; request?: PasswordChangeRequest; error?: string } {
+  const requests = getAllPasswordRequests();
+  const target = requests.find((r) => r.id === requestId);
+
+  if (!target) {
+    return { success: false, error: "Password request not found." };
+  }
+
+  target.status = "COMPLETED";
+  target.completed_at = new Date().toISOString();
+  target.reviewed_by = target.reviewed_by || adminIdentifier;
+
+  saveAllPasswordRequests(requests);
+
+  recordAuditLog({
+    category: "Auth",
+    event: "Password Request Closed",
+    user: target.account_identifier,
+    status: "Success",
+    details: `Admin (${adminIdentifier}) closed/completed password request ${target.id}.`,
+  });
+
+  return { success: true, request: target };
+}
+
+/**
+ * Administrator: Permanently Delete a Password Request from the Queue
+ */
+export function deletePasswordRequest(
+  requestId: string,
+  adminIdentifier: string = "Admin Superuser"
+): { success: boolean; error?: string } {
+  const requests = getAllPasswordRequests();
+  const index = requests.findIndex((r) => r.id === requestId);
+
+  if (index === -1) {
+    return { success: false, error: "Password request not found." };
+  }
+
+  const deleted = requests.splice(index, 1)[0];
+  saveAllPasswordRequests(requests);
+
+  recordAuditLog({
+    category: "Auth",
+    event: "Password Request Deleted",
+    user: deleted.account_identifier,
+    status: "Warning",
+    details: `Admin (${adminIdentifier}) deleted password request ${requestId} (${deleted.account_identifier}).`,
+  });
+
+  return { success: true };
+}
+
+/**
  * Validates a single-use reset token prior to rendering the password creation form
  */
 export function verifyResetToken(token: string): {

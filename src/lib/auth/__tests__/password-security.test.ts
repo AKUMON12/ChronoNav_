@@ -6,6 +6,8 @@ import {
   getAllPasswordRequests,
   approvePasswordRequest,
   rejectPasswordRequest,
+  closePasswordRequest,
+  deletePasswordRequest,
   verifyResetToken,
   completePasswordReset,
   resetPasswordRequestsStore,
@@ -152,6 +154,29 @@ describe("Enterprise Password Management & Security Test Suite", () => {
       expect(rejection.success).toBe(true);
       expect(rejection.request?.status).toBe("REJECTED");
       expect(rejection.request?.reason).toContain("Suspicious unverified device IP");
+    });
+
+    it("allows admin to close/archive an approved or processed request", () => {
+      createForgotPasswordRequest("22682702@uc.edu.ph");
+      const requests = getAllPasswordRequests();
+      const target = requests.find((r) => r.account_identifier === "22682702@uc.edu.ph")!;
+      approvePasswordRequest(target.id, "Admin Superuser");
+
+      const closeResult = closePasswordRequest(target.id, "Admin Superuser");
+      expect(closeResult.success).toBe(true);
+      expect(closeResult.request?.status).toBe("COMPLETED");
+    });
+
+    it("allows admin to permanently delete a request from queue", () => {
+      createForgotPasswordRequest("22682702@uc.edu.ph");
+      const requests = getAllPasswordRequests();
+      const target = requests.find((r) => r.account_identifier === "22682702@uc.edu.ph")!;
+
+      const deleteResult = deletePasswordRequest(target.id, "Admin Superuser");
+      expect(deleteResult.success).toBe(true);
+
+      const afterDelete = getAllPasswordRequests();
+      expect(afterDelete.some((r) => r.id === target.id)).toBe(false);
     });
   });
 

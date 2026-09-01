@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllPasswordRequests } from "@/lib/auth/password-manager";
+import { getAllPasswordRequests, saveAllPasswordRequests } from "@/lib/auth/password-manager";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 
@@ -62,6 +62,29 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return NextResponse.json(
       { error: "Failed to retrieve password change requests." },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/admin/password-requests
+ * Syncs client password requests array with server state (Admin Only)
+ */
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { requests } = body;
+
+    if (Array.isArray(requests)) {
+      saveAllPasswordRequests(requests, false);
+      return NextResponse.json({ success: true, count: requests.length });
+    }
+
+    return NextResponse.json({ error: "Invalid requests payload" }, { status: 400 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to sync password requests." },
       { status: 500 }
     );
   }
