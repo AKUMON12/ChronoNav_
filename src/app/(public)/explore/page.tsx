@@ -40,6 +40,12 @@ export default function PublicExplorePage() {
   // Active Floor & Map Control States
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>(1);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [recenterTrigger, setRecenterTrigger] = useState<number>(0);
+
+  const handleResetMap = () => {
+    setZoomLevel(1);
+    setRecenterTrigger((c) => c + 1);
+  };
 
   React.useEffect(() => {
     setMounted(true);
@@ -307,9 +313,9 @@ export default function PublicExplorePage() {
                 <ZoomOut className="size-4" />
               </button>
               <button
-                onClick={() => setZoomLevel(1)}
+                onClick={handleResetMap}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card hover:bg-accent text-xs font-bold text-foreground shadow-sm transition-colors"
-                aria-label="Reset zoom"
+                aria-label="Reset zoom and center"
               >
                 <RotateCcw className="size-3.5 text-primary" />
                 <span>Reset</span>
@@ -326,6 +332,7 @@ export default function PublicExplorePage() {
               targetNodeId={selectedRoomId || undefined}
               onSelectNode={handleSelectNode}
               zoomLevel={zoomLevel}
+              recenterTrigger={recenterTrigger}
             />
 
             {/* Vertical Multi-Floor Selector Component (All 8 Floors) */}

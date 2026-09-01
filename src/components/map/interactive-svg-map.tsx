@@ -13,6 +13,7 @@ interface InteractiveSVGMapProps {
   onSelectNode?: (nodeId: string) => void;
   zoomLevel?: number;
   interactive?: boolean;
+  recenterTrigger?: number;
 }
 
 /**
@@ -21,6 +22,8 @@ interface InteractiveSVGMapProps {
  * - Smooth Pointer Drag / Pan with bounds checking
  * - Mouse Wheel Zoom centered on pointer
  * - Touch single-finger pan & two-finger pinch-to-zoom (scoped to canvas)
+ * - Automatic re-centering and pan reset via recenterTrigger
+ * - Stable, jitter-free node waypoint hover states (zero SVG coordinate jumps)
  * - Calibrated SVG architectural blueprint overlay (viewBox 0 0 1191 842)
  * - Animated Dijkstra route polyline, node beacon aura, and crisp light/dark mode styling.
  */
@@ -33,6 +36,7 @@ export function InteractiveSVGMap({
   onSelectNode,
   zoomLevel = 1,
   interactive = true,
+  recenterTrigger,
 }: InteractiveSVGMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -57,10 +61,17 @@ export function InteractiveSVGMap({
     lastPanRef.current = pan;
   }, [pan]);
 
-  // Center pan when floor changes
+  // Center pan when floor changes or when explicit recenter is triggered
   useEffect(() => {
     setPan({ x: 0, y: 0 });
   }, [currentFloor]);
+
+  useEffect(() => {
+    if (recenterTrigger !== undefined) {
+      setPan({ x: 0, y: 0 });
+      setInternalZoom(1);
+    }
+  }, [recenterTrigger]);
 
   // Active Floor Configuration
   const activeFloorConfig = CAMPUS_FLOORS_CONFIG[currentFloor] || CAMPUS_FLOORS_CONFIG[1];
@@ -261,7 +272,7 @@ export function InteractiveSVGMap({
             width="1191"
             height="842"
             preserveAspectRatio="xMidYMid meet"
-            className="opacity-95 dark:opacity-85 filter contrast-125 dark:contrast-100"
+            className="opacity-95 dark:opacity-85 filter contrast-125 dark:contrast-100 pointer-events-none"
           />
 
           {/* ════════ LAYER 2: Animated Dijkstra Walking Route Polyline ════════ */}
@@ -339,12 +350,12 @@ export function InteractiveSVGMap({
                     e.stopPropagation();
                     if (onSelectNode) onSelectNode(node.id);
                   }}
-                  className="cursor-pointer transition-transform hover:scale-125 focus:outline-none"
+                  className="cursor-pointer group/node focus:outline-none select-none"
                   role="button"
                   tabIndex={0}
                   aria-label={`Select ${node.name}`}
                 >
-                  {/* Outer Pulsing Beacon Aura for Active Route / Selection */}
+                  {/* Outer Pulsing Beacon Aura for Active Route / Selection (pointer-events-none to prevent hover flicker) */}
                   {(isStart || isTarget || isWay) && (
                     <circle
                       cx={node.x}
@@ -353,11 +364,11 @@ export function InteractiveSVGMap({
                       fill="none"
                       stroke={ringColor}
                       strokeWidth="2.5"
-                      className="opacity-75 animate-ping origin-center"
+                      className="opacity-75 animate-ping origin-center pointer-events-none"
                     />
                   )}
 
-                  {/* Solid Central Node Circle with Drop Shadow */}
+                  {/* Central Node Circle with Hover Highlight */}
                   <circle
                     cx={node.x}
                     cy={node.y}
@@ -365,10 +376,10 @@ export function InteractiveSVGMap({
                     fill={nodeFill}
                     stroke="#FFFFFF"
                     strokeWidth="2.5"
-                    className="shadow-xl"
+                    className="transition-all duration-150 group-hover/node:stroke-primary group-hover/node:stroke-[3.5] drop-shadow-md"
                   />
 
-                  {/* Node Label Pill Background & Text */}
+                  {/* Node Label Pill Background & Text (pointer-events-none for rock-solid hover) */}
                   <g className="pointer-events-none select-none">
                     <rect
                       x={node.x - Math.max(32, node.name.length * 3.6)}
@@ -380,7 +391,7 @@ export function InteractiveSVGMap({
                       fillOpacity="0.95"
                       stroke="#CBD5E1"
                       strokeWidth="1"
-                      className="dark:fill-[#0B1015] dark:fill-opacity-90 dark:stroke-[#507495] shadow-sm"
+                      className="dark:fill-[#0B1015] dark:fill-opacity-90 dark:stroke-[#507495] shadow-sm group-hover/node:stroke-primary transition-colors"
                     />
                     <text
                       x={node.x}

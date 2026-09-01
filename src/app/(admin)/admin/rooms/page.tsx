@@ -295,7 +295,7 @@ export default function BuildingRoomManagerPage() {
                   return (
                     <g
                       key={room.id}
-                      className="cursor-pointer transition-transform hover:scale-110"
+                      className="cursor-pointer group/node focus:outline-none select-none"
                       onClick={() => setEditingRoom(room)}
                     >
                       <circle
@@ -305,7 +305,9 @@ export default function BuildingRoomManagerPage() {
                         fill={isSelected ? "#1D7DD7" : "currentColor"}
                         stroke="#FFFFFF"
                         strokeWidth="2"
-                        className={isSelected ? "" : "text-muted-foreground"}
+                        className={`transition-all duration-150 group-hover/node:stroke-primary group-hover/node:stroke-[3] drop-shadow-md ${
+                          isSelected ? "" : "text-muted-foreground"
+                        }`}
                       />
                       <text
                         x={room.x}
@@ -314,7 +316,7 @@ export default function BuildingRoomManagerPage() {
                         fontSize="10"
                         fontWeight="bold"
                         fill="currentColor"
-                        className="text-foreground"
+                        className="text-foreground pointer-events-none select-none"
                       >
                         {room.code}
                       </text>

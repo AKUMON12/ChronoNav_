@@ -45,6 +45,7 @@ function InteractiveMapContent() {
   // Map floor view & zoom state (All 8 campus levels)
   const [currentFloor, setCurrentFloor] = useState<FloorLevel>(5);
   const [zoomLevel, setZoomLevel] = useState<number>(1);
+  const [recenterTrigger, setRecenterTrigger] = useState<number>(0);
 
   // Settings: Voice Guidance toggle initialized from localStorage (defaults to true)
   const [voiceGuidance, setVoiceGuidance] = useState<boolean>(() => {
@@ -142,6 +143,7 @@ function InteractiveMapContent() {
 
   const handleRecenter = () => {
     setZoomLevel(1);
+    setRecenterTrigger((c) => c + 1);
     if (targetNodeId && graph[targetNodeId]) {
       setCurrentFloor(graph[targetNodeId].floor);
     } else if (startNodeId && graph[startNodeId]) {
@@ -427,6 +429,7 @@ function InteractiveMapContent() {
               targetNodeId={targetNodeId}
               onSelectNode={handleSelectNode}
               zoomLevel={zoomLevel}
+              recenterTrigger={recenterTrigger}
             />
 
             {/* Vertical Multi-Floor Selector Component (All 8 Floors) */}
