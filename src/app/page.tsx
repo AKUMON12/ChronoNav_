@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -8,20 +8,18 @@ import {
   CalendarDays,
   ScanLine,
   Bell,
-  Shield,
   ArrowRight,
   Menu,
   X,
   Sparkles,
   Layers,
-  GraduationCap,
   Building2,
-  CheckCircle2,
   Smartphone,
-  Flame,
+  HelpCircle,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Logo } from "@/components/shared/logo";
+import { LandingWelcomeModal } from "@/components/shared/landing-welcome-modal";
 
 const CAMPUS_DEPARTMENTS = [
   "College of Computer Studies",
@@ -38,16 +36,45 @@ const CAMPUS_DEPARTMENTS = [
 
 /**
  * ChronoNav Public Landing Page
- * Features subtle GPU-accelerated entrance animations, infinite department marquee,
- * interactive feature cards, and instant route to Explore/Register.
+ *
+ * Features:
+ * - GPU-accelerated staggered entrance animations for hero, metrics, marquee, features, and steps
+ * - Interactive Welcome & Quick Navigator Pop-Up Modal (auto-opens for new visitors, dismissible, reopenable)
+ * - Infinite department marquee with hover-pause
+ * - Responsive layout tested for Desktop, Tablet, and Mobile devices
+ * - Zero-login explore and study load registration entrypoints
  */
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
+
+  // Check localStorage on client mount to automatically show the welcome pop-up
+  // for first-time visitors who haven't selected "Don't show again"
+  useEffect(() => {
+    try {
+      const dismissed = localStorage.getItem("chrononav_welcome_dismissed");
+      if (!dismissed) {
+        // Small delay to ensure smooth initial page render before pop-up entrance
+        const timer = setTimeout(() => {
+          setWelcomeModalOpen(true);
+        }, 500);
+        return () => clearTimeout(timer);
+      }
+    } catch {
+      // In restricted storage environments, fallback to not auto-opening
+    }
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white">
+      {/* ── Interactive Welcome & Quick Navigator Pop-Up Modal ── */}
+      <LandingWelcomeModal
+        isOpen={welcomeModalOpen}
+        onClose={() => setWelcomeModalOpen(false)}
+      />
+
       {/* ── Sticky Navigation Bar ── */}
-      <header className="sticky top-0 z-50 border-b border-border bg-card/90 backdrop-blur-md transition-colors duration-200">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/90 backdrop-blur-md transition-colors duration-200">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -72,7 +99,18 @@ export default function LandingPage() {
 
           {/* Desktop CTA + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Quick Tour trigger button */}
+            <button
+              onClick={() => setWelcomeModalOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-muted-foreground hover:text-primary hover:border-primary/40 transition-all shadow-sm"
+              title="Open Quick Tour & Features Guide"
+            >
+              <HelpCircle className="size-3.5 text-primary" />
+              <span>Quick Tour</span>
+            </button>
+
             <ThemeToggle />
+
             <Link
               href="/login"
               className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-black text-foreground hover:bg-accent hover:text-primary transition-all duration-200 shadow-sm"
@@ -89,6 +127,14 @@ export default function LandingPage() {
 
           {/* Mobile Top Action Buttons */}
           <div className="flex items-center gap-2 md:hidden">
+            <button
+              onClick={() => setWelcomeModalOpen(true)}
+              className="p-2 rounded-xl text-primary hover:bg-accent transition-colors"
+              aria-label="Open Welcome Guide"
+              title="Guide"
+            >
+              <Sparkles className="size-4" />
+            </button>
             <ThemeToggle compact={true} />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -132,6 +178,17 @@ export default function LandingPage() {
               Privacy & Security
             </Link>
 
+            <button
+              onClick={() => {
+                setMobileMenuOpen(false);
+                setWelcomeModalOpen(true);
+              }}
+              className="w-full text-left text-sm font-semibold text-primary py-1 flex items-center gap-2"
+            >
+              <Sparkles className="size-4" />
+              <span>Campus Quick Tour Guide</span>
+            </button>
+
             <div className="flex gap-2 pt-2 border-t border-border">
               <Link
                 href="/login"
@@ -155,28 +212,36 @@ export default function LandingPage() {
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[850px] h-[350px] bg-gradient-to-tr from-primary/20 to-sky-400/15 dark:from-primary/10 dark:to-cyan-400/10 blur-[120px] rounded-full pointer-events-none animate-glow" />
 
         {/* ── Hero Section ── */}
-        <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-16 sm:pt-24 lg:pt-28 pb-12 text-center animate-fade-in-up">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black text-primary mb-6 shadow-sm animate-float">
-            <Compass className="size-3.5 text-primary" />
-            <span>University of Cebu Main Campus • 8 Floors</span>
-            <Sparkles className="size-3 text-primary animate-pulse" />
+        <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-16 sm:pt-24 lg:pt-28 pb-12 text-center">
+          {/* Badge with Entrance Pop & Interactive Guide Trigger */}
+          <div className="animate-fade-in-up">
+            <button
+              onClick={() => setWelcomeModalOpen(true)}
+              className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black text-primary mb-6 shadow-sm hover:bg-primary/20 hover:border-primary/50 hover:scale-105 transition-all cursor-pointer animate-float"
+              title="Click to view Quick Guide"
+            >
+              <Compass className="size-3.5 text-primary group-hover:rotate-45 transition-transform duration-300" />
+              <span>University of Cebu Main Campus • 8 Floors</span>
+              <Sparkles className="size-3 text-primary animate-pulse" />
+            </button>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1]">
+          {/* Hero Main Heading with Staggered Entrance */}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1] animate-fade-in-up delay-100">
             Navigate Your Campus.{" "}
-            <span className="bg-gradient-to-r from-primary to-sky-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-sky-500 to-sky-400 bg-clip-text text-transparent">
               Never Miss a Class.
             </span>
           </h1>
 
-          <p className="mt-6 text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium">
+          {/* Subtitle Description */}
+          <p className="mt-6 text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium animate-fade-in-up delay-200">
             ChronoNav is an indoor navigation and schedule management web system that guides you through every
             corridor, staircase, and elevator across all 8 campus floors with automatic study-load routing.
           </p>
 
           {/* Hero CTA buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
             <Link
               href="/register"
               className="group inline-flex items-center gap-2.5 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black text-white hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-primary/45 hover:scale-[1.02] active:scale-[0.98]"
@@ -193,8 +258,8 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Key Metrics Strip */}
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3.5 max-w-4xl mx-auto">
+          {/* Key Metrics Strip with Entrance Stagger & Pop Hover */}
+          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3.5 max-w-4xl mx-auto animate-fade-in-up delay-400">
             {[
               { label: "Campus Floors", val: "8 Levels", icon: Layers },
               { label: "Navigable Rooms", val: "60+ Rooms", icon: Building2 },
@@ -205,7 +270,7 @@ export default function LandingPage() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-1 text-center shadow-sm hover:border-primary/40 transition-colors"
+                  className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-1 text-center shadow-sm hover:border-primary/40 hover:-translate-y-1 hover:shadow-md transition-all duration-200"
                 >
                   <Icon className="size-5 text-primary mx-auto mb-1" />
                   <p className="text-base font-black text-foreground">{stat.val}</p>
@@ -217,7 +282,7 @@ export default function LandingPage() {
         </section>
 
         {/* ── Infinite Horizontal Department Marquee ── */}
-        <section id="departments" className="relative z-10 border-y border-border bg-card/60 backdrop-blur py-4 overflow-hidden">
+        <section id="departments" className="relative z-10 border-y border-border bg-card/60 backdrop-blur py-4 overflow-hidden animate-fade-in-up delay-500">
           <div className="animate-marquee gap-8 items-center select-none">
             {[...CAMPUS_DEPARTMENTS, ...CAMPUS_DEPARTMENTS].map((dept, i) => (
               <div key={i} className="flex items-center gap-3 shrink-0 px-4">
@@ -313,6 +378,12 @@ export default function LandingPage() {
               <Link href="/privacy" className="hover:text-foreground transition-colors">
                 Privacy Policy
               </Link>
+              <button
+                onClick={() => setWelcomeModalOpen(true)}
+                className="hover:text-primary transition-colors font-bold"
+              >
+                Quick Guide
+              </button>
               <Link href="/login" className="hover:text-foreground transition-colors font-bold text-primary">
                 Portal Sign In
               </Link>
@@ -354,7 +425,7 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className="rounded-3xl border border-border bg-card p-6 space-y-3 shadow-sm hover:border-primary/40 transition-colors">
+    <div className="rounded-3xl border border-border bg-card p-6 space-y-3 shadow-sm hover:border-primary/40 hover:-translate-y-1 transition-all duration-200">
       <div className="flex size-9 items-center justify-center rounded-xl bg-primary text-white font-black text-sm shadow-md shadow-primary/30">
         {step}
       </div>
