@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -20,6 +20,7 @@ import {
 import { ThemeToggle } from "@/components/shared/theme-toggle";
 import { Logo } from "@/components/shared/logo";
 import { LandingWelcomeModal } from "@/components/shared/landing-welcome-modal";
+import { HeroCampus3DVisualizer } from "@/components/shared/hero-campus-3d-visualizer";
 
 const CAMPUS_DEPARTMENTS = [
   "College of Computer Studies",
@@ -37,37 +38,19 @@ const CAMPUS_DEPARTMENTS = [
 /**
  * ChronoNav Public Landing Page
  *
- * Features:
- * - GPU-accelerated staggered entrance animations for hero, metrics, marquee, features, and steps
- * - Interactive Welcome & Quick Navigator Pop-Up Modal (auto-opens for new visitors, dismissible, reopenable)
+ * Layout:
+ * - 2-Column Responsive Hero: Context & CTA on Left, 3D Isometric Campus Navigation Visualizer on Right
+ * - Icon-Only Quick Tour trigger in Hero CTA group (modal opens only upon user click)
  * - Infinite department marquee with hover-pause
- * - Responsive layout tested for Desktop, Tablet, and Mobile devices
- * - Zero-login explore and study load registration entrypoints
+ * - Responsive layout tested for Desktop, Tablet, and Mobile screens
  */
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [welcomeModalOpen, setWelcomeModalOpen] = useState(false);
 
-  // Check localStorage on client mount to automatically show the welcome pop-up
-  // for first-time visitors who haven't selected "Don't show again"
-  useEffect(() => {
-    try {
-      const dismissed = localStorage.getItem("chrononav_welcome_dismissed");
-      if (!dismissed) {
-        // Small delay to ensure smooth initial page render before pop-up entrance
-        const timer = setTimeout(() => {
-          setWelcomeModalOpen(true);
-        }, 500);
-        return () => clearTimeout(timer);
-      }
-    } catch {
-      // In restricted storage environments, fallback to not auto-opening
-    }
-  }, []);
-
   return (
     <div className="min-h-screen flex flex-col bg-background text-foreground transition-colors duration-200 overflow-x-hidden selection:bg-primary selection:text-white">
-      {/* ── Interactive Welcome & Quick Navigator Pop-Up Modal ── */}
+      {/* ── Interactive Welcome & Quick Navigator Pop-Up Modal (Manual Trigger Only) ── */}
       <LandingWelcomeModal
         isOpen={welcomeModalOpen}
         onClose={() => setWelcomeModalOpen(false)}
@@ -97,18 +80,8 @@ export default function LandingPage() {
             </Link>
           </nav>
 
-          {/* Desktop CTA + Theme Toggle */}
+          {/* Desktop Auth CTA + Theme Toggle */}
           <div className="hidden md:flex items-center gap-3">
-            {/* Quick Tour trigger button */}
-            <button
-              onClick={() => setWelcomeModalOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background px-3 py-2 text-xs font-bold text-muted-foreground hover:text-primary hover:border-primary/40 transition-all shadow-sm"
-              title="Open Quick Tour & Features Guide"
-            >
-              <HelpCircle className="size-3.5 text-primary" />
-              <span>Quick Tour</span>
-            </button>
-
             <ThemeToggle />
 
             <Link
@@ -127,14 +100,6 @@ export default function LandingPage() {
 
           {/* Mobile Top Action Buttons */}
           <div className="flex items-center gap-2 md:hidden">
-            <button
-              onClick={() => setWelcomeModalOpen(true)}
-              className="p-2 rounded-xl text-primary hover:bg-accent transition-colors"
-              aria-label="Open Welcome Guide"
-              title="Guide"
-            >
-              <Sparkles className="size-4" />
-            </button>
             <ThemeToggle compact={true} />
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -186,7 +151,7 @@ export default function LandingPage() {
               className="w-full text-left text-sm font-semibold text-primary py-1 flex items-center gap-2"
             >
               <Sparkles className="size-4" />
-              <span>Campus Quick Tour Guide</span>
+              <span>Campus Quick Tour & Guide</span>
             </button>
 
             <div className="flex gap-2 pt-2 border-t border-border">
@@ -211,73 +176,96 @@ export default function LandingPage() {
       <div className="relative flex-1 flex flex-col justify-between">
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[850px] h-[350px] bg-gradient-to-tr from-primary/20 to-sky-400/15 dark:from-primary/10 dark:to-cyan-400/10 blur-[120px] rounded-full pointer-events-none animate-glow" />
 
-        {/* ── Hero Section ── */}
-        <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-16 sm:pt-24 lg:pt-28 pb-12 text-center">
-          {/* Badge with Entrance Pop & Interactive Guide Trigger */}
-          <div className="animate-fade-in-up">
-            <button
-              onClick={() => setWelcomeModalOpen(true)}
-              className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black text-primary mb-6 shadow-sm hover:bg-primary/20 hover:border-primary/50 hover:scale-105 transition-all cursor-pointer animate-float"
-              title="Click to view Quick Guide"
-            >
-              <Compass className="size-3.5 text-primary group-hover:rotate-45 transition-transform duration-300" />
-              <span>University of Cebu Main Campus • 8 Floors</span>
-              <Sparkles className="size-3 text-primary animate-pulse" />
-            </button>
-          </div>
-
-          {/* Hero Main Heading with Staggered Entrance */}
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-foreground max-w-4xl mx-auto leading-[1.1] animate-fade-in-up delay-100">
-            Navigate Your Campus.{" "}
-            <span className="bg-gradient-to-r from-primary via-sky-500 to-sky-400 bg-clip-text text-transparent">
-              Never Miss a Class.
-            </span>
-          </h1>
-
-          {/* Subtitle Description */}
-          <p className="mt-6 text-sm sm:text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed font-medium animate-fade-in-up delay-200">
-            ChronoNav is an indoor navigation and schedule management web system that guides you through every
-            corridor, staircase, and elevator across all 8 campus floors with automatic study-load routing.
-          </p>
-
-          {/* Hero CTA buttons */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up delay-300">
-            <Link
-              href="/register"
-              className="group inline-flex items-center gap-2.5 rounded-2xl bg-primary px-7 py-3.5 text-sm font-black text-white hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-primary/45 hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <span>Register Study Load</span>
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              href="/explore"
-              className="group inline-flex items-center gap-2.5 rounded-2xl border border-border bg-card px-7 py-3.5 text-sm font-black text-foreground hover:bg-accent hover:text-primary transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <Map className="size-4 text-primary" />
-              <span>Explore 8-Floor Map</span>
-            </Link>
-          </div>
-
-          {/* Key Metrics Strip with Entrance Stagger & Pop Hover */}
-          <div className="mt-14 grid grid-cols-2 md:grid-cols-4 gap-3.5 max-w-4xl mx-auto animate-fade-in-up delay-400">
-            {[
-              { label: "Campus Floors", val: "8 Levels", icon: Layers },
-              { label: "Navigable Rooms", val: "60+ Rooms", icon: Building2 },
-              { label: "Shortest Paths", val: "Dijkstra Engine", icon: Compass },
-              { label: "Guest Explorer", val: "Zero-Login", icon: Smartphone },
-            ].map((stat, idx) => {
-              const Icon = stat.icon;
-              return (
-                <div
-                  key={idx}
-                  className="rounded-2xl border border-border bg-card/70 backdrop-blur p-4 space-y-1 text-center shadow-sm hover:border-primary/40 hover:-translate-y-1 hover:shadow-md transition-all duration-200"
+        {/* ── 2-Column Responsive Hero Section ── */}
+        <section className="relative z-10 mx-auto max-w-7xl px-4 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+            {/* Left Column: Context, Headline, CTA & Metrics */}
+            <div className="lg:col-span-7 space-y-6 text-left">
+              {/* Badge with Pop & Guide Trigger */}
+              <div className="animate-fade-in-up">
+                <button
+                  onClick={() => setWelcomeModalOpen(true)}
+                  className="group inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-xs font-black text-primary shadow-sm hover:bg-primary/20 hover:border-primary/50 hover:scale-105 transition-all cursor-pointer"
+                  title="Click to view Quick Guide & System Features"
                 >
-                  <Icon className="size-5 text-primary mx-auto mb-1" />
-                  <p className="text-base font-black text-foreground">{stat.val}</p>
-                  <p className="text-[11px] font-semibold text-muted-foreground">{stat.label}</p>
-                </div>
-              );
-            })}
+                  <Compass className="size-3.5 text-primary group-hover:rotate-45 transition-transform duration-300" />
+                  <span>University of Cebu Main Campus • 8 Floors</span>
+                  <Sparkles className="size-3 text-primary animate-pulse" />
+                </button>
+              </div>
+
+              {/* Main Headline */}
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight text-foreground leading-[1.1] animate-fade-in-up delay-100">
+                Navigate Your Campus.{" "}
+                <span className="bg-gradient-to-r from-primary via-sky-500 to-sky-400 bg-clip-text text-transparent">
+                  Never Miss a Class.
+                </span>
+              </h1>
+
+              {/* Description Paragraph */}
+              <p className="text-sm sm:text-base lg:text-lg text-muted-foreground leading-relaxed font-medium max-w-xl animate-fade-in-up delay-200">
+                ChronoNav is an indoor navigation and schedule management web system that guides you through every
+                corridor, staircase, and elevator across all 8 campus floors with automatic study-load routing.
+              </p>
+
+              {/* Hero CTA Group with Icon-Only Quick Tour Button */}
+              <div className="flex flex-wrap items-center gap-3 pt-2 animate-fade-in-up delay-300">
+                <Link
+                  href="/register"
+                  className="group inline-flex items-center gap-2.5 rounded-2xl bg-primary px-6 sm:px-7 py-3.5 text-sm font-black text-white hover:bg-primary/90 transition-all duration-200 shadow-lg shadow-primary/30 hover:shadow-primary/45 hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <span>Register Study Load</span>
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+
+                <Link
+                  href="/explore"
+                  className="group inline-flex items-center gap-2.5 rounded-2xl border border-border bg-card px-6 sm:px-7 py-3.5 text-sm font-black text-foreground hover:bg-accent hover:text-primary transition-all duration-200 shadow-sm hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Map className="size-4 text-primary" />
+                  <span>Explore Map</span>
+                </Link>
+
+                {/* ── Icon-Only Quick Tour Button (Modal only opens on click) ── */}
+                <button
+                  onClick={() => setWelcomeModalOpen(true)}
+                  className="relative group flex size-12 items-center justify-center rounded-2xl border border-border bg-card hover:bg-primary/15 hover:border-primary/50 text-muted-foreground hover:text-primary transition-all duration-200 shadow-sm hover:scale-105 active:scale-95"
+                  title="Quick Tour & Feature Guide"
+                  aria-label="Open Quick Tour and System Guide"
+                >
+                  <HelpCircle className="size-5 transition-transform group-hover:scale-110 text-primary" />
+                  {/* Subtle hover pulse indicator */}
+                  <span className="absolute -top-1 -right-1 size-2.5 rounded-full bg-primary ring-2 ring-background animate-pulse" />
+                </button>
+              </div>
+
+              {/* Key Metrics Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4 max-w-xl animate-fade-in-up delay-400">
+                {[
+                  { label: "Campus Floors", val: "8 Levels", icon: Layers },
+                  { label: "Navigable Rooms", val: "60+ Rooms", icon: Building2 },
+                  { label: "Shortest Paths", val: "Dijkstra Engine", icon: Compass },
+                  { label: "Guest Explorer", val: "Zero-Login", icon: Smartphone },
+                ].map((stat, idx) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-border bg-card/70 backdrop-blur p-3.5 space-y-1 text-center shadow-sm hover:border-primary/40 hover:-translate-y-1 hover:shadow-md transition-all duration-200"
+                    >
+                      <Icon className="size-4.5 text-primary mx-auto mb-1" />
+                      <p className="text-sm font-black text-foreground">{stat.val}</p>
+                      <p className="text-[10px] font-semibold text-muted-foreground">{stat.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right Column: 3D Campus Navigation Visualizer */}
+            <div className="lg:col-span-5 w-full animate-fade-in-up delay-200">
+              <HeroCampus3DVisualizer />
+            </div>
           </div>
         </section>
 
